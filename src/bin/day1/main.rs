@@ -6,8 +6,7 @@ fn main() {
     let inp = std::fs::read_to_string("src/bin/day1/input.txt").unwrap_or_else(|e| panic!("{e}"));
 
     let sum = inp.lines()
-        .map(|line| extract_first_last(line))
-        .map(|n| n.unwrap() )
+        .filter_map(|line| extract_first_last(line))
         .sum::<u32>();
     println!("Sum = {sum}");
 }
