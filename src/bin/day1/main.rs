@@ -1,3 +1,4 @@
+#![feature(exclusive_range_pattern)]
 
 
 static DIGITS: [&str; 9] = [
@@ -53,28 +54,46 @@ mod test {
     fn test_string_in_string() {
 
         INPUT.iter()
-            .for_each(|inp|{
-                let mut i = 0;
-
-                let itr = inp.chars();
-
+            .for_each(|input| {
+                let mut buf = String::new();
                 println!("INP: {inp}");
 
-                while i < inp.len()-1 {
-                    DIGITS.iter()
-                        .any(|digit| {
-                            if !inp[i..].starts_with(digit) { false }
-                            else {
-                                println!("{i}:{}",&inp[i..i+digit.len()],);
-                                i += digit.len()-1;
-                                true
-                            }
-                        });
-                    i += 1;
-                }
+                let extract = input
+                    .chars()
+                    .filter_map(|c| {
+                        match c {
+                            '1'..'9' => c.to_digit(10),
+                            'a'..'z' => {
+                                buf.push(c);
+                                DIGITS.iter()
+                                    .filter_map(|d| {
+                                        if !buf.ends_with(d) { None }
+                                        else {
+                                            println!("BUF:{buf}");
+                                            buf.clear();
+                                            match d {
+                                                &"one" => Some(1),
+                                                &"two" => Some(2),
+                                                &"three" => Some(3),
+                                                &"four" => Some(4),
+                                                &"five" => Some(5),
+                                                &"six" => Some(6),
+                                                &"seven" => Some(7),
+                                                &"eight" => Some(8),
+                                                &"nine" => Some(9),
+                                                _ => None
+                                            }
+                                        }
+                                    })
+                                    .next()
+                            },
+                            _ => None
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+                println!("Found: {:?}",extract);
             });
-
-
         assert!(true)
     }
 }
