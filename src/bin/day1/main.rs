@@ -1,6 +1,3 @@
-#![feature(result_option_inspect)]
-
-use std::ops::Not;
 
 fn main() {
     let inp = std::fs::read_to_string("src/bin/day1/input.txt").unwrap_or_else(|e| panic!("{e}"));
@@ -12,16 +9,17 @@ fn main() {
 }
 
 fn extract_first_last(inp: &str) -> Option<u32> {
+    use std::ops::Not;
+
     let mut tmp = vec![];
+
     inp.chars()
         .filter(|c| c.is_digit(10))
-        .for_each(|c| tmp.push(c) );
+        .for_each(|c| tmp.push(c.to_digit(10).expect("Failed to convert")) );
+
     tmp.is_empty()
         .not()
-        .then(|| {
-            10 * tmp.first().unwrap().to_digit(10).expect("Failed to convert")
-                + tmp.last().unwrap().to_digit(10).expect("Failed to convert")
-        })
+        .then(|| 10 * tmp.first().unwrap() + tmp.last().unwrap() )
 }
 
 #[cfg(test)]
