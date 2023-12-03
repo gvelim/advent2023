@@ -93,20 +93,27 @@ mod test {
 
     #[test]
     fn test_extract_digit_numeric() {
-        INPUT.iter()
-            .for_each(|str|{
+        let sum = INPUT.iter()
+            .filter_map(|str|{
                 print!("{str:?} : ");
-                println!(" -> {:?}", extract_first_last_part1(str))
+                let val = extract_first_last_part1(str);
+                println!(" -> {:?}",val );
+                val
             })
+            .sum::<u32>();
+        assert_eq!(sum, 209)
     }
 
     #[test]
-    fn test_extract_digit_word() {
+    fn test_part2() {
 
-        INPUT.iter()
-            .for_each(|input| {
-                println!("Found: {:?}", extract_first_last_part2(input) );
-            });
-        assert!(true)
+        let sum = INPUT.iter()
+            .filter_map(|input| {
+                let val = extract_first_last_part2(input);
+                println!("Found: {:?}", val);
+                val
+            })
+            .sum::<u32>();
+        assert_eq!(sum, 281)
     }
 }
