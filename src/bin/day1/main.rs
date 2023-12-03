@@ -60,7 +60,7 @@ fn extract_first_last_part2(input: &str) -> Option<u32> {
                         // check if the string we have in BUF matches any of the DIGIT names
                         .filter_map(|(d,numeric)| {
                             // if BUF doesn't match any return NONE
-                            if !buf.is_suffix_of(d) { None }
+                            if !buf.ends_with(d) { None }
                             else {
                                 // we have a match
                                 print!("{buf},");
