@@ -71,8 +71,10 @@ fn extract_first_last_part2(input: &str) -> Option<u32> {
             }
         });
 
-    let ret = parser.next().unwrap();
-    Some(ret * 10 + parser.last().unwrap_or(ret))
+    parser.next()
+        .and_then(|ret|
+            Some(ret * 10 + parser.last().unwrap_or(ret))
+        )
 }
 
 #[cfg(test)]
