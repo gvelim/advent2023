@@ -60,8 +60,10 @@ fn extract_first_last_part2(input: &str) -> Option<u32> {
                             else {
                                 // we have a match
                                 print!("{buf},");
-                                // clear the buffer
-                                buf.clear();
+                                // drain the buffer up to the char before last
+                                // so we can handle the cases like
+                                // eightwo -> eight & two
+                                buf.drain(..buf.len()-1);
                                 Some(*numeric)
                             }
                         })
