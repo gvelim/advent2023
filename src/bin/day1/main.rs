@@ -1,3 +1,7 @@
+#![feature(pattern)]
+
+use std::str::pattern::Pattern;
+
 fn main() {
     let inp = std::fs::read_to_string("src/bin/day1/input.txt").unwrap_or_else(|e| panic!("{e}"));
 
@@ -48,7 +52,7 @@ fn extract_first_last_part2(input: &str) -> Option<u32> {
                 },
                 // if non-digit
                 'a'..='z' => {
-                    // push into the string
+                    // append char onto the string
                     buf.push(c);
                     // For every DIGIT name ... return Some(num) or None
                     DIGITS
@@ -56,27 +60,30 @@ fn extract_first_last_part2(input: &str) -> Option<u32> {
                         // check if the string we have in BUF matches any of the DIGIT names
                         .filter_map(|(d,numeric)| {
                             // if BUF doesn't match any return NONE
-                            if !buf.ends_with(d) { None }
+                            if !buf.is_suffix_of(d) { None }
                             else {
                                 // we have a match
                                 print!("{buf},");
                                 // drain the buffer up to the char before last
                                 // so we can handle the cases like
                                 // eightwo -> eight & two
+                                // twone -> two & one
                                 buf.drain(..buf.len()-1);
                                 Some(*numeric)
                             }
                         })
+                        // return what you've just found
                         .next()
                 },
                 _ => None
             }
         });
 
-    parser.next()
-        .and_then(|ret|
-            Some(ret * 10 + parser.last().unwrap_or(ret))
-        )
+    parser
+        // get first digit or return None
+        .next()
+        // and then get the last digit otherwise reuse the first digit
+        .and_then(|ret| Some(ret * 10 + parser.last().unwrap_or(ret)))
 }
 
 #[cfg(test)]
