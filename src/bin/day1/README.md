@@ -11,7 +11,7 @@
     7pqrstsixtee
 
 ## Output
-Extract the first and last digits, either in digit or work form, to produce the following numeric outputs. 
+Extract the first and last digits, either in digit or word form ("one", "two", "three", etc), to produce the following numeric outputs. 
 
     29
     83
