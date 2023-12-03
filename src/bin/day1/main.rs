@@ -28,7 +28,6 @@ fn extract_first_last_part1(inp: &str) -> Option<u32> {
 }
 
 fn extract_first_last_part2(input: &str) -> Option<u32> {
-    use std::ops::Not;
     static DIGITS: [(&str,u32); 9] = [
         ("one",1), ("two",2), ("three",3), ("four",4), ("five",5), ("six",6), ("seven",7), ("eight",8), ("nine",9)
     ];
@@ -36,8 +35,9 @@ fn extract_first_last_part2(input: &str) -> Option<u32> {
     // String Buffer to store non-numeric chars for lateral processing
     let mut buf = String::new();
     print!("Inp: {input} -> ");
+
     // for every char in the input string
-    let tmp = input
+    let mut parser = input
         .chars()
         .filter_map(|c| {
             match c {
@@ -50,7 +50,7 @@ fn extract_first_last_part2(input: &str) -> Option<u32> {
                 'a'..='z' => {
                     // push into the string
                     buf.push(c);
-                    // For every DIGIT name
+                    // For every DIGIT name ... return Some(num) or None
                     DIGITS
                         .iter()
                         // check if the string we have in BUF matches any of the DIGIT names
@@ -69,13 +69,10 @@ fn extract_first_last_part2(input: &str) -> Option<u32> {
                 },
                 _ => None
             }
-        })
-        .collect::<Vec<_>>();
+        });
 
-    print!("{:?}!! ",tmp);
-    tmp.is_empty()
-        .not()
-        .then(|| 10 * tmp.first().unwrap() + tmp.last().unwrap() )
+    let ret = parser.next().unwrap();
+    Some(ret * 10 + parser.last().unwrap_or(ret))
 }
 
 #[cfg(test)]
