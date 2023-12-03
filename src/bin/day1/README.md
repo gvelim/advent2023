@@ -21,7 +21,7 @@ Extract the first and last digits, either in digit or word form ("one", "two", "
     14
     76
 
-Pay attention to cases such `eightwothree` is understood as `eight`, `two` & `three` hence results to `83` 
+Pay attention to cases such `threeightwo` is understood as `three`, `eight` & `two`  hence results to `32` 
 
 ## Approach
 While moving fwd the input array, look backwards for patterns e.g.
