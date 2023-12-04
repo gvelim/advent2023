@@ -94,7 +94,7 @@ impl FromStr for Game {
     /// should parse the string "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"
     /// Game { 1, [ {(Blue,3),(Red,4)},{(Red,1),(Green,2),(Blue,6)},{(Green,2)} ]
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let (mut max_r, mut max_b, mut max_g) = (0,0,0);
+        let (mut red, mut blue, mut green) = (0, 0, 0);
         let mut gsplit = input.split(':');
         let id = u32::from_str_radix(gsplit.next().unwrap().split(' ').last().unwrap(), 10).expect("Ops");
         let runs = gsplit
@@ -102,15 +102,15 @@ impl FromStr for Game {
             .split(';')
             .map(|run| Run::from_str(run).expect("Ops!") )
             .inspect(|run| {
-                max_r = max(max_r, run.red);
-                max_b = max(max_b, run.blue);
-                max_g = max(max_g, run.green);
+                red = max(red, run.red);
+                blue = max(blue, run.blue);
+                green = max(green, run.green);
             })
             .collect::<Vec<_>>();
 
         Ok(Game {
             id, runs,
-            max: Run { red: max_r, green: max_g, blue: max_b },
+            max: Run { red, green, blue },
         })
     }
 }
