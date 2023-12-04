@@ -1,5 +1,23 @@
-fn main() {
+use std::cmp::max;
+use std::os::macos::raw::stat;
 
+fn main() {
+    let input = std::fs::read_to_string("src/bin/day2/input.txt").unwrap_or_else(|e| panic!("{e}"));
+    let arr = parse_input(input.as_str());
+
+    let g_ref = Game {id: 0, red: 12, green: 13, blue: 14};
+
+    let num = arr.iter()
+        .filter(|g| {
+            g.red < g_ref.red
+                && g.green <= g_ref.green
+                && g.blue <= g_ref.blue
+        })
+        .map(|g| g.id)
+        .sum::<u32>();
+
+    arr.iter().for_each(|g| println!("{:?} = {}",g, g.sum()) );
+    println!("Part 1 : Probable games = {num}");
 }
 
 #[derive(Debug)]
@@ -20,26 +38,32 @@ fn parse_input(input: &str) -> Vec<Game> {
     use std::str::FromStr;
 
     input.lines()
-        .map(|line| line.split([':',';']).collect::<Vec<_>>() )
-        .map(|s| {(
+        .map(|line| line.split([':',';']) )
+        .map(|mut s| {(
             Game {
-                id: s[0].chars().last().unwrap().to_digit(10).expect("Ops!"),
+                id: u32::from_str_radix(
+                    s.next()
+                            .unwrap()
+                            .split(' ')
+                            .last()
+                            .unwrap(),
+                10).expect("Ops!"),
                 red: 0, green: 0, blue: 0
-            }, s
+            }, s.collect::<Vec<_>>()
         )})
         .fold( Vec::<Game>::new(), |mut arr, (mut game, runs)| {
             runs.iter()
-                .skip(1)
+                //.skip(1)
                 .map(|run| {
                     run.split(',')
-                        .map(|ball| {
-                            let mut s = ball.trim().split(' ');
+                        .map(|balls| {
+                            let mut s = balls.trim().split(' ');
                             let val = u32::from_str(s.next().unwrap()).unwrap_or_else(|e| panic!("{e}"));
-                            match s.next().unwrap().trim() {
-                                "green" => game.green += val,
-                                "blue" => game.blue += val,
-                                "red" => game.red += val,
-                                d => println!("{d}")
+                            match s.next().unwrap() {
+                                "green" => game.green = max( game.green, val),
+                                "blue" => game.blue = max( game.blue, val),
+                                "red" => game.red = max( game.red, val),
+                                _ => panic!("This shouldn't have happened")
                             }
                         })
                         .all(|_| true)
@@ -64,13 +88,25 @@ mod test {
 
     #[test]
     fn test_parse_input() {
+        let arr = parse_input(INPUT);
+        arr.iter().for_each(|g| println!("{:?} = {}",g, g.sum()) );
+        assert!(true);
+    }
 
+    #[test]
+    fn test_game_compare() {
+        let g_ref = Game {id: 0, red: 12, green: 13, blue: 14};
         let arr = parse_input(INPUT);
 
-        arr.iter().all(|g| {println!("{:?} = {}",g, g.sum());true} );
-
-        assert!(true);
-
+        let num = arr.iter()
+            .filter(|g| {
+                g.red < g_ref.red
+                    && g.green < g_ref.green
+                    && g.blue < g_ref.blue
+            })
+            .map(|g| g.id)
+            .sum::<u32>();
+        assert_eq!(num, 8)
     }
 
 }
