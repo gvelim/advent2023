@@ -4,18 +4,25 @@ use crate::Colour::{Blue, Green, Red};
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day2/input.txt").unwrap_or_else(|e| panic!("{e}"));
-    let gref = Game { id: 0, runs: vec![Run { red: 12, blue:14, green:13 }] };
+    let gref = Game { id: 0, runs: vec![Run { red: 12, blue:14, green:13 }], max: Run { red: 12, blue:14, green:13 }};
 
-    let sum = input
+    let games = input
         .lines()
         .map(|game| Game::from_str(game).expect("Ops!"))
+        .collect::<Vec<_>>();
+
+    let sum = games.iter()
         .filter(|game| game.is_feasible(&gref))
-        .inspect(|game| println!("{:?}",game))
-        .map(|game| game.id)
+        .map(|game| game.id )
         .sum::<u32>();
 
     println!("Part 1 : Sum = {sum}");
 
+    let sum = games.iter()
+        .map(|game| game.power() )
+        .sum::<u32>();
+
+    println!("Part 2 : Sum = {sum}");
 }
 
 #[derive(Debug,Eq, PartialEq,Hash)]
@@ -58,16 +65,20 @@ impl FromStr for Run {
 #[derive(Debug)]
 struct Game {
     id: u32,
-    runs: Vec<Run>
+    runs: Vec<Run>,
+    max: Run
 }
 
 impl Game {
     fn is_feasible(&self, game: &Game) -> bool {
         let Run{ red,green,blue} = game.runs[0];
-        self.runs.iter()
-            .all(|run|
-                     run.red <= red && run.blue <= blue && run.green <= green
-            )
+        self.runs
+            .iter()
+            .all(|run| run.red <= red && run.blue <= blue && run.green <= green )
+    }
+    fn power(&self) -> u32 {
+        let Run { red, green, blue} = self.max;
+        red * green * blue
     }
 }
 
@@ -84,7 +95,15 @@ impl FromStr for Game {
             .split(';')
             .map(|run| Run::from_str(run).expect("Ops!") )
             .collect::<Vec<_>>();
-        Ok(Game {id, runs})
+
+        Ok(Game {
+            max: Run {
+                red: runs.iter().map(|run| run.red).max().unwrap(),
+                green: runs.iter().map(|run| run.green).max().unwrap(),
+                blue: runs.iter().map(|run| run.blue).max().unwrap()
+            },
+            id, runs
+        })
     }
 }
 
@@ -100,14 +119,15 @@ mod test {
         Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green\n";
 
     #[test]
-    fn test_feasible() {
+    fn test_game_feasible() {
         use Colour::*;
 
         let gref = Game {
             id: 0,
             runs: vec![
                 Run { red: 12, blue:14, green:13 }
-            ]
+            ],
+            max: Run { red: 12, blue:14, green:13 }
         };
 
         let sum = INPUT.lines()
@@ -120,10 +140,21 @@ mod test {
     }
 
     #[test]
+    fn test_game_power() {
+        let sum = INPUT.lines()
+            .map(|game| Game::from_str(game).expect("Ops!"))
+            .map(|game| game.power() )
+            .inspect(|n| println!("{n}"))
+            .sum::<u32>();
+
+        assert_eq!(2286,sum);
+    }
+
+    #[test]
     fn test_parse_input() {
         let input = "Game 12: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green";
         let game = Game::from_str(input).expect("Ops!");
-        println!("{:?}",game);
+        println!("{:?} = {}",game, game.power());
         assert!(true);
     }
 
