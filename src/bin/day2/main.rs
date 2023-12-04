@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::str::FromStr;
-use crate::Colour::Red;
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day2/input.txt").unwrap_or_else(|e| panic!("{e}"));
@@ -10,7 +9,6 @@ fn main() {
         .collect::<Vec<_>>();
 
     arr.iter().for_each(|g| println!("{:?}",g) );
-
 }
 
 #[derive(Debug,Eq, PartialEq,Hash)]
@@ -25,11 +23,11 @@ impl FromStr for Run {
     /// convert " 3 blue, 4 red"," 1 red, 2 green, 6 blue", "2 green"
     /// to [(Blue,3),(Red,4)], etc
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let balls = input
+        let picked = input
             .trim()
             .split(',')
-            .map(|balls| {
-                let mut split = balls.trim().split(' ');
+            .map(|picked| {
+                let mut split = picked.trim().split(' ');
                 let count = u32::from_str_radix(split.next().unwrap(), 10).expect("Ops!");
                 let colour = match split.next().unwrap().trim() {
                     "red" => Colour::Red,
@@ -40,7 +38,7 @@ impl FromStr for Run {
                 (colour,count)
             })
             .collect::<HashMap<_, _>>();
-        Ok(Run { picked: balls })
+        Ok(Run { picked })
     }
 }
 
@@ -80,8 +78,9 @@ mod test {
 
     #[test]
     fn test_parse_input() {
-        let arr = Game::from_str(INPUT).expect("Ops!");
-        arr.iter().for_each(|g| println!("{:?} = {}",g, g.sum()) );
+        let input = "Game 12: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green";
+        let game = Game::from_str(input).expect("Ops!");
+        println!("{:?}",game);
         assert!(true);
     }
 
@@ -94,5 +93,4 @@ mod test {
                 println!("Run: {:?}",run);
             });
     }
-
 }
