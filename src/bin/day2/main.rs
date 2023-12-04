@@ -28,18 +28,21 @@ fn main() {
 struct Run {
     red: u32, green: u32, blue: u32
 }
+impl Default for Run {
+    fn default() -> Self {
+        Run { red: 0, green: 0, blue: 0 }
+    }
+}
 impl FromStr for Run {
     type Err = ();
 
     /// convert " 3 blue, 4 red"," 1 red, 2 green, 6 blue", "2 green"
     /// to [(Blue,3),(Red,4)], etc
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        use std::collections::HashMap;
-
         #[derive(Debug,Eq, PartialEq,Hash)]
         enum Colour { Red, Green, Blue }
 
-        let run = input
+        Ok( input
             .trim()
             .split(',')
             .map(|picked| {
@@ -53,12 +56,15 @@ impl FromStr for Run {
                 };
                 (colour,count)
             })
-            .collect::<HashMap<_, _>>();
-        Ok(Run {
-            red: *run.get(&Colour::Red).unwrap_or_else(||&0),
-            green: *run.get(&Colour::Green).unwrap_or_else(||&0),
-            blue: *run.get(&Colour::Blue).unwrap_or_else(||&0),
-        })
+            .fold(Run::default(),|mut run, (col, val)| {
+                match col {
+                    Colour::Red => run.red = val,
+                    Colour::Green => run.green = val,
+                    Colour::Blue => run.blue = val
+                }
+                run
+            })
+        )
     }
 }
 
