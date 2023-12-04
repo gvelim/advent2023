@@ -1,6 +1,5 @@
-use std::collections::HashMap;
+use std::cmp::max;
 use std::str::FromStr;
-use crate::Colour::{Blue, Green, Red};
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day2/input.txt").unwrap_or_else(|e| panic!("{e}"));
@@ -25,9 +24,6 @@ fn main() {
     println!("Part 2 : Sum = {sum}");
 }
 
-#[derive(Debug,Eq, PartialEq,Hash)]
-enum Colour { Red, Green, Blue }
-
 #[derive(Debug)]
 struct Run {
     red: u32, green: u32, blue: u32
@@ -38,8 +34,12 @@ impl FromStr for Run {
     /// convert " 3 blue, 4 red"," 1 red, 2 green, 6 blue", "2 green"
     /// to [(Blue,3),(Red,4)], etc
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let run =
-            input
+        use std::collections::HashMap;
+
+        #[derive(Debug,Eq, PartialEq,Hash)]
+        enum Colour { Red, Green, Blue }
+
+        let run = input
             .trim()
             .split(',')
             .map(|picked| {
@@ -55,9 +55,9 @@ impl FromStr for Run {
             })
             .collect::<HashMap<_, _>>();
         Ok(Run {
-            red: *run.get(&Red).unwrap_or_else(||&0),
-            green: *run.get(&Green).unwrap_or_else(||&0),
-            blue: *run.get(&Blue).unwrap_or_else(||&0),
+            red: *run.get(&Colour::Red).unwrap_or_else(||&0),
+            green: *run.get(&Colour::Green).unwrap_or_else(||&0),
+            blue: *run.get(&Colour::Blue).unwrap_or_else(||&0),
         })
     }
 }
@@ -88,21 +88,23 @@ impl FromStr for Game {
     /// should parse the string "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"
     /// Game { 1, [ {(Blue,3),(Red,4)},{(Red,1),(Green,2),(Blue,6)},{(Green,2)} ]
     fn from_str(input: &str) -> Result<Self, Self::Err> {
+        let (mut max_r, mut max_b, mut max_g) = (0,0,0);
         let mut gsplit = input.split(':');
         let id = u32::from_str_radix(gsplit.next().unwrap().split(' ').last().unwrap(), 10).expect("Ops");
         let runs = gsplit
             .next().unwrap()
             .split(';')
             .map(|run| Run::from_str(run).expect("Ops!") )
+            .inspect(|run| {
+                max_r = max(max_r, run.red);
+                max_b = max(max_b, run.blue);
+                max_g = max(max_g, run.green);
+            })
             .collect::<Vec<_>>();
 
         Ok(Game {
-            max: Run {
-                red: runs.iter().map(|run| run.red).max().unwrap(),
-                green: runs.iter().map(|run| run.green).max().unwrap(),
-                blue: runs.iter().map(|run| run.blue).max().unwrap()
-            },
-            id, runs
+            id, runs,
+            max: Run { red: max_r, green: max_g, blue: max_b },
         })
     }
 }
@@ -120,7 +122,6 @@ mod test {
 
     #[test]
     fn test_game_feasible() {
-        use Colour::*;
 
         let gref = Game {
             id: 0,
