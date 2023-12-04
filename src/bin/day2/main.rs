@@ -1,21 +1,29 @@
 use std::collections::HashMap;
 use std::str::FromStr;
+use crate::Colour::{Blue, Green, Red};
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day2/input.txt").unwrap_or_else(|e| panic!("{e}"));
-    let arr = input
+    let gref = Game { id: 0, runs: vec![Run { red: 12, blue:14, green:13 }] };
+
+    let sum = input
         .lines()
         .map(|game| Game::from_str(game).expect("Ops!"))
-        .collect::<Vec<_>>();
+        .filter(|game| game.is_feasible(&gref))
+        .inspect(|game| println!("{:?}",game))
+        .map(|game| game.id)
+        .sum::<u32>();
 
-    arr.iter().for_each(|g| println!("{:?}",g) );
+    println!("Part 1 : Sum = {sum}");
+
 }
 
 #[derive(Debug,Eq, PartialEq,Hash)]
 enum Colour { Red, Green, Blue }
+
 #[derive(Debug)]
 struct Run {
-    picked: HashMap<Colour,u32>
+    red: u32, green: u32, blue: u32
 }
 impl FromStr for Run {
     type Err = ();
@@ -23,7 +31,8 @@ impl FromStr for Run {
     /// convert " 3 blue, 4 red"," 1 red, 2 green, 6 blue", "2 green"
     /// to [(Blue,3),(Red,4)], etc
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let picked = input
+        let run =
+            input
             .trim()
             .split(',')
             .map(|picked| {
@@ -38,7 +47,11 @@ impl FromStr for Run {
                 (colour,count)
             })
             .collect::<HashMap<_, _>>();
-        Ok(Run { picked })
+        Ok(Run {
+            red: *run.get(&Red).unwrap_or_else(||&0),
+            green: *run.get(&Green).unwrap_or_else(||&0),
+            blue: *run.get(&Blue).unwrap_or_else(||&0),
+        })
     }
 }
 
@@ -46,6 +59,16 @@ impl FromStr for Run {
 struct Game {
     id: u32,
     runs: Vec<Run>
+}
+
+impl Game {
+    fn is_feasible(&self, game: &Game) -> bool {
+        let Run{ red,green,blue} = game.runs[0];
+        self.runs.iter()
+            .all(|run|
+                     run.red <= red && run.blue <= blue && run.green <= green
+            )
+    }
 }
 
 impl FromStr for Game {
@@ -59,7 +82,7 @@ impl FromStr for Game {
         let runs = gsplit
             .next().unwrap()
             .split(';')
-            .map(|run| Run::from_str(run).expect("Ops!"))
+            .map(|run| Run::from_str(run).expect("Ops!") )
             .collect::<Vec<_>>();
         Ok(Game {id, runs})
     }
@@ -75,6 +98,26 @@ mod test {
         Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red\n\
         Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red\n\
         Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green\n";
+
+    #[test]
+    fn test_feasible() {
+        use Colour::*;
+
+        let gref = Game {
+            id: 0,
+            runs: vec![
+                Run { red: 12, blue:14, green:13 }
+            ]
+        };
+
+        let sum = INPUT.lines()
+            .map(|game| Game::from_str(game).expect("Ops!"))
+            .filter(|game| game.is_feasible(&gref) )
+            .map(|game| game.id)
+            .sum::<u32>();
+
+        assert_eq!(8,sum);
+    }
 
     #[test]
     fn test_parse_input() {
