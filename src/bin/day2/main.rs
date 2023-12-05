@@ -3,7 +3,7 @@ use std::str::FromStr;
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day2/input.txt").unwrap_or_else(|e| panic!("{e}"));
-    let gref = Game { id: 0, runs: vec![Run { red: 12, blue:14, green:13 }], max: Run { red: 12, blue:14, green:13 }};
+    let rref = Run { red: 12, blue:14, green:13 };
 
     let games = input
         .lines()
@@ -11,7 +11,7 @@ fn main() {
         .collect::<Vec<_>>();
 
     let sum = games.iter()
-        .filter(|game| game.is_feasible(&gref))
+        .filter(|game| game.is_feasible(&rref))
         .map(|game| game.id )
         .sum::<u32>();
 
@@ -76,8 +76,8 @@ struct Game {
 }
 
 impl Game {
-    fn is_feasible(&self, game: &Game) -> bool {
-        let Run{ red,green,blue} = game.runs[0];
+    fn is_feasible(&self, run: &Run) -> bool {
+        let &Run{ red,green,blue} = run;
         self.runs
             .iter()
             .all(|run| run.red <= red && run.blue <= blue && run.green <= green )
@@ -129,13 +129,7 @@ mod test {
     #[test]
     fn test_game_feasible() {
 
-        let gref = Game {
-            id: 0,
-            runs: vec![
-                Run { red: 12, blue:14, green:13 }
-            ],
-            max: Run { red: 12, blue:14, green:13 }
-        };
+        let gref = Run { red: 12, blue:14, green:13 };
 
         let sum = INPUT.lines()
             .map(|game| Game::from_str(game).expect("Ops!"))
