@@ -1,5 +1,8 @@
-use std::cmp::max;
-use std::str::FromStr;
+use crate::run::Run;
+use crate::game::Game;
+
+mod game;
+mod run;
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day2/input.txt").unwrap_or_else(|e| panic!("{e}"));
@@ -22,97 +25,6 @@ fn main() {
         .sum::<u32>();
 
     println!("Part 2 : Sum = {sum}");
-}
-
-#[derive(Debug)]
-struct Run {
-    red: u32, green: u32, blue: u32
-}
-impl Default for Run {
-    fn default() -> Self {
-        Run { red: 0, green: 0, blue: 0 }
-    }
-}
-impl FromStr for Run {
-    type Err = ();
-
-    /// convert " 3 blue, 4 red"," 1 red, 2 green, 6 blue", "2 green"
-    /// to [(Blue,3),(Red,4)], etc
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        #[derive(Debug,Eq, PartialEq,Hash)]
-        enum Colour { Red, Green, Blue }
-
-        Ok( input
-            .trim()
-            .split(',')
-            .map(|picked| {
-                let mut split = picked.trim().split(' ');
-                let count = u32::from_str_radix(split.next().unwrap(), 10).expect("Ops!");
-                let colour = match split.next().unwrap().trim() {
-                    "red" => Colour::Red,
-                    "green" => Colour::Green,
-                    "blue" => Colour::Blue,
-                    err => {println!("What's this \"{err}\"?!"); unreachable!("Shouldn't be here")}
-                };
-                (colour,count)
-            })
-            .fold(Run::default(),|mut run, (col, val)| {
-                match col {
-                    Colour::Red => run.red = val,
-                    Colour::Green => run.green = val,
-                    Colour::Blue => run.blue = val
-                }
-                run
-            })
-        )
-    }
-}
-
-#[derive(Debug)]
-struct Game {
-    id: u32,
-    runs: Vec<Run>,
-    max: Run
-}
-
-impl Game {
-    fn is_feasible(&self, run: &Run) -> bool {
-        let &Run{ red,green,blue} = run;
-        self.runs
-            .iter()
-            .all(|run| run.red <= red && run.blue <= blue && run.green <= green )
-    }
-    fn power(&self) -> u32 {
-        let Run { red, green, blue} = self.max;
-        red * green * blue
-    }
-}
-
-impl FromStr for Game {
-    type Err = ();
-
-    /// should parse the string "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"
-    /// Game { 1, [ {(Blue,3),(Red,4)},{(Red,1),(Green,2),(Blue,6)},{(Green,2)} ]
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let Run{mut red, mut blue, mut green} = Run::default();
-        let mut gsplit = input.split(':');
-        let id = u32::from_str_radix(gsplit.next().unwrap().split(' ').last().unwrap(), 10).expect("Ops");
-        let runs = gsplit
-            .next().unwrap()
-            .split(';')
-            .map(|run| Run::from_str(run).expect("Ops!") )
-            .inspect(|run| {
-                red = max(red, run.red);
-                blue = max(blue, run.blue);
-                green = max(green, run.green);
-            })
-            .collect::<Vec<_>>();
-
-        Ok(Game {
-            id, runs,
-            max: Run { red, green, blue },
-        })
-    }
 }
 
 #[cfg(test)]
