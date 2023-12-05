@@ -32,15 +32,19 @@ For each game to be feasible, what would be the lowest required number of cubes 
 ## Approach
 Use the below Data structure to (a) reject all games that has at least a run with  higher number of cubes, (b) calculate max red, green, blue cubes per game
 
-    Array
-        +-- Game( max_red, max_green, max_blue )
-            +---- (red, green, blue)
-            +---- (red, green, blue)
-            ...
-            +---- (red, green, blue)
-        +-- Game( 12, 5, 4 )
-            +---- (12, 0, 1)
-            +---- (2, 0, 0)
-            ...
-            +---- (0, 5, 4)
+    Games
+        +-- Game
+            + max( red, green, blue )
+            + Runs
+               +---- (red, green, blue)
+               +---- (red, green, blue)
+               ...
+               +---- (red, green, blue)
+        +-- Game
+            + Max( 4, 2, 6 )
+            + Runs
+               +---- (4, 0, 3)
+               +---- (1, 2, 6)
+               ...
+               +---- (0, 2, 0)
         ...
