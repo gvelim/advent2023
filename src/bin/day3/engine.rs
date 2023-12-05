@@ -10,7 +10,6 @@ pub(crate) struct PartNumber {
 #[derive(Debug)]
 pub(crate) struct EngineSchematic {
     pub(crate) len: usize,
-    pub(crate) schematic: String,
     pub(crate) partnums: Vec<PartNumber>,
     pub(crate) symbols: Vec<(usize,char)>
 }
@@ -67,6 +66,6 @@ impl FromStr for EngineSchematic {
                 }
             });
 
-        Ok(EngineSchematic { len, schematic, partnums, symbols } )
+        Ok(EngineSchematic { len, partnums, symbols } )
     }
 }
