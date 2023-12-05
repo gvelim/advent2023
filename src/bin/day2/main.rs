@@ -7,7 +7,7 @@ fn main() {
 
     let games = input
         .lines()
-        .map(|game| Game::from_str(game).expect("Ops!"))
+        .map(|game| game.parse::<Game>().expect("Ops!"))
         .collect::<Vec<_>>();
 
     let sum = games.iter()
@@ -132,7 +132,7 @@ mod test {
         let gref = Run { red: 12, blue:14, green:13 };
 
         let sum = INPUT.lines()
-            .map(|game| Game::from_str(game).expect("Ops!"))
+            .map(|game| game.parse::<Game>().expect("Ops!"))
             .filter(|game| game.is_feasible(&gref) )
             .map(|game| game.id)
             .sum::<u32>();
@@ -143,7 +143,7 @@ mod test {
     #[test]
     fn test_game_power() {
         let sum = INPUT.lines()
-            .map(|game| Game::from_str(game).expect("Ops!"))
+            .map(|game| game.parse::<Game>().expect("Ops!"))
             .map(|game| game.power() )
             .inspect(|n| println!("{n}"))
             .sum::<u32>();
@@ -154,7 +154,7 @@ mod test {
     #[test]
     fn test_parse_input() {
         let input = "Game 12: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green";
-        let game = Game::from_str(input).expect("Ops!");
+        let game = input.parse::<Game>().expect("Ops!");
         println!("{:?} = {}",game, game.power());
         assert!(true);
     }
@@ -164,7 +164,7 @@ mod test {
         let input = [" 3 blue, 4 red"," 1 red, 2 green, 6 blue"," 2 green"];
         input.iter()
             .for_each(|inp| {
-                let run = Run::from_str(inp).expect("Ops!");
+                let run = inp.parse::<Run>().expect("Ops!");
                 println!("Run: {:?}",run);
             });
     }
