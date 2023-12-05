@@ -48,21 +48,31 @@ impl FromStr for EngineSchematic {
         let mut symbols: Vec<(usize, char)> = vec![];
         let mut buf = vec![];
 
+        let make_part_number = |buf: &Vec<(usize, char)>| {
+            let number = buf.iter().map(|(_,c)| c).collect::<String>();
+            PartNumber {
+                number: u32::from_str_radix(number.as_str(), 10).expect("Ops!"),
+                pos: (buf[0].0 ..= buf.last().expect("Ops").0),
+            }
+        };
+
         schematic.char_indices()
             .for_each(|c| {
                 match c.1 {
                     '.' => {
                         if !buf.is_empty() {
-                            let number = buf.iter().map(|(_,c)| c).collect::<String>();
-                            partnums.push(PartNumber {
-                                number: u32::from_str_radix(number.as_str(), 10).expect("Ops!"),
-                                pos: (buf[0].0 ..= buf.last().expect("Ops").0),
-                            });
+                            partnums.push(make_part_number(&buf) );
                             buf.clear();
                         }
                     }
                     '0'..='9' => buf.push(c),
-                    _ => symbols.push(c),
+                    _ => {
+                        symbols.push(c);
+                        if !buf.is_empty() {
+                            partnums.push(make_part_number(&buf) );
+                            buf.clear();
+                        }
+                    },
                 }
             });
 
