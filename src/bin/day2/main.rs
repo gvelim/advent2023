@@ -94,7 +94,7 @@ impl FromStr for Game {
     /// should parse the string "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"
     /// Game { 1, [ {(Blue,3),(Red,4)},{(Red,1),(Green,2),(Blue,6)},{(Green,2)} ]
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let (mut red, mut blue, mut green) = (0, 0, 0);
+        let Run{mut red, mut blue, mut green} = Run::default();
         let mut gsplit = input.split(':');
         let id = u32::from_str_radix(gsplit.next().unwrap().split(' ').last().unwrap(), 10).expect("Ops");
         let runs = gsplit
