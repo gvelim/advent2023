@@ -49,4 +49,18 @@ mod test {
 
         assert_eq!(sum,4361)
     }
+
+    #[test]
+    fn test_engine_extract_with_symbol() {
+        let es = INPUT.parse::<EngineSchematic>().expect("Ops!");
+
+        let sum = es.get_gears_part_numbers('*')
+            .inspect(|d| println!("{:?},",d))
+            .map(|d| d.iter().map(|d| d.number).product::<u32>())
+            .sum::<u32>();
+
+        println!("{:?}",sum);
+        assert_eq!(467835,sum)
+
+    }
 }

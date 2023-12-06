@@ -20,7 +20,10 @@ impl PartNumber {
 
 }
 #[derive(Debug)]
-pub(crate) struct Symbol(usize,char);
+pub(crate) struct Symbol(
+    pub(crate) usize,
+    pub(crate) char
+);
 impl From<(usize,char)> for Symbol {
     fn from(value: (usize, char)) -> Self {
         Symbol(value.0,value.1)

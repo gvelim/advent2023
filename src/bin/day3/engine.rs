@@ -16,6 +16,21 @@ impl EngineSchematic {
                 self.symbols.iter().any(|s| pn.is_touching(&s,len))
             })
     }
+    pub(crate) fn get_gears_part_numbers(&self, gear: char) -> impl Iterator<Item=Vec<&PartNumber>> {
+        self.symbols.iter()
+            .filter(move |s| s.1.eq(&gear))
+            .filter_map(|s| {
+                let pns = self.partnums.iter()
+                    .filter(|pn| pn.is_touching(s, self.len))
+                    .collect::<Vec<_>>();
+
+                if pns.len() > 1 {
+                    Some(pns)
+                } else {
+                    None
+                }
+            })
+    }
 }
 
 impl FromStr for EngineSchematic {
