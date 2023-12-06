@@ -18,17 +18,23 @@ impl EngineSchematic {
     }
     pub(crate) fn get_gears_part_numbers(&self, gear: char) -> impl Iterator<Item=Vec<&PartNumber>> {
         self.symbols.iter()
+            // only proceed with gear symbol provided
             .filter(move |s| s.1.eq(&gear))
+            // per gear symbol
             .filter_map(|s| {
                 let pns = self.partnums.iter()
+                    // only consider part numbers proximate to the gear
+                    // ignore part numbers falling outside the gears reach
+                    .filter(|pn|
+                        pn.pos.end() >= &(s.0 - self.len-1) &&
+                            pn.pos.start() <= &(s.0 + self.len+1)
+                    )
+                    // Those in proximity filter those that touch
                     .filter(|pn| pn.is_touching(s, self.len))
                     .collect::<Vec<_>>();
 
-                if pns.len() > 1 {
-                    Some(pns)
-                } else {
-                    None
-                }
+                // return pairs otherwise skip what was found for this gear
+                if pns.len() > 1 { Some(pns) } else { None }
             })
     }
 }
