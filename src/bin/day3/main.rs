@@ -6,12 +6,18 @@ use crate::engine::*;
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day3/input.txt").expect("Ops!");
+    let es = input.parse::<EngineSchematic>().expect("Ops!");
 
-    let sum = input
-        .parse::<EngineSchematic>()
-        .expect("Ops!")
+    let sum = es
         .part_numbers()
         .map(|pn| pn.number)
+        .sum::<u32>();
+
+    println!("Par 1 - Sum: {sum}");
+
+    let sum = es
+        .get_gears_part_numbers('*')
+        .map(|d| d.iter().map(|d| d.number).product::<u32>())
         .sum::<u32>();
 
     println!("Par 1 - Sum: {sum}");
