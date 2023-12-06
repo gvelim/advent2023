@@ -35,9 +35,12 @@ A gear is any `*` symbol that is adjacent to exactly two part numbers. Its gear 
    3. `Symbol.pos -/+ offset +/- 1` falls within `Number.pos(star,end)` ?  == diagonal to the number
 
 ```
-...123...   ==> ...123........*... (offset: 9)   
-.....*...            +---9----+
-
+...123...   ==> ...123.....%//*#.. (offset: 9)   
+..%//*#..          ||+---10----+
+                   ||+---9----+
+                   |+---9----+
+                   +---9----+
+                   +---8---+
 Offset analysis
 ================
 ..abbbc..   ==> ..abbbc....d123d....efffg.. (offset: 9)
