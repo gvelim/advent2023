@@ -1,17 +1,11 @@
-use std::ops::{RangeInclusive};
 use std::str::FromStr;
-
-#[derive(Debug)]
-pub(crate) struct PartNumber {
-    pub(crate) number: u32,
-    pub(crate) pos: RangeInclusive<usize>
-}
+use super::parts::*;
 
 #[derive(Debug)]
 pub(crate) struct EngineSchematic {
     pub(crate) len: usize,
     pub(crate) partnums: Vec<PartNumber>,
-    pub(crate) symbols: Vec<(usize,char)>
+    pub(crate) symbols: Vec<Symbol>
 }
 
 impl EngineSchematic {
@@ -19,16 +13,7 @@ impl EngineSchematic {
         let len = self.len;
         self.partnums.iter()
             .filter(move |pn| {
-                self.symbols.iter().any(|(pos,_)| {
-                    pn.pos.contains(&(pos + 1))
-                        || pn.pos.contains(&(pos - 1))
-                        || pn.pos.contains(&(pos + len-1))
-                        || pn.pos.contains(&(pos + len))
-                        || pn.pos.contains(&(pos + len+1))
-                        || pn.pos.contains(&(pos - len+1))
-                        || pn.pos.contains(&(pos - len))
-                        || pn.pos.contains(&(pos - len-1))
-                })
+                self.symbols.iter().any(|s| pn.is_touching(&s,len))
             })
     }
 }
@@ -45,7 +30,7 @@ impl FromStr for EngineSchematic {
                 .collect::<String>();
 
         let mut partnums: Vec<PartNumber> = vec![];
-        let mut symbols: Vec<(usize, char)> = vec![];
+        let mut symbols: Vec<Symbol> = vec![];
         let mut buf = vec![];
 
         let make_part_number = |buf: &Vec<(usize, char)>| {
@@ -67,7 +52,7 @@ impl FromStr for EngineSchematic {
                     }
                     '0'..='9' => buf.push(c),
                     _ => {
-                        symbols.push(c);
+                        symbols.push(c.into());
                         if !buf.is_empty() {
                             partnums.push(make_part_number(&buf) );
                             buf.clear();
