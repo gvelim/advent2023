@@ -30,9 +30,9 @@ A gear is any `*` symbol that is adjacent to exactly two part numbers. Its gear 
 2. Extract all numbers from the string in a struct (value, pos(start,end))
 3. Extract all symbols from the string in a struct (value, pos)
 4. Per number, iterate over the symbols and check if
-   1. `Symbol.pos -/+ 1` falls in `Number.pos(star,end)`  == Adjacent to number
-   2. `Symbol.pos -/+ offset` falls in `Number.pos(star,end)` == Under/Over the number 
-   3. `Symbol.pos -/+ offset +/- 1` falls in `Number.pos(star,end)`  == diagonal to the number
+   1. `Symbol.pos -/+ 1` falls within `Number.pos(star,end)` ? == Adjacent to number
+   2. `Symbol.pos -/+ offset` falls within `Number.pos(star,end)` ? == Under/Over the number 
+   3. `Symbol.pos -/+ offset +/- 1` falls within `Number.pos(star,end)` ?  == diagonal to the number
 
 ```
 ...123...   ==> ...123........*... (offset: 9)   
