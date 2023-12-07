@@ -24,6 +24,17 @@ pub(crate) struct Symbol(
     pub(crate) usize,
     pub(crate) char
 );
+
+impl Symbol {
+    pub(crate) fn is_touching(&self, pn: &PartNumber, len:usize) -> bool {
+        (self.0 - len-1 ..= self.0 - len+1).contains(pn.pos.end()) ||
+            (self.0 - len-1 ..= self.0 - len+1).contains(pn.pos.start()) ||
+            (self.0 + len-1 ..= self.0 + len+1).contains(pn.pos.end()) ||
+            (self.0 + len-1 ..= self.0 + len+1).contains(pn.pos.start()) ||
+            pn.pos.contains(&(self.0 - 1)) ||
+            pn.pos.contains(&(self.0 + 1))
+    }
+}
 impl From<(usize,char)> for Symbol {
     fn from(value: (usize, char)) -> Self {
         Symbol(value.0,value.1)
