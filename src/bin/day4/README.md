@@ -26,9 +26,9 @@ Part 1 Sum: 13
 There's no such thing as "points". You win copies of the scratchcards below the winning card equal to the number of matches. So, if card 10 were to have 5 matching numbers, you would win one copy each of cards 11, 12, 13, 14, and 15.
 ```
 Card { 1, {17, 9, 83, 86, 6, 31, 48, 53} } --> Wins: 4 (copies: 2..5) --> Total Copies: 1
-Card { 2, {32, 19, 24, 61, 30, 68, 17, 82} } --> Wins: 2 (copies: 3..5) --> Total Copies: 2
-Card { 3, {1, 63, 69, 82, 72, 21, 16, 14} } --> Wins: 2 (copies: 4..6) --> Total Copies: 4
-Card { 4, {84, 58, 83, 54, 76, 51, 5, 59} } --> Wins: 1 (copies: 5..6) --> Total Copies: 8
+Card { 2, {32, 19, 24, 61, 30, 68, 17, 82} } --> Wins: 2 (copies: 3..4) --> Total Copies: 2
+Card { 3, {1, 63, 69, 82, 72, 21, 16, 14} } --> Wins: 2 (copies: 4..5) --> Total Copies: 4
+Card { 4, {84, 58, 83, 54, 76, 51, 5, 59} } --> Wins: 1 (copies: 5..5) --> Total Copies: 8
 Card { 5, {93, 12, 82, 22, 30, 36, 70, 88} } --> Wins: 0 --> Total Copies: 14
 Card { 6, {36, 67, 10, 74, 23, 35, 77, 11} } --> Wins: 0 --> Total Copies: 1
 Part2 Sum: 30
