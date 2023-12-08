@@ -24,7 +24,6 @@ fn main() {
             let winning_numbers = card.winning_numbers(&numbers);
             (card,winning_numbers.len() as u32)
         })
-        .inspect(|d| println!("{:?}",d))
         .map(|(card,size)| {
             let copies = *part2.get(&card.id).unwrap();
             (card.id+1 ..=card.id + size as u32)
@@ -33,10 +32,9 @@ fn main() {
                 });
             copies
         })
-        .inspect(|d| println!("{:?}",d))
         .sum::<u32>();
 
-    println!("Part2 Sum: {part2_sum}");
+    println!("Part 2 Sum: {part2_sum}");
 
 }
 
@@ -100,18 +98,19 @@ mod test {
                 let winning_numbers = card.winning_numbers(&numbers);
                 (card,winning_numbers.len() as u32)
             })
-            .inspect(|d| println!("{:?}",d))
-            .map(|(card,size)| {
+            .inspect(|d| print!("{:?}",d))
+            .map(|(card, wins)| {
                 let copies = *part2.get(&card.id).unwrap();
-                (card.id+1 ..=card.id + size as u32)
+                (card.id+1 ..=card.id + wins as u32)
                     .for_each(|next_card| {
                         part2.get_mut(&next_card).and_then(|d| Some(*d += copies ));
                 });
                 copies
             })
-            .inspect(|d| println!("{:?}",d))
+            .inspect(|d| println!(" --> Copies: {:?}",d))
             .sum::<u32>();
 
+            println!("Part2 Sum: {part2_sum}");
             assert_eq!(part2_sum, 30)
     }
 }
