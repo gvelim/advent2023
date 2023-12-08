@@ -25,6 +25,12 @@ struct Card {
     win_nums: HashSet<u32>
 }
 
+impl Card {
+    fn winning_numbers(&self) -> Vec<u32> {
+        self.elf_nums.intersection(&self.win_nums).copied().collect::<Vec<u32>>()
+    }
+    
+}
 impl FromStr for Card {
     type Err = ();
 
@@ -57,6 +63,18 @@ mod test {
             .for_each(|card| {
                 print!("{:?}\n", card )
             });   
+    }
+    #[test]
+    fn test_match_numbers() {
+        let card = "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53".parse::<Card>().expect("Ops!");
+
+        let win = card.winning_numbers();
+        
+        println!("Card {}, wins {:?}, score:{:?}",
+            card.id, win, 
+            2_i32.pow((win.len()-1) as u32)
+        );
+    
     }
     
 }
