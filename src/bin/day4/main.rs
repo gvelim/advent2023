@@ -1,47 +1,23 @@
-use std::{collections::HashSet, str::FromStr};
+mod card;
+mod numbers;
+
+use crate::{card::Card,numbers::Numbers};
 
 fn main() {
 
 }
 
-struct HashNum(HashSet<u32>);
-impl FromStr for HashNum {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        Ok( HashNum( input
-            .split(' ')
-            .filter(|&d| !d.is_empty())
-            .map(|num| u32::from_str(num.trim()).expect("Ops!"))
-            .collect::<HashSet<u32>>()
-        ))
-    }
-}
-
-#[derive(Debug)]
-struct Card {
-    id: u32,
-    elf_nums: HashSet<u32>,
-    win_nums: HashSet<u32>
-}
-
-impl Card {
-    fn winning_numbers(&self) -> Vec<u32> {
-        self.elf_nums.intersection(&self.win_nums).copied().collect::<Vec<u32>>()
-    }
-    
-}
-impl FromStr for Card {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut split = s.split([':','|']);
-     
-        Ok(Card { 
-            id : u32::from_str(split.next().unwrap().trim().split(' ').skip(1).next().unwrap()).expect("id:Ops!"), 
-            elf_nums: split.next().unwrap().trim().parse::<HashNum>().ok().expect("elf_nums Ops!").0, 
-            win_nums: split.next().unwrap().trim().parse::<HashNum>().ok().expect("win_nums Ops!").0
-        })    
+struct Rounds;
+impl Rounds {
+    fn parse_rounds(input: &str) -> impl Iterator<Item=(Card, Numbers)> + '_ {
+        input.lines()
+            .map(|line| {
+                let mut split = line.split("|");
+                let mut card = split.next().unwrap().trim().parse::<Card>().expect("Ops");
+                let numbers = card.elf_nums;
+                card.elf_nums = split.next().unwrap().trim().parse::<Numbers>().ok().expect("win_nums Ops!");
+                (card,numbers)
+            } )
     }
 }
 
@@ -58,17 +34,16 @@ mod test {
     #[test]
     fn test_parsing_of_numbers() {
         
-        INPUT.lines()
-            .map(|line| line.parse::<Card>().expect("Ops") )
+        Rounds::parse_rounds(INPUT)
             .for_each(|card| {
                 print!("{:?}\n", card )
             });   
     }
     #[test]
     fn test_match_numbers() {
-        let card = "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53".parse::<Card>().expect("Ops!");
+        let (card,win_nums) = Rounds::parse_rounds("Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53").next().expect("Ops!");
 
-        let win = card.winning_numbers();
+        let win = card.winning_numbers( &win_nums);
         
         println!("Card {}, wins {:?}, score:{:?}",
             card.id, win, 
