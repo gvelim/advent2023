@@ -41,15 +41,21 @@ mod test {
     }
     #[test]
     fn test_match_numbers() {
-        let (card,win_nums) = Rounds::parse_rounds("Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53").next().expect("Ops!");
 
-        let win = card.winning_numbers( &win_nums);
-        
-        println!("Card {}, wins {:?}, score:{:?}",
-            card.id, win, 
-            2_i32.pow((win.len()-1) as u32)
-        );
-    
+        let sum = Rounds::parse_rounds(INPUT)
+            .map(|(card, numbers)| {
+                print!("{:?} - Winning Nums = {:?}",card,numbers);
+                let win_nums = card.winning_numbers(&numbers);
+                println!(" -->  {:?}",win_nums);
+                win_nums.len()
+            })
+            .filter(|size| size > &0)
+            .map(|win_nums| 2_i32.pow((win_nums-1) as u32) as u32)
+            .inspect(|score| println!(" --> Score: {score}"))
+            .sum::<u32>();
+
+        println!("Sum: {sum}");
+        assert_eq!(sum, 13)
     }
     
 }
