@@ -2,13 +2,13 @@ mod card;
 mod numbers;
 
 use std::collections::HashMap;
-use crate::{card::Card, numbers::Numbers};
+use crate::card::Rounds;
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day4/input.txt").expect("Ops!");
 
     let part1 = Rounds::parse_rounds(input.as_str())
-        .map(|(card, numbers)| card.winning_numbers(&numbers).len())
+        .map(|(card, numbers)| card.winning_numbers(&numbers.0).count())
         .filter(|size| size > &0)
         .map(|size| 2_u32.pow((size - 1) as u32))
         .sum::<u32>();
@@ -21,35 +21,21 @@ fn main() {
 
     let part2_sum = Rounds::parse_rounds(input.as_str())
         .map(|(card, numbers)| {
-            let winning_numbers = card.winning_numbers(&numbers);
-            (card,winning_numbers.len() as u32)
+            let winning_numbers = card.winning_numbers(&numbers.0).count() as u32;
+            (card,winning_numbers)
         })
         .map(|(card,size)| {
             let copies = *part2.get(&card.id).unwrap();
             (card.id+1 ..=card.id + size as u32)
-                .for_each(|next_card| {
-                    part2.get_mut(&next_card).and_then(|d| Some(*d += copies ));
-                });
+                .all(|next_card|
+                    part2.get_mut(&next_card).and_then(|d| Some(*d += copies) ).is_some()
+                );
             copies
         })
         .sum::<u32>();
 
     println!("Part 2 Sum: {part2_sum}");
 
-}
-
-struct Rounds;
-impl Rounds {
-    fn parse_rounds(input: &str) -> impl Iterator<Item=(Card, Numbers)> + '_ {
-        input.lines()
-            .map(|line| {
-                let mut split = line.split("|");
-                let mut card = split.next().unwrap().trim().parse::<Card>().expect("Ops");
-                let numbers = card.elf_nums;
-                card.elf_nums = split.next().unwrap().trim().parse::<Numbers>().ok().expect("win_nums Ops!");
-                (card,numbers)
-            } )
-    }
 }
 
 #[cfg(test)]
@@ -62,6 +48,9 @@ mod test {
                 Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83\n\
                 Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36\n\
                 Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11";
+
+
+
     #[test]
     fn test_parsing_of_numbers() {
         Rounds::parse_rounds(INPUT)

@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use super::numbers::Numbers;
 use std::str::FromStr;
 
@@ -8,8 +9,8 @@ pub(crate) struct Card {
 }
 
 impl Card {
-    pub(crate) fn winning_numbers(&self, win_nums: &Numbers) -> Vec<u32> {
-        self.elf_nums.0.intersection(&win_nums.0).copied().collect::<Vec<u32>>()
+    pub(crate) fn winning_numbers<'a>(&'a self, win_nums: &'a HashSet<u32>) -> impl Iterator<Item=u32> + 'a {
+        self.elf_nums.0.intersection(&win_nums).copied()
     }
 }
 impl FromStr for Card {
@@ -22,5 +23,20 @@ impl FromStr for Card {
             id : u32::from_str(split.next().unwrap().trim().split(' ').last().unwrap()).expect("id:Ops!"),
             elf_nums: split.next().unwrap().trim().parse::<Numbers>().ok().expect("elf_nums Ops!"),
         })
+    }
+}
+
+
+pub(crate) struct Rounds;
+impl Rounds {
+    pub(crate) fn parse_rounds(input: &str) -> impl Iterator<Item=(Card, Numbers)> + '_ {
+        input.lines()
+            .map(|line| {
+                let mut split = line.split("|");
+                let mut card = split.next().unwrap().trim().parse::<Card>().expect("Ops");
+                let numbers = card.elf_nums;
+                card.elf_nums = split.next().unwrap().trim().parse::<Numbers>().ok().expect("win_nums Ops!");
+                (card,numbers)
+            } )
     }
 }
