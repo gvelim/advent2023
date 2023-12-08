@@ -19,7 +19,7 @@ impl FromStr for Card {
         let mut split = s.split([':','|']);
 
         Ok(Card {
-            id : u32::from_str(split.next().unwrap().trim().split(' ').skip(1).next().unwrap()).expect("id:Ops!"),
+            id : u32::from_str(split.next().unwrap().trim().split(' ').last().unwrap()).expect("id:Ops!"),
             elf_nums: split.next().unwrap().trim().parse::<Numbers>().ok().expect("elf_nums Ops!"),
         })
     }

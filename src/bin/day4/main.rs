@@ -1,10 +1,19 @@
 mod card;
 mod numbers;
 
-use crate::{card::Card,numbers::Numbers};
+use crate::{card::Card, numbers::Numbers};
 
 fn main() {
+    let input = std::fs::read_to_string("src/bin/day4/input.txt").expect("Ops!");
+    let sum = Rounds::parse_rounds(input.as_str())
+        .map(|(card, numbers)| {
+            card.winning_numbers(&numbers).len()
+        })
+        .filter(|size| size > &0)
+        .map(|win_nums| 2_u32.pow((win_nums-1) as u32))
+        .sum::<u32>();
 
+    println!("Sum: {sum}");
 }
 
 struct Rounds;
@@ -33,11 +42,10 @@ mod test {
                 Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11";
     #[test]
     fn test_parsing_of_numbers() {
-        
         Rounds::parse_rounds(INPUT)
             .for_each(|card| {
                 print!("{:?}\n", card )
-            });   
+            });
     }
     #[test]
     fn test_match_numbers() {
@@ -50,7 +58,7 @@ mod test {
                 win_nums.len()
             })
             .filter(|size| size > &0)
-            .map(|win_nums| 2_i32.pow((win_nums-1) as u32) as u32)
+            .map(|win_nums| 2_u32.pow((win_nums-1) as u32))
             .inspect(|score| println!(" --> Score: {score}"))
             .sum::<u32>();
 
