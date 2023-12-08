@@ -7,21 +7,37 @@ use crate::{card::Card, numbers::Numbers};
 fn main() {
     let input = std::fs::read_to_string("src/bin/day4/input.txt").expect("Ops!");
 
-    let part2 = Rounds::parse_rounds(input.as_str()).map(|(card,_)| (card.id,1)).collect::<HashMap<u32,u32>>();
-
     let part1 = Rounds::parse_rounds(input.as_str())
-        .map(|(card, numbers)| {
-            let size = card.winning_numbers(&numbers).len();
-            (card,size)
-        })
-        .filter(|(_,size)| size > &0)
-        .map(|(card,size)| {
-
-            2_u32.pow((size - 1) as u32)
-        })
+        .map(|(card, numbers)| card.winning_numbers(&numbers).len())
+        .filter(|size| size > &0)
+        .map(|size| 2_u32.pow((size - 1) as u32))
         .sum::<u32>();
 
-    println!("Sum: {part1}");
+    println!("Part 1 Sum: {part1}");
+
+    let mut part2 = Rounds::parse_rounds(input.as_str())
+        .map(|(card,_)| (card.id,1))
+        .collect::<HashMap<u32,u32>>();
+
+    let part2_sum = Rounds::parse_rounds(input.as_str())
+        .map(|(card, numbers)| {
+            let winning_numbers = card.winning_numbers(&numbers);
+            (card,winning_numbers.len() as u32)
+        })
+        .inspect(|d| println!("{:?}",d))
+        .map(|(card,size)| {
+            let copies = *part2.get(&card.id).unwrap();
+            (card.id+1 ..=card.id + size as u32)
+                .for_each(|next_card| {
+                    part2.get_mut(&next_card).and_then(|d| Some(*d += copies ));
+                });
+            copies
+        })
+        .inspect(|d| println!("{:?}",d))
+        .sum::<u32>();
+
+    println!("Part2 Sum: {part2_sum}");
+
 }
 
 struct Rounds;
@@ -56,7 +72,7 @@ mod test {
             });
     }
     #[test]
-    fn test_match_numbers() {
+    fn test_part1() {
 
         let sum = Rounds::parse_rounds(INPUT)
             .map(|(card, numbers)| {
@@ -73,5 +89,29 @@ mod test {
         println!("Sum: {sum}");
         assert_eq!(sum, 13)
     }
-    
+    #[test]
+    fn test_part2() {
+        let mut part2 = Rounds::parse_rounds(INPUT)
+            .map(|(card,_)| (card.id,1))
+            .collect::<HashMap<u32,u32>>();
+
+        let part2_sum = Rounds::parse_rounds(INPUT)
+            .map(|(card, numbers)| {
+                let winning_numbers = card.winning_numbers(&numbers);
+                (card,winning_numbers.len() as u32)
+            })
+            .inspect(|d| println!("{:?}",d))
+            .map(|(card,size)| {
+                let copies = *part2.get(&card.id).unwrap();
+                (card.id+1 ..=card.id + size as u32)
+                    .for_each(|next_card| {
+                        part2.get_mut(&next_card).and_then(|d| Some(*d += copies ));
+                });
+                copies
+            })
+            .inspect(|d| println!("{:?}",d))
+            .sum::<u32>();
+
+            assert_eq!(part2_sum, 30)
+    }
 }
