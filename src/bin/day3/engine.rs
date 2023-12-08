@@ -20,14 +20,14 @@ impl EngineSchematic {
         self.symbols.iter()
             // only proceed with gear symbol provided
             .filter(move |s| s.1.eq(&gear))
-            .inspect(|d| println!("{:?}",d))
+            // .inspect(|d| println!("{:?}",d))
             // per gear symbol
             .filter_map(|s| {
                 let pns = self.partnums.iter()
                     // only consider part numbers proximate to the gear
                     // ignore part numbers falling outside the gears reach
                     .filter(|pn| s.is_touching(pn,self.len))
-                    .inspect(|d| println!("{:?}",d))
+                    // .inspect(|d| println!("{:?}",d))
                     .collect::<Vec<_>>();
 
                 // return pairs otherwise skip what was found for this gear

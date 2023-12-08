@@ -8,8 +8,8 @@ pub(crate) struct Card {
 }
 
 impl Card {
-    pub(crate) fn winning_numbers<'a>(&'a self, win_nums: &'a Numbers) -> impl Iterator<Item=u32> + 'a {
-        self.elf_nums.0.intersection(&win_nums.0).copied()
+    pub(crate) fn winning_numbers<'a>(&'a self, win_nums: &'a Numbers) -> impl Iterator<Item=&u32> + 'a {
+        self.elf_nums.0.intersection(&win_nums.0)
     }
 }
 impl FromStr for Card {
@@ -32,9 +32,9 @@ impl Rounds {
         input.lines()
             .map(|line| {
                 let mut split = line.split("|");
-                let mut card = split.next().unwrap().trim().parse::<Card>().expect("Ops");
+                let mut card = split.next().unwrap().trim().parse::<Card>().expect("Card:Ops");
                 let numbers = card.elf_nums;
-                card.elf_nums = split.next().unwrap().trim().parse::<Numbers>().ok().expect("win_nums Ops!");
+                card.elf_nums = split.next().unwrap().trim().parse::<Numbers>().ok().expect("elf_nums Ops!");
                 (card,numbers)
             } )
     }

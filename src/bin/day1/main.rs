@@ -1,16 +1,19 @@
+use std::time::Instant;
 fn main() {
     let inp = std::fs::read_to_string("src/bin/day1/input.txt").unwrap_or_else(|e| panic!("{e}"));
 
+    let t = Instant::now();
     let sum = inp.lines()
         .filter_map(|line| extract_first_last_part1(line))
         .sum::<u32>();
-    println!("Part 1 -> Sum = {sum}");
+    println!("Part 1 -> Sum = {sum} - {:?}", t.elapsed());
 
+    let t = Instant::now();
     let sum = inp.lines()
         .filter_map(|line| extract_first_last_part2(line))
-        .inspect(|num| println!("Result: {num}"))
+        // .inspect(|num| println!("Result: {num}"))
         .sum::<u32>();
-    println!("Part 2 -> Sum = {sum}");
+    println!("Part 2 -> Sum = {sum} - {:?}", t.elapsed());
 }
 
 fn extract_first_last_part1(inp: &str) -> Option<u32> {
@@ -34,7 +37,7 @@ fn extract_first_last_part2(input: &str) -> Option<u32> {
 
     // String Buffer to store non-numeric chars for lateral processing
     let mut buf = String::new();
-    print!("Inp: {input} -> ");
+    // print!("Inp: {input} -> ");
 
     // for every char in the input string
     let mut parser = input
@@ -58,7 +61,7 @@ fn extract_first_last_part2(input: &str) -> Option<u32> {
                             if !buf.ends_with(d) { None }
                             else {
                                 // we have a match
-                                print!("{buf},");
+                                // print!("{buf},");
                                 Some(*numeric)
                             }
                         )

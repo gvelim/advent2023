@@ -1,5 +1,6 @@
 use crate::run::Run;
 use crate::game::Game;
+use std::time::Instant;
 
 mod game;
 mod run;
@@ -13,18 +14,20 @@ fn main() {
         .map(|game| game.parse::<Game>().expect("Ops!"))
         .collect::<Vec<_>>();
 
+    let t = Instant::now();
     let sum = games.iter()
         .filter(|game| game.is_feasible(&rref))
         .map(|game| game.id )
         .sum::<u32>();
 
-    println!("Part 1 : Sum = {sum}");
+    println!("Part 1 : Sum = {sum} - {:?}", t.elapsed());
 
+    let t = Instant::now();
     let sum = games.iter()
         .map(|game| game.power() )
         .sum::<u32>();
 
-    println!("Part 2 : Sum = {sum}");
+    println!("Part 2 : Sum = {sum} - {:?}", t.elapsed());
 }
 
 #[cfg(test)]
