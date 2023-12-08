@@ -64,9 +64,9 @@ mod test {
         let sum = Rounds::parse_rounds(INPUT)
             .map(|(card, numbers)| {
                 print!("{:?} - Winning Nums = {:?}",card,numbers);
-                let win_nums = card.winning_numbers(&numbers);
+                let win_nums = card.winning_numbers(&numbers.0).count();
                 println!(" -->  {:?}",win_nums);
-                win_nums.len()
+                win_nums
             })
             .filter(|size| size > &0)
             .map(|win_nums| 2_u32.pow((win_nums-1) as u32))
@@ -84,16 +84,16 @@ mod test {
 
         let part2_sum = Rounds::parse_rounds(INPUT)
             .map(|(card, numbers)| {
-                let winning_numbers = card.winning_numbers(&numbers);
-                (card,winning_numbers.len() as u32)
+                let winning_numbers = card.winning_numbers(&numbers.0).count() as u32;
+                (card,winning_numbers)
             })
             .inspect(|d| print!("{:?}",d))
             .map(|(card, wins)| {
                 let copies = *part2.get(&card.id).unwrap();
                 (card.id+1 ..=card.id + wins as u32)
-                    .for_each(|next_card| {
-                        part2.get_mut(&next_card).and_then(|d| Some(*d += copies ));
-                });
+                    .all(|next_card|
+                        part2.get_mut(&next_card).and_then(|d| Some(*d += copies )).is_some()
+                );
                 copies
             })
             .inspect(|d| println!(" --> Copies: {:?}",d))
