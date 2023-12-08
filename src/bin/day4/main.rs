@@ -8,7 +8,7 @@ fn main() {
     let input = std::fs::read_to_string("src/bin/day4/input.txt").expect("Ops!");
 
     let part1 = Rounds::parse_rounds(input.as_str())
-        .map(|(card, numbers)| card.winning_numbers(&numbers.0).count())
+        .map(|(card, numbers)| card.winning_numbers(&numbers).count())
         .filter(|size| size > &0)
         .map(|size| 2_u32.pow((size - 1) as u32))
         .sum::<u32>();
@@ -21,7 +21,7 @@ fn main() {
 
     let part2_sum = Rounds::parse_rounds(input.as_str())
         .map(|(card, numbers)| {
-            let winning_numbers = card.winning_numbers(&numbers.0).count() as u32;
+            let winning_numbers = card.winning_numbers(&numbers).count() as u32;
             (card,winning_numbers)
         })
         .map(|(card,size)| {
@@ -64,7 +64,7 @@ mod test {
         let sum = Rounds::parse_rounds(INPUT)
             .map(|(card, numbers)| {
                 print!("{:?} - Winning Nums = {:?}",card,numbers);
-                let win_nums = card.winning_numbers(&numbers.0).count();
+                let win_nums = card.winning_numbers(&numbers).count();
                 println!(" -->  {:?}",win_nums);
                 win_nums
             })
@@ -84,7 +84,7 @@ mod test {
 
         let part2_sum = Rounds::parse_rounds(INPUT)
             .map(|(card, numbers)| {
-                let winning_numbers = card.winning_numbers(&numbers.0).count() as u32;
+                let winning_numbers = card.winning_numbers(&numbers).count() as u32;
                 (card,winning_numbers)
             })
             .inspect(|d| print!("{:?}",d))

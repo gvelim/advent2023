@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use super::numbers::Numbers;
 use std::str::FromStr;
 
@@ -9,8 +8,8 @@ pub(crate) struct Card {
 }
 
 impl Card {
-    pub(crate) fn winning_numbers<'a>(&'a self, win_nums: &'a HashSet<u32>) -> impl Iterator<Item=u32> + 'a {
-        self.elf_nums.0.intersection(&win_nums).copied()
+    pub(crate) fn winning_numbers<'a>(&'a self, win_nums: &'a Numbers) -> impl Iterator<Item=u32> + 'a {
+        self.elf_nums.0.intersection(&win_nums.0).copied()
     }
 }
 impl FromStr for Card {
