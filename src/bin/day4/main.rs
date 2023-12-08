@@ -1,19 +1,27 @@
 mod card;
 mod numbers;
 
+use std::collections::HashMap;
 use crate::{card::Card, numbers::Numbers};
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day4/input.txt").expect("Ops!");
-    let sum = Rounds::parse_rounds(input.as_str())
+
+    let part2 = Rounds::parse_rounds(input.as_str()).map(|(card,_)| (card.id,1)).collect::<HashMap<u32,u32>>();
+
+    let part1 = Rounds::parse_rounds(input.as_str())
         .map(|(card, numbers)| {
-            card.winning_numbers(&numbers).len()
+            let size = card.winning_numbers(&numbers).len();
+            (card,size)
         })
-        .filter(|size| size > &0)
-        .map(|win_nums| 2_u32.pow((win_nums-1) as u32))
+        .filter(|(_,size)| size > &0)
+        .map(|(card,size)| {
+
+            2_u32.pow((size - 1) as u32)
+        })
         .sum::<u32>();
 
-    println!("Sum: {sum}");
+    println!("Sum: {part1}");
 }
 
 struct Rounds;
