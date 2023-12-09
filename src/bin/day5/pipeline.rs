@@ -11,13 +11,10 @@ impl Pipeline {
         let (mut out, mut next) = start;
         loop {
             if self.maps.contains_key(&next) {
-                print!("({:?})->", (out, next));
                 (out, next) = self.maps
                     .get(&next).unwrap()
                     .transform(out);
-                println!("({:?})", (out, next));
             } else {
-                println!();
                 break out
             }
         }

@@ -16,8 +16,6 @@ impl FromStr for Mapping {
         let src_base = u64::from_str(nums.next().unwrap()).expect("src_base::Ops!");
         let len = u64::from_str(nums.next().unwrap()).expect("len::Ops!");
 
-        print!("{:?} -> ",(dst_base,src_base,len));
-        println!("{:?}",(src_base..src_base + len));
         Ok( Mapping {
             dst_base,
             src_base: (src_base..src_base + len),

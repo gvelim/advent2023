@@ -2,34 +2,64 @@ mod map;
 mod mapping;
 mod pipeline;
 
+use std::ops::Range;
+use std::str::FromStr;
 use mapping::*;
 use map::*;
 use pipeline::*;
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day5/input.txt").expect("Ops!");
-    let seeds = Seeds::parse(input.as_str());
+    let seeds = input.parse::<Seeds>().expect("Ops!");
     let pipeline = input.parse::<Pipeline>().expect("Ops!");
 
-    let min = seeds.iter()
+    let min = seeds.0.iter()
         .map(|&seed|
             pipeline.run((seed,MapType::Seed))
         )
         .min();
 
     println!("Part 1, min: {:?}",min);
+
+    let min = seeds
+        .into_ranges()
+        .into_iter()
+        .inspect(|range| println!("{:?}",range))
+        .map(|range| {
+            range.map(|seed|
+                    pipeline.run((seed,MapType::Seed))
+                )
+                .min()
+                .unwrap()
+        })
+        .min();
+
+    println!("Part 2, min: {:?}",min);
 }
 
-struct Seeds;
+struct Seeds(Vec<u64>);
+
 impl Seeds {
-    fn parse(input: &str) -> Vec<u64> {
-        input.split("\n\n")
+    fn into_ranges(&self) -> Vec<Range<u64>>{
+        self.0.chunks(2)
+            .map(|r| (r[0]..r[0]+r[1]))
+            .collect::<Vec<_>>()
+    }
+}
+
+impl FromStr for Seeds {
+    type Err = ();
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        Ok(Seeds(
+            input.split("\n\n")
             .next().unwrap()
             .split(':')
             .last().unwrap()
             .split_whitespace()
             .map(|num| u64::from_str_radix(num.trim(),10).expect("Seeds:Ops!"))
             .collect::<Vec<_>>()
+        ))
     }
 }
 
@@ -38,11 +68,40 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_min_location() {
-        let seeds = Seeds::parse(INPUT.split("\n\n").next().unwrap());
+    fn test_ranges_min_location() {
+        let seeds = INPUT.split("\n\n").next().unwrap().parse::<Seeds>().expect("Ops!");
         let pipeline = INPUT.parse::<Pipeline>().expect("Ops!");
 
-        let min = seeds.iter()
+        let min = seeds
+            .into_ranges()
+            .into_iter()
+            .inspect(|range| println!("{:?}",range))
+            .map(|range| {
+                range.map(|seed|
+                    pipeline.run((seed,MapType::Seed))
+                )
+                    .min()
+                    .unwrap()
+            })
+            .min();
+
+        assert_eq!(min, Some(46))
+    }
+    #[test]
+    fn test_ranges() {
+        let seeds = INPUT.split("\n\n").next().unwrap().parse::<Seeds>().expect("Ops!");
+        let ranges = seeds.into_ranges();
+        assert_eq!(
+            ranges,
+            [79..93, 55..68]
+        )
+    }
+    #[test]
+    fn test_min_location() {
+        let seeds = INPUT.split("\n\n").next().unwrap().parse::<Seeds>().expect("Ops!");
+        let pipeline = INPUT.parse::<Pipeline>().expect("Ops!");
+
+        let min = seeds.0.iter()
             .map(|&seed|
                 pipeline.run((seed,MapType::Seed))
             )
@@ -52,35 +111,35 @@ mod test {
     }
     #[test]
     fn test_pipeline() {
-        let seeds = Seeds::parse(INPUT.split("\n\n").next().unwrap());
+        let seeds = INPUT.split("\n\n").next().unwrap().parse::<Seeds>().expect("Ops!");
         let pipeline = INPUT.parse::<Pipeline>().expect("Ops!");
 
         assert_eq!(
             82,
-            pipeline.run( (seeds[0], MapType::Seed)))
+            pipeline.run( (seeds.0[0], MapType::Seed)))
         ;
     }
     #[test]
     fn test_map_transform() {
         let mut split = INPUT.split("\n\n");
-        let seeds = Seeds::parse(split.next().unwrap());
+        let seeds = split.next().unwrap().parse::<Seeds>().expect("Ops!");
         let map = split.next().unwrap().parse::<Map>().expect("Ops!");
 
-        seeds.iter()
+        seeds.0.iter()
             .inspect(|seed| print!("Input: {seed}"))
             .map(|&seed| map.transform(seed))
             .for_each(|d| println!(" -> {:?}",d));
 
         assert_eq!(
-            seeds.iter().map(|&seed| map.transform(seed)).collect::<Vec<_>>(),
+            seeds.0.iter().map(|&seed| map.transform(seed)).collect::<Vec<_>>(),
             [(81, MapType::Soil), (14, MapType::Soil), (57, MapType::Soil),(13, MapType::Soil)]
         )
     }
     #[test]
     fn test_parse_seeds() {
         let mut split = INPUT.split("\n\n");
-        let seeds = Seeds::parse(split.next().unwrap());
-        assert_eq!(seeds,[79,14,55,13_u32]);
+        let seeds = split.next().unwrap().parse::<Seeds>().expect("Ops!");
+        assert_eq!(seeds.0,[79_u64,14,55,13]);
     }
     #[test]
     fn test_parse_map() {
