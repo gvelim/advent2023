@@ -8,14 +8,7 @@ pub(crate) struct PartNumber {
 
 impl PartNumber {
     pub(crate) fn is_touching(&self, s: &Symbol, len:usize) -> bool {
-        self.pos.contains(&(s.0 + 1))
-            || self.pos.contains(&(s.0 - 1))
-            || self.pos.contains(&(s.0 + len-1))
-            || self.pos.contains(&(s.0 + len))
-            || self.pos.contains(&(s.0 + len+1))
-            || self.pos.contains(&(s.0 - len+1))
-            || self.pos.contains(&(s.0 - len))
-            || self.pos.contains(&(s.0 - len-1))
+        s.is_touching(&self, len)
     }
 
 }
