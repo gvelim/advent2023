@@ -8,7 +8,7 @@ pub(crate) struct PartNumber {
 
 impl PartNumber {
     pub(crate) fn is_touching(&self, s: &Symbol, len:usize) -> bool {
-        s.is_touching(&self, len)
+        s.is_touching(self,len)
     }
 
 }
