@@ -49,7 +49,7 @@ impl FromStr for EngineSchematic {
 
         let mut partnums: Vec<PartNumber> = vec![];
         let mut symbols: Vec<Symbol> = vec![];
-        let mut buf = vec![];
+        let mut buf = Vec::with_capacity(40);
 
         let make_part_number = |buf: &Vec<(usize, char)>| {
             let number = buf.iter().map(|(_,c)| c).collect::<String>();
