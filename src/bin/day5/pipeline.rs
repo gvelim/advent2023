@@ -7,7 +7,7 @@ pub(crate) struct Pipeline {
     maps: HashMap<MapType,Map>
 }
 impl Pipeline {
-    pub(crate) fn run(&self, start: (u32, MapType)) -> u32 {
+    pub(crate) fn run(&self, start: (u64, MapType)) -> u64 {
         let (mut out, mut next) = start;
         loop {
             if self.maps.contains_key(&next) {

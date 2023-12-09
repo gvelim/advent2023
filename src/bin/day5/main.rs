@@ -7,17 +7,28 @@ use map::*;
 use pipeline::*;
 
 fn main() {
+    let input = std::fs::read_to_string("src/bin/day5/input.txt").expect("Ops!");
+    let seeds = Seeds::parse(input.as_str());
+    let pipeline = input.parse::<Pipeline>().expect("Ops!");
 
+    let min = seeds.iter()
+        .map(|&seed|
+            pipeline.run((seed,MapType::Seed))
+        )
+        .min();
 
+    println!("Part 1, min: {:?}",min);
 }
 
 struct Seeds;
 impl Seeds {
-    fn parse(input: &str) -> Vec<u32> {
-        input.split(':')
+    fn parse(input: &str) -> Vec<u64> {
+        input.split("\n\n")
+            .next().unwrap()
+            .split(':')
             .last().unwrap()
             .split_whitespace()
-            .map(|num| u32::from_str_radix(num.trim(),10).expect("Seeds:Ops!"))
+            .map(|num| u64::from_str_radix(num.trim(),10).expect("Seeds:Ops!"))
             .collect::<Vec<_>>()
     }
 }

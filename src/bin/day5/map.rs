@@ -32,7 +32,7 @@ pub(crate) struct Map {
 }
 
 impl Map {
-    pub(crate) fn transform(&self, input: u32) -> (u32,MapType) {
+    pub(crate) fn transform(&self, input: u64) -> (u64,MapType) {
         self.mappings.iter()
             .filter_map(|tx| {
                 if tx.src_base.contains(&input) {
