@@ -1,5 +1,6 @@
 use std::str::FromStr;
 use super::mapping::*;
+use rayon::prelude::*;
 
 #[derive(Debug,Hash,Eq,PartialEq,Copy, Clone)]
 pub(crate) enum MapType {

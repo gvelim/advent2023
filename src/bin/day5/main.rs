@@ -2,29 +2,29 @@ mod map;
 mod mapping;
 mod pipeline;
 
-use std::ops::Range;
-use std::str::FromStr;
-use mapping::*;
+use std::{ops::Range, str::FromStr, time::Instant};
 use map::*;
 use pipeline::*;
-
+use rayon::prelude::*;
 fn main() {
     let input = std::fs::read_to_string("src/bin/day5/input.txt").expect("Ops!");
     let seeds = input.parse::<Seeds>().expect("Ops!");
     let pipeline = input.parse::<Pipeline>().expect("Ops!");
 
+    let t = Instant::now();
     let min = seeds.0.iter()
         .map(|&seed|
             pipeline.run((seed,MapType::Seed))
         )
         .min();
 
-    println!("Part 1, min: {:?}",min);
+    println!("Part 1, min: {:?} - {:?}",min, t.elapsed());
 
+    let t = Instant::now();
     let min = seeds
         .into_ranges()
-        .into_iter()
-        .inspect(|range| println!("{:?}",range))
+        .into_par_iter()
+        .inspect(|range| print!("{:?} - ",range))
         .map(|range| {
             range.map(|seed|
                     pipeline.run((seed,MapType::Seed))
@@ -32,6 +32,7 @@ fn main() {
                 .min()
                 .unwrap()
         })
+        .inspect(|_| println!("{:?}", t.elapsed()))
         .min();
 
     println!("Part 2, min: {:?}",min);
