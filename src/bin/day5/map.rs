@@ -1,12 +1,11 @@
 use std::str::FromStr;
-use super::mapping::Mapping;
+use super::mapping::*;
 
-#[derive(Debug,PartialEq)]
+#[derive(Debug,Hash,Eq,PartialEq,Copy, Clone)]
 pub(crate) enum MapType {
     Seed, Soil, Fertilizer, Water, Light, Temperature, Humidity, Location
 }
-impl MapType {
-}
+
 impl FromStr for MapType {
     type Err = String;
 
@@ -30,6 +29,23 @@ pub(crate) struct Map {
     pub(crate) map: MapType,
     pub(crate) dest: MapType,
     pub(crate) mappings: Vec<Mapping>
+}
+
+impl Map {
+    pub(crate) fn transform(&self, input: u32) -> (u32,MapType) {
+        self.mappings.iter()
+            .filter_map(|tx| {
+                if tx.src_base.contains(&input) {
+                    Some(tx.dst_base + input - tx.src_base.start)
+                } else {
+                    None
+                }
+            })
+            .next()
+            .and_then(|o| Some((o, self.dest)))
+            .or_else(|| Some((input, self.dest)))
+            .unwrap()
+    }
 }
 
 impl FromStr for Map {
