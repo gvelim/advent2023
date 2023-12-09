@@ -66,6 +66,7 @@ impl FromStr for Seeds {
 
 #[cfg(test)]
 mod test {
+    use crate::mapping::Mapping;
     use super::*;
 
     #[test]
