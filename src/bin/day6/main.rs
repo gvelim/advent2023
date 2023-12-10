@@ -3,6 +3,17 @@ mod race;
 use crate::race::*;
 
 fn main() {
+    let input = std::fs::read_to_string("./src/bin/day6/input.txt").unwrap_or_default();
+    let races = Race::parse_races(input.as_str());
+
+    let product = races
+        .map(|race| race.winning_charge_times().collect::<Vec<_>>() )
+        .map(|ways| ways.len() as u32)
+        .product::<u32>();
+
+    println!("Part 1: product = {product}");
+
+
 
 }
 
