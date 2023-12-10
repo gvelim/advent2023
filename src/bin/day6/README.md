@@ -30,12 +30,11 @@ Total: 71516 - 14 + 1 = 71503 ways!
 ## Approach
 The below quadratic formula defines the bounds where `charge` values give `run` distances always greater than `record` distance
 ```
-if charge is x =>
-=> ( run_limit - x ) * x = record_distance
+( run_limit - x ) * x = record_distance
 => -x^2 + run_limit * x - record_distance = 0
 => x^2 - run_limit * x + record_distance = 0
  
- where x takes charge values 0..n
+Where x takes charge values 0..n
 ```
 
 
