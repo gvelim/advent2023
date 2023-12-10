@@ -6,6 +6,7 @@ use std::{ops::Range, str::FromStr, time::Instant};
 use map::*;
 use pipeline::*;
 use rayon::prelude::*;
+
 fn main() {
     let input = std::fs::read_to_string("src/bin/day5/input.txt").expect("Ops!");
     let seeds = input.parse::<Seeds>().expect("Ops!");
@@ -71,7 +72,7 @@ mod test {
 
     #[test]
     fn test_ranges_min_location() {
-        let seeds = INPUT.split("\n\n").next().unwrap().parse::<Seeds>().expect("Ops!");
+        let seeds = INPUT.parse::<Seeds>().expect("Ops!");
         let pipeline = INPUT.parse::<Pipeline>().expect("Ops!");
 
         let min = seeds
@@ -91,7 +92,7 @@ mod test {
     }
     #[test]
     fn test_ranges() {
-        let seeds = INPUT.split("\n\n").next().unwrap().parse::<Seeds>().expect("Ops!");
+        let seeds = INPUT.parse::<Seeds>().expect("Ops!");
         let ranges = seeds.into_ranges();
         assert_eq!(
             ranges,
@@ -100,7 +101,7 @@ mod test {
     }
     #[test]
     fn test_min_location() {
-        let seeds = INPUT.split("\n\n").next().unwrap().parse::<Seeds>().expect("Ops!");
+        let seeds = INPUT.parse::<Seeds>().expect("Ops!");
         let pipeline = INPUT.parse::<Pipeline>().expect("Ops!");
 
         let min = seeds.0.iter()
@@ -113,7 +114,7 @@ mod test {
     }
     #[test]
     fn test_pipeline() {
-        let seeds = INPUT.split("\n\n").next().unwrap().parse::<Seeds>().expect("Ops!");
+        let seeds = INPUT.parse::<Seeds>().expect("Ops!");
         let pipeline = INPUT.parse::<Pipeline>().expect("Ops!");
 
         assert_eq!(
@@ -139,8 +140,7 @@ mod test {
     }
     #[test]
     fn test_parse_seeds() {
-        let mut split = INPUT.split("\n\n");
-        let seeds = split.next().unwrap().parse::<Seeds>().expect("Ops!");
+        let seeds = INPUT.parse::<Seeds>().expect("Ops!");
         assert_eq!(seeds.0,[79_u64,14,55,13]);
     }
     #[test]
@@ -153,8 +153,8 @@ mod test {
             input.parse::<Map>().expect("Map::Ops!"),
             Map { map: MapType::Seed, dest: MapType::Soil,
                     mappings: vec![
-                        Mapping { src_base: 98..100, dst_base: 50, len: 2 },
-                        Mapping { src_base: 50..98, dst_base: 52, len: 48 }
+                        Mapping { src_base: 98..100, dst_base: 50 },
+                        Mapping { src_base: 50..98, dst_base: 52 }
                     ]
                 }
         )

@@ -4,7 +4,6 @@ use std::{ops::Range, str::FromStr};
 pub(crate) struct Mapping {
     pub(crate) src_base: Range<u64>, // 98 (98,99)
     pub(crate) dst_base: u64, // 52
-    pub(crate) len: u64
 }
 
 impl FromStr for Mapping {
@@ -19,7 +18,6 @@ impl FromStr for Mapping {
         Ok( Mapping {
             dst_base,
             src_base: (src_base..src_base + len),
-            len
         })
     }
 }
