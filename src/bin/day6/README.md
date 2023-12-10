@@ -10,7 +10,12 @@ Time:      7  15   30
 Distance:  9  40  200
 ```
 ## Part 1: Output
-determine the number of ways you can beat the record in each race;
+Your toy boat has a starting speed of zero millimeters per millisecond. For each whole millisecond you spend at the beginning of the race holding down the button, the boat's speed increases by one millimeter per millisecond i.e.
+* Hold the button for 1 millisecond at the start of the race. Then, the boat will travel at a speed of 1 millimeter per millisecond for 6 milliseconds, reaching a total distance traveled of 6 millimeters.
+* Hold the button for 2 milliseconds, giving the boat a speed of 2 millimeters per millisecond. It will then get 5 milliseconds to move, reaching a total distance of 10 millimeters, etc
+
+
+Determine the number of ways you can beat the record in each race;
 ```
 Race { duration: 7, record: 9 }-> 4
 Race { duration: 15, record: 40 }-> 8
