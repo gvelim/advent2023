@@ -30,7 +30,7 @@ impl FromStr for Game {
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let Run{mut red, mut blue, mut green} = Run::default();
         let mut gsplit = input.split(':');
-        let id = u32::from_str_radix(gsplit.next().unwrap().split(' ').last().unwrap(), 10).expect("Ops");
+        let id = u32::from_str_radix(gsplit.next().unwrap().split_ascii_whitespace().last().unwrap(), 10).expect("Ops");
         let runs = gsplit
             .next().unwrap()
             .split(';')

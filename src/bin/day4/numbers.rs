@@ -7,9 +7,8 @@ impl FromStr for Numbers {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         Ok( Numbers( input
-            .split(' ')
-            .filter(|&d| !d.is_empty())
-            .map(|num| u32::from_str(num.trim()).expect("Ops!"))
+            .split_ascii_whitespace()
+            .map(|num| u32::from_str(num).expect("Ops!"))
             .collect::<HashSet<u32>>()
         ))
     }

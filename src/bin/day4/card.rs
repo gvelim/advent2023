@@ -19,8 +19,8 @@ impl FromStr for Card {
         let mut split = s.split([':','|']);
 
         Ok(Card {
-            id : u32::from_str(split.next().unwrap().trim().split(' ').last().unwrap()).expect("id:Ops!"),
-            elf_nums: split.next().unwrap().trim().parse::<Numbers>().ok().expect("elf_nums Ops!"),
+            id : u32::from_str(split.next().unwrap().split_ascii_whitespace().last().unwrap()).expect("id:Ops!"),
+            elf_nums: split.next().unwrap().parse::<Numbers>().ok().expect("elf_nums Ops!"),
         })
     }
 }
@@ -32,9 +32,9 @@ impl Rounds {
         input.lines()
             .map(|line| {
                 let mut split = line.split("|");
-                let mut card = split.next().unwrap().trim().parse::<Card>().expect("Card:Ops");
+                let mut card = split.next().unwrap().parse::<Card>().expect("Card:Ops");
                 let numbers = card.elf_nums;
-                card.elf_nums = split.next().unwrap().trim().parse::<Numbers>().ok().expect("elf_nums Ops!");
+                card.elf_nums = split.next().unwrap().parse::<Numbers>().ok().expect("elf_nums Ops!");
                 (card,numbers)
             } )
     }

@@ -22,9 +22,9 @@ impl FromStr for Run {
             .trim()
             .split(',')
             .map(|picked| {
-                let mut split = picked.trim().split(' ');
+                let mut split = picked.trim().split_ascii_whitespace();
                 let count = u32::from_str_radix(split.next().unwrap(), 10).expect("Ops!");
-                let colour = match split.next().unwrap().trim() {
+                let colour = match split.next().unwrap() {
                     "red" => Colour::Red,
                     "green" => Colour::Green,
                     "blue" => Colour::Blue,
