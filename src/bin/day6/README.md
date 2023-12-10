@@ -33,11 +33,11 @@ Upper Duration = 71516
 Total: 71516 - 14 + 1 = 71503 ways!
 ```
 ## Approach
-The below quadratic formula defines the bounds where `charge` values give `run` distances always greater than `record` distance
+The below quadratic formula defines the bounds where `charge` time values give `run` distances always greater than `record` distance
 ```
-( run_limit - x ) * x = record_distance
-=> -x^2 + run_limit * x - record_distance = 0
-=> x^2 - run_limit * x + record_distance = 0
+( race_duration - x ) * x = record_distance
+=> -x^2 + race_duration * x - record_distance = 0
+=> x^2 - race_duration * x + record_distance = 0
  
 Where x takes charge values 0..n
 ```
