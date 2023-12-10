@@ -35,7 +35,6 @@ mod test {
 
     static INPUT: &str = "Time:      7  15   30\n\
                           Distance:  9  40  200";
-
     #[test]
     fn test_find_winning_bounds() {
         let races = Race::parse_races(INPUT);
@@ -49,13 +48,11 @@ mod test {
         )
     }
     #[test]
-    fn test_bounds() {
+    fn test_find_winning_bounds_whole_numbers() {
         let race = Race::parse_whole_numbers(INPUT).expect("");
-
-        println!("Part 2 = {:?})",&race);
-
-        println!("{:?}",race.find_lower_winning_charge());
-        println!("{:?}",race.find_upper_winning_charge());
+        let bounds = (race.find_lower_winning_charge(), race.find_upper_winning_charge());
+        println!("{:?}\nCharge bounds {:?}",&race, bounds);
+        assert_eq!(bounds,(14,71516))
     }
     #[test]
     fn test_parse_whole_numbers() {
@@ -64,7 +61,6 @@ mod test {
           Race::parse_whole_numbers(INPUT).expect("")
         )
     }
-
     #[test]
     fn test_ways_to_beat_record() {
         let races = Race::parse_races(INPUT);
