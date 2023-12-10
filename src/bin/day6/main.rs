@@ -1,27 +1,71 @@
+#![feature(isqrt)]
+#![feature(round_ties_even)]
+
 mod race;
 
 use crate::race::*;
+use std::time::Instant;
 
 fn main() {
     let input = std::fs::read_to_string("./src/bin/day6/input.txt").unwrap_or_default();
     let races = Race::parse_races(input.as_str());
 
+    let t = Instant::now();
     let product = races
-        .map(|race| race.winning_charge_times().collect::<Vec<_>>() )
-        .map(|ways| ways.len() as u32)
-        .product::<u32>();
+        // .map(|race| race.winning_charge_times().collect::<Vec<_>>() )
+        .map(|race|
+            (race.find_upper_winning_charge(), race.find_lower_winning_charge())
+        )
+        .map(|(ub,lb)| ub-lb+1)
+        .product::<u64>();
 
-    println!("Part 1: product = {product}");
+    println!("Part 1: product = {product} - {:?}",t.elapsed());
 
+    let race = Race::parse_whole_numbers(input.as_str()).expect("");
 
-
+    let t = Instant::now();
+    let lb = race.find_lower_winning_charge();
+    let ub = race.find_upper_winning_charge();
+    println!("Part 2: Bounds {:?} -> {} - {:?}",(lb,ub), ub-lb+1, t.elapsed());
 }
 
 #[cfg(test)]
 mod test {
-    use  super::*;
+    use super::*;
 
     static INPUT: &str = "Time:      7  15   30\nDistance:  9  40  200";
+
+    #[test]
+    fn test_find_winning_bounds() {
+        let races = Race::parse_races(INPUT);
+        assert_eq!(
+            races
+                .map(|race|
+                    (race.find_lower_winning_charge(),race.find_upper_winning_charge())
+                )
+                .collect::<Vec<_>>(),
+            [(2u64,5u64),(4,11),(11,19)]
+        )
+    }
+    #[test]
+    fn test_bounds() {
+        let race = Race::parse_whole_numbers(INPUT).expect("");
+        let (low_charge,high_charge) = race.find_approx_winning_bounds();
+
+        println!("Part 2 = {:?})",(
+            &race, low_charge, high_charge,
+        ));
+
+        println!("{:?}",race.find_lower_winning_charge());
+        println!("{:?}",race.find_upper_winning_charge());
+    }
+    #[test]
+    fn test_parse_whole_numbers() {
+        assert_eq!(
+            Race { duration:71530, record:940200 },
+          Race::parse_whole_numbers(INPUT).expect("")
+        )
+    }
 
     #[test]
     fn test_ways_to_beat_record() {
@@ -36,7 +80,6 @@ mod test {
                 .product::<u32>()
         )
     }
-
     #[test]
     fn test_winning_charge_times() {
         let race = Race::parse_races(INPUT).next().unwrap();
@@ -48,7 +91,6 @@ mod test {
             [(2, 10), (3, 12), (4, 12), (5, 10)]
         )
     }
-
     #[test]
     fn test_trial_charge_times() {
         let race = Race::parse_races(INPUT).next().unwrap();
@@ -60,7 +102,6 @@ mod test {
             [(0, 0), (1, 6), (2, 10), (3, 12), (4, 12), (5, 10), (6, 6), (7,0)]
         )
     }
-
     #[test]
     fn test_parse_races() {
         assert_eq!(
