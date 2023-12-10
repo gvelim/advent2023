@@ -1,5 +1,4 @@
 #![feature(isqrt)]
-#![feature(round_ties_even)]
 
 mod race;
 
@@ -16,6 +15,7 @@ fn main() {
         .map(|race|
             (race.find_upper_winning_charge(), race.find_lower_winning_charge())
         )
+        // .map(|wins| wins.len() as u64)
         .map(|(ub,lb)| ub-lb+1)
         .product::<u64>();
 
@@ -33,7 +33,8 @@ fn main() {
 mod test {
     use super::*;
 
-    static INPUT: &str = "Time:      7  15   30\nDistance:  9  40  200";
+    static INPUT: &str = "Time:      7  15   30\n\
+                          Distance:  9  40  200";
 
     #[test]
     fn test_find_winning_bounds() {
@@ -50,11 +51,8 @@ mod test {
     #[test]
     fn test_bounds() {
         let race = Race::parse_whole_numbers(INPUT).expect("");
-        let (low_charge,high_charge) = race.find_approx_winning_bounds();
 
-        println!("Part 2 = {:?})",(
-            &race, low_charge, high_charge,
-        ));
+        println!("Part 2 = {:?})",&race);
 
         println!("{:?}",race.find_lower_winning_charge());
         println!("{:?}",race.find_upper_winning_charge());
