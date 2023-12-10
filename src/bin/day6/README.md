@@ -35,11 +35,24 @@ Total: 71516 - 14 + 1 = 71503 ways!
 ## Approach
 The below quadratic formula defines the bounds where `charge` time values give `run` distances always greater than `record` distance
 ```
+( race_duration - x ) * x = distance_travelled
+Where
+- x = `charge time` values 0..n
+- `distance_travelled = record_distance` for certain `charge time` values
+ 
+Therefore we have... 
 ( race_duration - x ) * x = record_distance
 => -x^2 + race_duration * x - record_distance = 0
 => x^2 - race_duration * x + record_distance = 0
- 
-Where x takes charge values 0..n
 ```
+Solving the equation we get the *approximate* upper the lower `charge time` bounds but not the exact mainly due to rounding error.
 
+Therefore we do a bound scan from each side to establish the exact `charge time` that results to `distance travelled > record`
+```
+          v -- True bounds -- v
+----------*-------------------*-----------
+         + -- lower, upper  -- +         <- approx due to rounding error 
+       |>>>|  Scan (lower-2, lower+2)
+  Scan (upper-2, upper+2)  |<<<|
+```
 
