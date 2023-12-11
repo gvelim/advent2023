@@ -3,7 +3,24 @@ mod hand;
 use crate::hand::{HandsType, Hand};
 
 fn main() {
+    let input = std::fs::read_to_string("./src/bin/day7/input.txt").expect("Ops!");
 
+    let mut hands = input.lines()
+        .map(|line|{
+            let mut split = line.split_ascii_whitespace();
+            (split.next().unwrap().parse::<Hand>().expect("Ops!"), u32::from_str_radix(split.next().unwrap(),10).expect("Ops!"))
+        })
+        .collect::<Vec<_>>();
+
+    hands.sort_by(|a,b| a.cmp(&b));
+    let total_wins = hands.iter()
+        .enumerate()
+        .inspect(|(i,(h,bid))| print!("Rank {i} - {:?} {bid} => ",(&h.layout,&h.ord_layout,&h.hands_type)))
+        .map(|(i,(h,bid))| (i as u32+1) * *bid )
+        .inspect(|ht| println!("{:?}",ht))
+        .sum::<u32>();
+
+    println!("Part 1 - Total Wins: {total_wins}");
 }
 
 #[cfg(test)]
