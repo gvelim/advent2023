@@ -7,3 +7,4 @@ Coding challenges in Rust
 * [Day 4](./src/bin/day4) - Scratchcards
 * [Day 5](./src/bin/day5) - The food production problem
 * [Day 6](./src/bin/day6) - Boat races
+* [Day 7](./src/bin/day7) - Game of Camel Cards
