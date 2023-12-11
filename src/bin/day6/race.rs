@@ -29,7 +29,7 @@ impl  Race {
 
     pub(crate) fn find_lower_winning_charge(&self) -> u64 {
         let charge = (self.duration - u64::isqrt(u64::pow(self.duration,2) - 4*self.record)) / 2;
-        let mut range = (charge - 2) ..= (charge + 2);
+        let mut range = (charge - 1) ..= (charge + 1);
         let mut output = 0;
         range.any(|charge| {
             output = charge;
@@ -40,7 +40,7 @@ impl  Race {
 
     pub(crate) fn find_upper_winning_charge(&self) -> u64 {
         let charge = (self.duration + u64::isqrt(u64::pow(self.duration,2) - 4*self.record)) / 2;
-        let mut range = ((charge - 2) ..= (charge + 2)).rev();
+        let mut range = ((charge - 1) ..= (charge + 1)).rev();
         let mut output = 0;
         range.any(|charge| {
             output = charge;
