@@ -53,6 +53,6 @@ Therefore we do a bound scan from each side to establish the exact `charge time`
 ----------*-------------------*-----------
          + -- lower, upper  -- +         <- approximate calculation due to rounding error 
        |>>>| (lower-2..=lower+2)         <- direction lower -> upper
- (upper-2..=upper+2).rev()  |<<<|        <- direction upper -> lower
+  (upper-2..=upper+2).rev()  |<<<|        <- direction upper -> lower
 ```
 
