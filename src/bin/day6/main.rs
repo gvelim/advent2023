@@ -51,11 +51,10 @@ mod test {
     #[test]
     fn test_bounds() {
         let race = Race::parse_whole_numbers(INPUT).expect("");
+        let bounds = (race.find_lower_winning_charge(),race.find_upper_winning_charge());
+        println!("Part 2 = {:?}\n{:?})",&race,bounds);
 
-        println!("Part 2 = {:?})",&race);
-
-        println!("{:?}",race.find_lower_winning_charge());
-        println!("{:?}",race.find_upper_winning_charge());
+        assert_eq!(bounds,(14u64,71516))
     }
     #[test]
     fn test_parse_whole_numbers() {
