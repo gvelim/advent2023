@@ -46,5 +46,24 @@ Rank 4 - ("QQQJA", FourOfAKind) => "QQQJA"
 Rank 5 - ("KTJJT", FourOfAKind) => "KTJJT"
 ```
 ## Approach
+To find the type of hand, use a Hashmap to extract the counts for character in the string, then convert the Hashmap to a Vector and reverse sort it. Now you should have in reverse order all the unique cards and card frequency.
+
+Hence the types are derived from two values (a) number of unique cards & (b) the highest card freq
 ```
+match array_length {
+    1 => HandType::FiveOfAKind,
+    2 if array[0].freq ==4 => HandType::FourOfAKind,
+    2 => HandType::FullHouse,
+    3 if array[0].freq ==3 => HandType::ThreeOfAKind,
+    3 => HandType::TwoPair,
+    4 => HandType::OnePair,
+    _ => HandType::HighCard
+}
 ```
+The Joker card affects the two key parameters like this
+1. `number of unique cards` is reduced by one since the Joker isn't a unique card
+2. `new highest card freq` = highest card freq + Joker card frequency
+
+Watch out for unique hand cases like 
+1. `JJ123`', hence if Joker is the most frequency card you have to pick the card with `highest card freq` coming after the joker
+2. '`JJJJ`' ignore the Joker logic 
