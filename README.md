@@ -1,4 +1,4 @@
-# advent2023
+# Advent of Code (AoC) 2023
 Coding challenges in Rust
 
 * [Day 1](./src/bin/day1) - Weather machine calibration
