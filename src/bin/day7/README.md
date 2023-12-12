@@ -1,8 +1,6 @@
 # Day 7
 ## Input
-You get a list of hands, and your goal is to order them based on the strength of each hand. A hand consists of five cards labeled one of `A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, or 2`.
-
-The relative strength of each card follows this order, where `A` is the highest and `2` is the lowest
+You get a list of hands & bids pairs, and your goal is to order them based on the strength of each hand. 
 ```
 32T3K 765
 T55J5 684
@@ -10,6 +8,7 @@ KK677 28
 KTJJT 220
 QQQJA 483
 ```
+A hand consists of five cards labeled one of `A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, or 2`. The relative strength of each card follows this order, where `A` is the highest and `2` is the lowest
 Every hand is exactly one type. From strongest to weakest, they are:
 
 * **Five of a kind**, where all five cards have the same label: `AAAAA`
@@ -24,12 +23,13 @@ If two hands have the same type, a second ordering rule takes effect. Start by c
 ## Part 1: Output
 Find the rank of every hand in your set and calculate the total winnings of this set of hands by adding up the result of multiplying each hand's bid with its rank
 ```
-Rank 0 - ("32T3K", OnePair) => "32T3K"
-Rank 1 - ("JJ958", OnePair) => "JJ958"
+Rank 1 - ("32T3K", OnePair) => "32T3K"
 Rank 2 - ("KTJJT", TwoPair) => "KTJJT"
 Rank 3 - ("KK677", TwoPair) => "KK677"
 Rank 4 - ("T55J5", ThreeOfAKind) => "T55J5"
 Rank 5 - ("QQQJA", ThreeOfAKind) => "QQQJA
+
+765 * 1 + 220 * 2 + 28 * 3 + 684 * 4 + 483 * 5 = 6440
 ```
 ## Part 2: Output
 Now, `J` cards are jokers - wildcards that can act like whatever card would make the hand the strongest type possible.
@@ -38,19 +38,20 @@ To balance this, `J` cards are now the weakest individual cards, weaker even tha
 
 Using the new joker rule, find the rank of every hand in your set. What are the new total winnings?
 ```
-Rank 0 - ("32T3K", OnePair) => "32T3K"
-Rank 1 - ("KK677", TwoPair) => "KK677"
-Rank 2 - ("JJ958", ThreeOfAKind) => "JJ958"
+Rank 1 - ("32T3K", OnePair) => "32T3K"
+Rank 2 - ("KK677", TwoPair) => "KK677"
 Rank 3 - ("T55J5", FourOfAKind) => "T55J5"
 Rank 4 - ("QQQJA", FourOfAKind) => "QQQJA"
 Rank 5 - ("KTJJT", FourOfAKind) => "KTJJT"
+
+765 * 1 + 28 * 2 + 684 * 3 + 483 * 4 + 220 * 5 = 5905
 ```
 ## Approach
-To find the type of hand, use a Hashmap to extract the counts for character in the string, then convert the Hashmap to a Vector and reverse sort it. Now you should have in reverse order all the unique cards and card frequency.
+To find the type of hand, use a `Hashmap` to extract the frequency per character in the hand, then convert the `Hashmap` to a `Vector` and reverse sort it. Now you should have in reverse order all the unique cards and card frequency i.e. `[('A',2),('J',2),('2',1)]`
 
-Hence the types are derived from two values (a) number of unique cards & (b) the highest card freq
+Hence, the types are derived from two values (a) number of unique cards; `array.len()` & (b) the highest card freq; `array[0].freq`
 ```
-match array_length {
+match array.len() {
     1 => HandType::FiveOfAKind,
     2 if array[0].freq ==4 => HandType::FourOfAKind,
     2 => HandType::FullHouse,
@@ -65,5 +66,5 @@ The Joker card affects the two key parameters like this
 2. `new highest card freq` = highest card freq + Joker card frequency
 
 Watch out for unique hand cases like 
-1. `JJ123`', hence if Joker is the most frequency card you have to pick the card with `highest card freq` coming after the joker
-2. '`JJJJ`' ignore the Joker logic 
+1. `JJ123`, hence if the Joker is the most frequent card, you have to pick the next in order card that has the highest card frequency after the joker one.
+2. `JJJJJ` no joker logic applies in this case 
