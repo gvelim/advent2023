@@ -21,23 +21,24 @@ pub(crate) struct Hand {
 }
 impl Hand {
     pub(crate) fn get_type(&self, joker: Option<char>) -> HandType {
-        let mut cards = self.cards.len() as u32;
-        let mut most_common = self.cards[0].1;
+        let mut unique_cards = self.cards.len() as u32;
+        let mut most_freq = self.cards[0].1;
 
-        if joker.is_some() && cards > 1 {
-            let iter = self.cards.iter();
+        // watch out for cases like `JJ234` or `JJJJJ`
+        // Joker is the most common card or the only card
+        if joker.is_some() && unique_cards > 1 {
             let j = joker.unwrap();
-            if let Some(&(_,joker)) = self.cards.iter().find(|(card,_)| card.eq(&j)) {
-                cards -= 1;
-                most_common += if self.cards[0].0.eq(&j) { self.cards[1].1 } else { joker };
+            if let Some(&(_, joker_freq)) = self.cards.iter().find(|(card,_)| card.eq(&j)) {
+                unique_cards -= 1;
+                most_freq += if self.cards[0].0 == j { self.cards[1].1 } else { joker_freq };
             }
         }
 
-        match cards {
+        match unique_cards {
             1 => HandType::FiveOfAKind,
-            2 if most_common ==4 => HandType::FourOfAKind,
+            2 if most_freq ==4 => HandType::FourOfAKind,
             2 => HandType::FullHouse,
-            3 if most_common ==3 => HandType::ThreeOfAKind,
+            3 if most_freq ==3 => HandType::ThreeOfAKind,
             3 => HandType::TwoPair,
             4 => HandType::OnePair,
             _ => HandType::HighCard
@@ -51,9 +52,8 @@ impl Hand {
             .collect::<HashMap<char,char>>();
 
         let (cards,ord_layout)= input.chars()
-            .fold((HashMap::new(),String::new()), |(mut cards, mut ord_layout), card| {
-                let c = cards.entry(card).or_insert(0);
-                *c += 1;
+            .fold((HashMap::with_capacity(5),String::with_capacity(5)), |(mut cards, mut ord_layout), card| {
+                *cards.entry(card).or_insert(0) += 1;
                 ord_layout.push( ord_card[&card]);
                 (cards, ord_layout)
             });
@@ -68,7 +68,6 @@ impl Hand {
             hands_type: HandType::HighCard,
             cards
         };
-
         hand.hands_type = hand.get_type(joker);
         hand
     }

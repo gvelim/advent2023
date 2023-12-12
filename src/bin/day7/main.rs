@@ -1,17 +1,15 @@
-#![feature(iter_collect_into)]
-
 mod hand;
 
-use crate::hand::{HandType, Hand};
+use crate::hand::Hand;
 use std::time::Instant;
 
-pub(crate) static CAMEL_ORDER_PART1: [char; 13] = [ '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A' ];
-pub(crate) static CAMEL_ORDER_PART2: [char; 13] = [ 'J', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'Q', 'K', 'A' ];
+static CAMEL_ORDER_PART1: [char; 13] = [ '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A' ];
+static CAMEL_ORDER_PART2: [char; 13] = [ 'J', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'Q', 'K', 'A' ];
 
 fn main() {
     let input = std::fs::read_to_string("./src/bin/day7/input.txt").expect("Ops!");
 
-    let part = |camel_order, joker| {
+    let run_part = |camel_order, joker| {
         let mut hands = input.lines()
             .map(|line|{
                 let mut split = line.split_ascii_whitespace();
@@ -25,16 +23,16 @@ fn main() {
         hands.sort_by(|a,b| a.cmp(&b));
         hands.iter()
             .enumerate()
-            .inspect(|(i,(h,bid))| print!("Rank {i} - {:?} {bid} => ",(&h.layout,&h.ord_layout,&h.hands_type)))
+            // .inspect(|(i,(h,bid))| print!("Rank {i} - {:?} {bid} => ",(&h.layout,&h.ord_layout,&h.hands_type)))
             .map(|(i,(_,bid))| (i as u32+1) * *bid )
-            .inspect(|ht| println!("{:?}",ht))
+            // .inspect(|ht| println!("{:?}",ht))
             .sum::<u32>()
     };
 
     let t = Instant::now();
-    println!("Part 1 - Total Wins: {:?} - {:?}",part(CAMEL_ORDER_PART1,None), t.elapsed());
+    println!("Part 1 - Total Wins: {:?} - {:?}", run_part(CAMEL_ORDER_PART1, None), t.elapsed());
     let t = Instant::now();
-    println!("Part 2 - Total Wins: {:?} - {:?}",part(CAMEL_ORDER_PART2,Some('J')), t.elapsed());
+    println!("Part 2 - Total Wins: {:?} - {:?}", run_part(CAMEL_ORDER_PART2, Some('J')), t.elapsed());
 }
 
 #[cfg(test)]
