@@ -3,10 +3,10 @@ use std::str::FromStr;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
-static CAMEL_CARD: [char; 13] = [ '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A' ];
+static CAMEL_ORDER_PART1: [char; 13] = [ '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A' ];
 
 #[derive(Debug,Ord, PartialOrd, Eq, PartialEq,Copy, Clone)]
-pub(crate) enum HandsType {
+pub(crate) enum HandType {
     HighCard = 0,
     OnePair,
     TwoPair,
@@ -18,15 +18,39 @@ pub(crate) enum HandsType {
 
 pub(crate) struct Hand {
     pub(crate) layout: String,
-    pub(crate) hands_type: HandsType,
+    pub(crate) hands_type: HandType,
     pub(crate) ord_layout: String,
-    cards: HashMap<char,u8>
+    pub(crate) cards: HashMap<char,u8>,
+    most_common: u8
+}
+impl Hand {
+    pub(crate) fn get_type(&self, joker: Option<char>) -> HandType {
+        let mut cards = self.cards.len() as u32;
+        let mut most_common = self.most_common;
+
+        if joker.is_some() && cards > 1 {
+            if let Some(&joker) = self.cards.get(&joker.unwrap()) {
+                cards -= 1;
+                most_common += joker;
+            }
+        }
+
+        match cards {
+            1 => HandType::FiveOfAKind,
+            2 if most_common ==4 => HandType::FourOfAKind,
+            2 => HandType::FullHouse,
+            3 if most_common ==3 => HandType::ThreeOfAKind,
+            3 => HandType::TwoPair,
+            4 => HandType::OnePair,
+            _ => HandType::HighCard
+        }
+    }
 }
 
 impl Eq for Hand {}
 
 impl PartialEq<Self> for Hand {
-    fn eq(&self, other: &Self) -> bool {
+    fn eq(&self, _other: &Self) -> bool {
         todo!()
     }
 }
@@ -39,6 +63,9 @@ impl PartialOrd<Self> for Hand {
 
 impl Ord for Hand {
     fn cmp(&self, other: &Self) -> Ordering {
+        if let Some(joker) = self.cards.get(&'J') {
+            println!(" {:?} ",(joker,self.cards.len(),self.get_type(Some('J')), self));
+        }
         match self.hands_type.cmp(&other.hands_type) {
             Ordering::Equal =>
                 self.ord_layout.cmp(&other.ord_layout),
@@ -50,9 +77,8 @@ impl FromStr for Hand {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use HandsType::*;
 
-        let ord_card = CAMEL_CARD.iter()
+        let ord_card = CAMEL_ORDER_PART1.iter()
             .zip([ '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E' ])
             .map(|(&i,o)| (i,o) )
             .collect::<HashMap<char,char>>();
@@ -66,20 +92,17 @@ impl FromStr for Hand {
                 ord_layout.push( ord_card[&card]);
                 (cards, ord_layout)
             });
-        Ok(Hand {
+
+        let mut hand = Hand {
             layout: String::from(s),
             ord_layout,
-            hands_type: match cards.len() {
-                1 => FiveOfAKind,
-                2 if most_common ==4 => FourOfAKind,
-                2 => FullHouse,
-                3 if most_common ==3 => ThreeOfAKind,
-                3 => TwoPair,
-                4 => OnePair,
-                _ => HighCard
-            },
+            most_common,
+            hands_type: HandType::HighCard,
             cards
-        })
+        };
+
+        hand.hands_type = hand.get_type(None);
+        Ok(hand)
     }
 }
 
