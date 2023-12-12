@@ -1,6 +1,6 @@
 mod hand;
 
-use crate::hand::{Hand,HandType};
+use crate::hand::Hand;
 use std::time::Instant;
 
 static CAMEL_ORDER_PART1: [char; 13] = [ '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A' ];
@@ -38,6 +38,7 @@ fn main() {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::hand::HandType;
 
     #[test]
     fn test_card_ordering_joker() {
@@ -91,7 +92,7 @@ mod test {
             vec![OnePair, FourOfAKind, TwoPair, FourOfAKind, FourOfAKind, ThreeOfAKind],
             hands.iter()
                 .inspect(|h| print!("{:?} => ",(&h.layout,&h.ord_layout)))
-                .map(|h| h.get_type(Some('J')) )
+                .map(|h| h.get_type() )
                 .inspect(|ht| println!("{:?}",ht))
                 .collect::<Vec<HandType>>()
         )

@@ -17,28 +17,25 @@ pub(crate) struct Hand {
     pub(crate) layout: String,
     pub(crate) hands_type: HandType,
     pub(crate) ord_layout: String,
-    pub(crate) cards: Vec<(char,u8)>
+    pub(crate) cards: Vec<(char,u8)>,
+    joker_pos: Option<usize>
 }
 impl Hand {
-    pub(crate) fn get_type(&self, joker: Option<char>) -> HandType {
+    pub(crate) fn get_type(&self) -> HandType {
         let mut unique_cards = self.cards.len() as u32;
-        let mut most_freq = self.cards[0].1;
+        let mut freq = self.cards[0].1;
 
-        // watch out for cases like `JJ234` or `JJJJJ`
-        // Joker is the most common card or the only card
-        if joker.is_some() && unique_cards > 1 {
-            let j = joker.unwrap();
-            if let Some(&(_, joker_freq)) = self.cards.iter().find(|(card,_)| card.eq(&j)) {
-                unique_cards -= 1;
-                most_freq += if self.cards[0].0 == j { self.cards[1].1 } else { joker_freq };
-            }
+        // if we have joker position && and is not a 'JJJJJ' case
+        if self.joker_pos.is_some() && unique_cards > 1 {
+            unique_cards -= 1;
+            freq += self.cards[self.joker_pos.unwrap()].1;
         }
 
         match unique_cards {
             1 => HandType::FiveOfAKind,
-            2 if most_freq ==4 => HandType::FourOfAKind,
+            2 if freq == 4 => HandType::FourOfAKind,
             2 => HandType::FullHouse,
-            3 if most_freq ==3 => HandType::ThreeOfAKind,
+            3 if freq == 3 => HandType::ThreeOfAKind,
             3 => HandType::TwoPair,
             4 => HandType::OnePair,
             _ => HandType::HighCard
@@ -51,6 +48,7 @@ impl Hand {
             .map(|(&i,o)| (i,o) )
             .collect::<HashMap<char,char>>();
 
+        let mut joker_pos = None;
         let (cards,ord_layout)= input.chars()
             .fold((HashMap::with_capacity(5),String::with_capacity(5)), |(mut cards, mut ord_layout), card| {
                 *cards.entry(card).or_insert(0) += 1;
@@ -58,17 +56,38 @@ impl Hand {
                 (cards, ord_layout)
             });
 
+        // extract the HashMap onto an array
         let mut cards= cards.into_iter().collect::<Vec<_>>();
-        cards.sort_by_key(|(_,d)| *d);
+        // reverse sort the array by order of card freq
+        // hence the most frequent is 1st, then then 2nd least freq, etc
+        cards.sort_by_key(|(_,freq)| *freq);
         cards.reverse();
+
+        // if we are dealing with a Joker case
+        joker
+            .is_some_and(|joker| {
+                // find Joker's freq order i.e. 1st, 2nd, etc and store it for later
+                // if there is no Joker in the hand, we exit this with None
+                // no position == no Joker
+                joker_pos = cards.iter().position(|(card,_)| joker.eq(card));
+                // if it is 1st and not the only card in the hand; we deal with JJ123 cases
+                cards.len() > 1 && joker_pos.eq(&Some(0))
+            })
+            .then(|| {
+                // move to the last place & update its position
+                cards.rotate_left(1);
+                joker_pos = Some(cards.len()-1);
+                Some(())
+            });
 
         let mut hand = Hand {
             layout: String::from(input),
             ord_layout,
             hands_type: HandType::HighCard,
-            cards
+            cards,
+            joker_pos
         };
-        hand.hands_type = hand.get_type(joker);
+        hand.hands_type = hand.get_type();
         hand
     }
 }
@@ -104,7 +123,7 @@ impl Debug for Hand {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("Layout {:?}, ",&self.layout))?;
         f.debug_struct("Hand")
-            .field("type",&self.hands_type)
+            .field("Type",&self.hands_type)
             .finish()?;
         f.write_str(", Cards ")?;
         f.debug_map()
