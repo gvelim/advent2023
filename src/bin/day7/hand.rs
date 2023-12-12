@@ -1,9 +1,6 @@
 use std::cmp::Ordering;
-use std::str::FromStr;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
-
-static CAMEL_ORDER_PART1: [char; 13] = [ '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A' ];
 
 #[derive(Debug,Ord, PartialOrd, Eq, PartialEq,Copy, Clone)]
 pub(crate) enum HandType {
@@ -45,6 +42,34 @@ impl Hand {
             _ => HandType::HighCard
         }
     }
+    pub(crate) fn parse(input: &str, card_order: [char; 13], joker:Option<char>) -> Hand {
+
+        let ord_card = card_order.iter()
+            .zip([ '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E' ])
+            .map(|(&i,o)| (i,o) )
+            .collect::<HashMap<char,char>>();
+
+        let mut most_common = 0;
+        let (cards,ord_layout)= input.chars()
+            .fold((HashMap::new(),String::new()), |(mut cards, mut ord_layout), card| {
+                let c = cards.entry(card).or_insert(0);
+                *c += 1;
+                most_common = std::cmp::max(most_common, *c);
+                ord_layout.push( ord_card[&card]);
+                (cards, ord_layout)
+            });
+
+        let mut hand = Hand {
+            layout: String::from(input),
+            ord_layout,
+            most_common,
+            hands_type: HandType::HighCard,
+            cards
+        };
+
+        hand.hands_type = hand.get_type(joker);
+        hand
+    }
 }
 
 impl Eq for Hand {}
@@ -63,46 +88,14 @@ impl PartialOrd<Self> for Hand {
 
 impl Ord for Hand {
     fn cmp(&self, other: &Self) -> Ordering {
-        if let Some(joker) = self.cards.get(&'J') {
-            println!(" {:?} ",(joker,self.cards.len(),self.get_type(Some('J')), self));
-        }
+        // if let Some(joker) = self.cards.get(&'J') {
+        //     println!(" {:?} ",(joker,self.cards.len(),self.get_type(Some('J')), self));
+        // }
         match self.hands_type.cmp(&other.hands_type) {
             Ordering::Equal =>
                 self.ord_layout.cmp(&other.ord_layout),
             comparison => comparison
         }
-    }
-}
-impl FromStr for Hand {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-
-        let ord_card = CAMEL_ORDER_PART1.iter()
-            .zip([ '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E' ])
-            .map(|(&i,o)| (i,o) )
-            .collect::<HashMap<char,char>>();
-
-        let mut most_common = 0;
-        let (cards,ord_layout)= s.chars()
-            .fold((HashMap::new(),String::new()), |(mut cards, mut ord_layout), card| {
-                let c = cards.entry(card).or_insert(0);
-                *c += 1;
-                most_common = std::cmp::max(most_common, *c);
-                ord_layout.push( ord_card[&card]);
-                (cards, ord_layout)
-            });
-
-        let mut hand = Hand {
-            layout: String::from(s),
-            ord_layout,
-            most_common,
-            hands_type: HandType::HighCard,
-            cards
-        };
-
-        hand.hands_type = hand.get_type(None);
-        Ok(hand)
     }
 }
 

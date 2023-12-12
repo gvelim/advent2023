@@ -2,29 +2,34 @@ mod hand;
 
 use crate::hand::{HandType, Hand};
 
+pub(crate) static CAMEL_ORDER_PART1: [char; 13] = [ '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A' ];
+pub(crate) static CAMEL_ORDER_PART2: [char; 13] = [ 'J', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'Q', 'K', 'A' ];
+
 fn main() {
     let input = std::fs::read_to_string("./src/bin/day7/input.txt").expect("Ops!");
 
+    let part = |camel_order, joker| {
+        let mut hands = input.lines()
+            .map(|line|{
+                let mut split = line.split_ascii_whitespace();
+                (
+                    Hand::parse(split.next().expect("Ops!"), camel_order, joker ),
+                    u32::from_str_radix(split.next().unwrap(),10).expect("Ops!")
+                )
+            })
+            .collect::<Vec<_>>();
 
-    let mut hands = input.lines()
-        .map(|line|{
-            let mut split = line.split_ascii_whitespace();
-            (
-                split.next().unwrap().parse::<Hand>().expect("Ops!"),
-                u32::from_str_radix(split.next().unwrap(),10).expect("Ops!")
-            )
-        })
-        .collect::<Vec<_>>();
+        hands.sort_by(|a,b| a.cmp(&b));
+        hands.iter()
+            .enumerate()
+            .inspect(|(i,(h,bid))| print!("Rank {i} - {:?} {bid} => ",(&h.layout,&h.ord_layout,&h.hands_type)))
+            .map(|(i,(_,bid))| (i as u32+1) * *bid )
+            .inspect(|ht| println!("{:?}",ht))
+            .sum::<u32>()
+    };
 
-    hands.sort_by(|a,b| a.cmp(&b));
-    let total_wins = hands.iter()
-        .enumerate()
-        .inspect(|(i,(h,bid))| print!("Rank {i} - {:?} {bid} => ",(&h.layout,&h.ord_layout,&h.hands_type)))
-        .map(|(i,(_,bid))| (i as u32+1) * *bid )
-        .inspect(|ht| println!("{:?}",ht))
-        .sum::<u32>();
-
-    println!("Part 1 - Total Wins: {total_wins}");
+    println!("Part 1 - Total Wins: {:?}",part(CAMEL_ORDER_PART1,None));
+    println!("Part 2 - Total Wins: {:?}",part(CAMEL_ORDER_PART2,Some('J')));
 }
 
 #[cfg(test)]
@@ -32,16 +37,35 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_card_ordering() {
+    fn test_card_ordering_joker() {
         let (input, _) = parse_input(INPUT);
         let mut hands = input
             .into_iter()
-            .map(|line| line.parse::<Hand>().expect("ops"))
+            .map(|line| Hand::parse(line,CAMEL_ORDER_PART2,Some('J')))
             .collect::<Vec<_>>();
 
         hands.sort();
         assert_eq!(
-            vec!["32T3K", "KTJJT", "KK677", "T55J5", "QQQJA"],
+            vec!["32T3K", "KK677", "T55J5", "QQQJA", "KTJJT", "JJJJJ"],
+            hands.iter()
+                .enumerate()
+                .inspect(|(i,h)| print!("Rank {i} - {:?} => ",(&h.layout,&h.ord_layout,&h.hands_type)))
+                .map(|(_,h)| h.layout.as_str())
+                .inspect(|h| println!("{:?}", h))
+                .collect::<Vec<&str>>()
+        )
+    }
+    #[test]
+    fn test_card_ordering() {
+        let (input, _) = parse_input(INPUT);
+        let mut hands = input
+            .into_iter()
+            .map(|line| Hand::parse(line,CAMEL_ORDER_PART1,None))
+            .collect::<Vec<_>>();
+
+        hands.sort();
+        assert_eq!(
+            vec!["32T3K", "KTJJT", "KK677", "T55J5", "QQQJA", "JJJJJ"],
             hands.iter()
                 .enumerate()
                 .inspect(|(i,h)| print!("Rank {i} - {:?} => ",(&h.layout,&h.ord_layout,&h.hands_type)))
@@ -57,11 +81,11 @@ mod test {
         let (input, _) = parse_input(INPUT);
         let hands = input
             .into_iter()
-            .map(|line| line.parse::<Hand>().expect("ops"))
+            .map(|line| Hand::parse(line,CAMEL_ORDER_PART2,Some('J')))
             .collect::<Vec<_>>();
 
         assert_eq!(
-            vec![OnePair, FourOfAKind, TwoPair, FourOfAKind, FourOfAKind],
+            vec![OnePair, FourOfAKind, TwoPair, FourOfAKind, FourOfAKind, FiveOfAKind],
             hands.iter()
                 .inspect(|h| print!("{:?} => ",(&h.layout,&h.ord_layout)))
                 .map(|h| h.get_type(Some('J')) )
@@ -77,11 +101,11 @@ mod test {
         let (input, _) = parse_input(INPUT);
         let hands = input
             .into_iter()
-            .map(|line| line.parse::<Hand>().expect("ops"))
+            .map(|line| Hand::parse(line,CAMEL_ORDER_PART1,None))
             .collect::<Vec<_>>();
 
         assert_eq!(
-            vec![OnePair, ThreeOfAKind, TwoPair, TwoPair, ThreeOfAKind],
+            vec![OnePair, ThreeOfAKind, TwoPair, TwoPair, ThreeOfAKind, FiveOfAKind],
             hands.iter()
                 .inspect(|h| print!("{:?} => ",(&h.layout,&h.ord_layout)))
                 .map(|h| h.hands_type)
@@ -99,6 +123,6 @@ mod test {
             .unzip()
     }
 
-    static INPUT: &str= "32T3K 765\nT55J5 684\nKK677 28\nKTJJT 220\nQQQJA 483";
+    static INPUT: &str= "32T3K 765\nT55J5 684\nKK677 28\nKTJJT 220\nQQQJA 483\nJJJJJ 123";
 }
 
