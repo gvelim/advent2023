@@ -1,6 +1,9 @@
+#![feature(iter_collect_into)]
+
 mod hand;
 
 use crate::hand::{HandType, Hand};
+use std::time::Instant;
 
 pub(crate) static CAMEL_ORDER_PART1: [char; 13] = [ '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A' ];
 pub(crate) static CAMEL_ORDER_PART2: [char; 13] = [ 'J', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'Q', 'K', 'A' ];
@@ -28,8 +31,10 @@ fn main() {
             .sum::<u32>()
     };
 
-    println!("Part 1 - Total Wins: {:?}",part(CAMEL_ORDER_PART1,None));
-    println!("Part 2 - Total Wins: {:?}",part(CAMEL_ORDER_PART2,Some('J')));
+    let t = Instant::now();
+    println!("Part 1 - Total Wins: {:?} - {:?}",part(CAMEL_ORDER_PART1,None), t.elapsed());
+    let t = Instant::now();
+    println!("Part 2 - Total Wins: {:?} - {:?}",part(CAMEL_ORDER_PART2,Some('J')), t.elapsed());
 }
 
 #[cfg(test)]
@@ -46,7 +51,7 @@ mod test {
 
         hands.sort();
         assert_eq!(
-            vec!["32T3K", "KK677", "T55J5", "QQQJA", "KTJJT", "JJJJJ"],
+            vec!["32T3K", "KK677", "JJ958", "T55J5", "QQQJA", "KTJJT"],
             hands.iter()
                 .enumerate()
                 .inspect(|(i,h)| print!("Rank {i} - {:?} => ",(&h.layout,&h.ord_layout,&h.hands_type)))
@@ -65,7 +70,7 @@ mod test {
 
         hands.sort();
         assert_eq!(
-            vec!["32T3K", "KTJJT", "KK677", "T55J5", "QQQJA", "JJJJJ"],
+            vec!["32T3K", "JJ958", "KTJJT", "KK677", "T55J5", "QQQJA"],
             hands.iter()
                 .enumerate()
                 .inspect(|(i,h)| print!("Rank {i} - {:?} => ",(&h.layout,&h.ord_layout,&h.hands_type)))
@@ -85,7 +90,7 @@ mod test {
             .collect::<Vec<_>>();
 
         assert_eq!(
-            vec![OnePair, FourOfAKind, TwoPair, FourOfAKind, FourOfAKind, FiveOfAKind],
+            vec![OnePair, FourOfAKind, TwoPair, FourOfAKind, FourOfAKind, ThreeOfAKind],
             hands.iter()
                 .inspect(|h| print!("{:?} => ",(&h.layout,&h.ord_layout)))
                 .map(|h| h.get_type(Some('J')) )
@@ -105,7 +110,7 @@ mod test {
             .collect::<Vec<_>>();
 
         assert_eq!(
-            vec![OnePair, ThreeOfAKind, TwoPair, TwoPair, ThreeOfAKind, FiveOfAKind],
+            vec![OnePair, ThreeOfAKind, TwoPair, TwoPair, ThreeOfAKind, OnePair],
             hands.iter()
                 .inspect(|h| print!("{:?} => ",(&h.layout,&h.ord_layout)))
                 .map(|h| h.hands_type)
@@ -123,6 +128,6 @@ mod test {
             .unzip()
     }
 
-    static INPUT: &str= "32T3K 765\nT55J5 684\nKK677 28\nKTJJT 220\nQQQJA 483\nJJJJJ 123";
+    static INPUT: &str= "32T3K 765\nT55J5 684\nKK677 28\nKTJJT 220\nQQQJA 483\nJJ958 123";
 }
 

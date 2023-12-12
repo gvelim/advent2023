@@ -17,18 +17,19 @@ pub(crate) struct Hand {
     pub(crate) layout: String,
     pub(crate) hands_type: HandType,
     pub(crate) ord_layout: String,
-    pub(crate) cards: HashMap<char,u8>,
-    most_common: u8
+    pub(crate) cards: Vec<(char,u8)>
 }
 impl Hand {
     pub(crate) fn get_type(&self, joker: Option<char>) -> HandType {
         let mut cards = self.cards.len() as u32;
-        let mut most_common = self.most_common;
+        let mut most_common = self.cards[0].1;
 
         if joker.is_some() && cards > 1 {
-            if let Some(&joker) = self.cards.get(&joker.unwrap()) {
+            let iter = self.cards.iter();
+            let j = joker.unwrap();
+            if let Some(&(_,joker)) = self.cards.iter().find(|(card,_)| card.eq(&j)) {
                 cards -= 1;
-                most_common += joker;
+                most_common += if self.cards[0].0.eq(&j) { self.cards[1].1 } else { joker };
             }
         }
 
@@ -49,20 +50,21 @@ impl Hand {
             .map(|(&i,o)| (i,o) )
             .collect::<HashMap<char,char>>();
 
-        let mut most_common = 0;
         let (cards,ord_layout)= input.chars()
             .fold((HashMap::new(),String::new()), |(mut cards, mut ord_layout), card| {
                 let c = cards.entry(card).or_insert(0);
                 *c += 1;
-                most_common = std::cmp::max(most_common, *c);
                 ord_layout.push( ord_card[&card]);
                 (cards, ord_layout)
             });
 
+        let mut cards= cards.into_iter().collect::<Vec<_>>();
+        cards.sort_by_key(|(_,d)| *d);
+        cards.reverse();
+
         let mut hand = Hand {
             layout: String::from(input),
             ord_layout,
-            most_common,
             hands_type: HandType::HighCard,
             cards
         };
