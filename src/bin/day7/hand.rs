@@ -1,12 +1,9 @@
 use std::cmp::Ordering;
-use std::str::FromStr;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
-static CAMEL_CARD: [char; 13] = [ '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A' ];
-
 #[derive(Debug,Ord, PartialOrd, Eq, PartialEq,Copy, Clone)]
-pub(crate) enum HandsType {
+pub(crate) enum HandType {
     HighCard = 0,
     OnePair,
     TwoPair,
@@ -18,15 +15,68 @@ pub(crate) enum HandsType {
 
 pub(crate) struct Hand {
     pub(crate) layout: String,
-    pub(crate) hands_type: HandsType,
+    pub(crate) hands_type: HandType,
     pub(crate) ord_layout: String,
-    cards: HashMap<char,u8>
+    pub(crate) cards: Vec<(char,u8)>
+}
+impl Hand {
+    pub(crate) fn get_type(&self, joker: Option<char>) -> HandType {
+        let mut unique_cards = self.cards.len() as u32;
+        let mut most_freq = self.cards[0].1;
+
+        // watch out for cases like `JJ234` or `JJJJJ`
+        // Joker is the most common card or the only card
+        if joker.is_some() && unique_cards > 1 {
+            let j = joker.unwrap();
+            if let Some(&(_, joker_freq)) = self.cards.iter().find(|(card,_)| card.eq(&j)) {
+                unique_cards -= 1;
+                most_freq += if self.cards[0].0 == j { self.cards[1].1 } else { joker_freq };
+            }
+        }
+
+        match unique_cards {
+            1 => HandType::FiveOfAKind,
+            2 if most_freq ==4 => HandType::FourOfAKind,
+            2 => HandType::FullHouse,
+            3 if most_freq ==3 => HandType::ThreeOfAKind,
+            3 => HandType::TwoPair,
+            4 => HandType::OnePair,
+            _ => HandType::HighCard
+        }
+    }
+    pub(crate) fn parse(input: &str, card_order: [char; 13], joker:Option<char>) -> Hand {
+
+        let ord_card = card_order.iter()
+            .zip([ '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E' ])
+            .map(|(&i,o)| (i,o) )
+            .collect::<HashMap<char,char>>();
+
+        let (cards,ord_layout)= input.chars()
+            .fold((HashMap::with_capacity(5),String::with_capacity(5)), |(mut cards, mut ord_layout), card| {
+                *cards.entry(card).or_insert(0) += 1;
+                ord_layout.push( ord_card[&card]);
+                (cards, ord_layout)
+            });
+
+        let mut cards= cards.into_iter().collect::<Vec<_>>();
+        cards.sort_by_key(|(_,d)| *d);
+        cards.reverse();
+
+        let mut hand = Hand {
+            layout: String::from(input),
+            ord_layout,
+            hands_type: HandType::HighCard,
+            cards
+        };
+        hand.hands_type = hand.get_type(joker);
+        hand
+    }
 }
 
 impl Eq for Hand {}
 
 impl PartialEq<Self> for Hand {
-    fn eq(&self, other: &Self) -> bool {
+    fn eq(&self, _other: &Self) -> bool {
         todo!()
     }
 }
@@ -39,47 +89,14 @@ impl PartialOrd<Self> for Hand {
 
 impl Ord for Hand {
     fn cmp(&self, other: &Self) -> Ordering {
+        // if let Some(joker) = self.cards.get(&'J') {
+        //     println!(" {:?} ",(joker,self.cards.len(),self.get_type(Some('J')), self));
+        // }
         match self.hands_type.cmp(&other.hands_type) {
             Ordering::Equal =>
                 self.ord_layout.cmp(&other.ord_layout),
             comparison => comparison
         }
-    }
-}
-impl FromStr for Hand {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use HandsType::*;
-
-        let ord_card = CAMEL_CARD.iter()
-            .zip([ '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E' ])
-            .map(|(&i,o)| (i,o) )
-            .collect::<HashMap<char,char>>();
-
-        let mut most_common = 0;
-        let (cards,ord_layout)= s.chars()
-            .fold((HashMap::new(),String::new()), |(mut cards, mut ord_layout), card| {
-                let c = cards.entry(card).or_insert(0);
-                *c += 1;
-                most_common = std::cmp::max(most_common, *c);
-                ord_layout.push( ord_card[&card]);
-                (cards, ord_layout)
-            });
-        Ok(Hand {
-            layout: String::from(s),
-            ord_layout,
-            hands_type: match cards.len() {
-                1 => FiveOfAKind,
-                2 if most_common ==4 => FourOfAKind,
-                2 => FullHouse,
-                3 if most_common ==3 => ThreeOfAKind,
-                3 => TwoPair,
-                4 => OnePair,
-                _ => HighCard
-            },
-            cards
-        })
     }
 }
 
