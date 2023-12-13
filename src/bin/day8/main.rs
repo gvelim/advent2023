@@ -9,7 +9,17 @@ use crate::{
 };
 
 fn main() {
+    let input = std::fs::read_to_string("./src/bin/day8/input.txt").expect("Ops!");
+    let mut split = input.split("\n\n");
+    let turns = Directions::parse(split.next().unwrap());
+    let mut net = input.parse::<Map>().expect("Ops");
 
+    let count = net.iter(&"AAA".to_string(), turns)
+        .inspect(|n| print!("{:?},",n))
+        .take_while(|node| node.ne(&"ZZZ") )
+        .count();
+
+    println!("\nPart 1: Count {}",count+1);
 }
 
 #[cfg(test)]
