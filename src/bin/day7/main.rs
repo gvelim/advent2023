@@ -15,12 +15,12 @@ fn main() {
                 let mut split = line.split_ascii_whitespace();
                 (
                     Hand::parse(split.next().expect("Ops!"), camel_order, joker ),
-                    u32::from_str_radix(split.next().unwrap(),10).expect("Ops!")
+                    split.next().unwrap().parse::<u32>().expect("Ops!")
                 )
             })
             .collect::<Vec<_>>();
 
-        hands.sort_by(|a,b| a.cmp(&b));
+        hands.sort();
         hands.iter()
             .enumerate()
             // .inspect(|(i,(h,bid))| print!("Rank {i} - {:?} {bid} => ",(&h.layout,&h.ord_layout,&h.hands_type)))
@@ -51,12 +51,7 @@ mod test {
         hands.sort();
         assert_eq!(
             vec!["32T3K", "KK677", "JJ958", "T55J5", "QQQJA", "KTJJT"],
-            hands.iter()
-                .enumerate()
-                .inspect(|(i,h)| print!("Rank {i} - {:?} => ",(&h.layout,&h.ord_layout,&h.hands_type)))
-                .map(|(_,h)| h.layout.as_str())
-                .inspect(|h| println!("{:?}", h))
-                .collect::<Vec<&str>>()
+            order(&hands)
         )
     }
     #[test]
@@ -70,12 +65,7 @@ mod test {
         hands.sort();
         assert_eq!(
             vec!["32T3K", "JJ958", "KTJJT", "KK677", "T55J5", "QQQJA"],
-            hands.iter()
-                .enumerate()
-                .inspect(|(i,h)| print!("Rank {i} - {:?} => ",(&h.layout,&h.ord_layout,&h.hands_type)))
-                .map(|(_,h)| h.layout.as_str())
-                .inspect(|h| println!("{:?}", h))
-                .collect::<Vec<&str>>()
+            order(&hands)
         )
     }
     #[test]
@@ -90,11 +80,7 @@ mod test {
 
         assert_eq!(
             vec![OnePair, FourOfAKind, TwoPair, FourOfAKind, FourOfAKind, ThreeOfAKind],
-            hands.iter()
-                .inspect(|h| print!("{:?} => ",(&h.layout,&h.ord_layout)))
-                .map(|h| h.get_type() )
-                .inspect(|ht| println!("{:?}",ht))
-                .collect::<Vec<HandType>>()
+            classify(&hands)
         )
     }
 
@@ -110,19 +96,31 @@ mod test {
 
         assert_eq!(
             vec![OnePair, ThreeOfAKind, TwoPair, TwoPair, ThreeOfAKind, OnePair],
-            hands.iter()
-                .inspect(|h| print!("{:?} => ",(&h.layout,&h.ord_layout)))
-                .map(|h| h.hands_type)
-                .inspect(|ht| println!("{:?}",ht))
-                .collect::<Vec<HandType>>()
+            classify(&hands)
         )
+    }
+
+    fn order(hands: &[Hand]) -> Vec<&str> {
+        hands.iter()
+            .enumerate()
+            .inspect(|(i,h)| print!("Rank {i} - {:?} => ",(&h.layout,&h.ord_layout,&h.hands_type)))
+            .map(|(_,h)| h.layout.as_str())
+            .inspect(|h| println!("{:?}", h))
+            .collect::<Vec<&str>>()
+    }
+    fn classify(hands: &[Hand]) -> Vec<HandType> {
+        hands.iter()
+            .inspect(|h| print!("{:?} => ",(&h.layout,&h.ord_layout)))
+            .map(|h| h.hands_type)
+            .inspect(|ht| println!("{:?}",ht))
+            .collect::<Vec<HandType>>()
     }
 
     fn parse_input(input: &str) -> (Vec<&str>,Vec<u32>) {
         input.lines()
             .map(|line|{
                 let mut split = line.split_ascii_whitespace();
-                (split.next().unwrap(),u32::from_str_radix(split.next().unwrap(),10).expect("Ops!"))
+                (split.next().unwrap(),split.next().unwrap().parse::<u32>().expect("Ops!"))
             })
             .unzip()
     }
