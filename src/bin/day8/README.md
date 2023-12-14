@@ -78,14 +78,16 @@ For part 1, and in order to traverse the network, we can create a Network `Itera
 4. then repeat step 1 until the `current` == `target node`
 
    
-For part 2, Brute forcing the solution could take up to trillions iterations!! Hence, the total number of steps is equal to the **Least Common Multiple** of all parallel runs. Each run has a fixed period in terms of steps to goal. Those periods repeat individually until all coincide at a single point where all nodes end with `Z`, this is the LCM value and the correct answer. 
+For part 2, Brute forcing the solution could take up to trillions iterations!! However we can observe that each run follows the exact same path hence is repeating itself, in other words, succesively reaches its goal at a fix period, let's say every 20 steps. 
+
+Hence which each parallel run having its' own fixed period, the total number of steps for achieving the part 2 goal is equal to the **Least Common Multiple** of all fixed periods. Hence the solution is to first find the fixed periods per run and then extract the LCM value.
 ```
-"AAA" -> steps 20093
-"CVA" -> steps 22357
-"LDA" -> steps 16697
-"LHA" -> steps 14999
-"RHA" -> steps 17263
-"VGA" -> steps 20659
+"AAA" -> repeats every 20093 steps
+"CVA" -> repeats every 22357 steps
+"LDA" -> repeats every 16697 steps
+"LHA" -> repeats every 14999 steps
+"RHA" -> repeats every 17263 steps
+"VGA" -> repeats every 20659 steps
 
 Part 2: Least Common Multiple = 22103062509257
 ```
