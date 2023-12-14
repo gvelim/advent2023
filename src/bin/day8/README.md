@@ -78,11 +78,10 @@ For part 1, and in order to traverse the network, we can create a Network `Itera
 4. then repeat step 1 until the `current` == `target node`
 
    
-For part 2, Brute forcing the solution could take up to trillions iterations!! However we can observe that each run follows the exact same path hence is repeating itself, in other words, succesively reaches its goal at a fix period, let's say every 20 steps. 
-
-Hence which each parallel run having its' own fixed period, the total number of steps for achieving the part 2 goal is equal to the **Least Common Multiple** of all fixed periods. Hence the solution is to first find the fixed periods per run and then extract the LCM value.
+For part 2, Brute forcing the solution could take up to trillion iterations!! However since each run follows the exact same path, therefore it is repeating itself, hence we can conclude that it reaches its goal at a fix period, let's say every 20 steps. 
 ```
 Based on sample puzzle input
+
   ["11A", "22A"]
 1 ["11B", "22B"] 1
 2 ["11Z", "22C"] 2 <-- only one 'Z', carry on - Fixed period for run starting at 11A
@@ -90,9 +89,13 @@ Based on sample puzzle input
 2 ["11Z", "22B"] 1 <-- only one 'Z', carry on - 11A period repeats
 1 ["11B", "22C"] 2
 2 ["11Z", "22Z"] 3 <-- Both nodes ending in 'Z'; finished (least common multiple = 6)
-The least common multiple of 2 and 3 is 6.
 
+The least common multiple of 2 and 3 is 6.
+```
+Therefore, which each parallel run having its' own fixed period, the total number of steps for achieving the part 2 goal is equal to the **Least Common Multiple** of all fixed periods. Hence the solution is to first find the fixed periods per run and then extract the LCM value.
+```
 Based on puzzle input:
+
 "AAA" -> repeats every 20093 steps
 "CVA" -> repeats every 22357 steps
 "LDA" -> repeats every 16697 steps
