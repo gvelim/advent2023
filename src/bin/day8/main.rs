@@ -49,9 +49,9 @@ mod test {
         println!("{:?}",a_nodes);
         let count = net.par_iter(&a_nodes, turns)
             .inspect(|n| println!("{:?}",n))
-            .take_while(|nodes|{
+            .take_while(|nodes|
                 !nodes.iter().all(|node| node.ends_with("Z"))
-            })
+            )
             .count() + 1;
 
         assert_eq!(count,6)
@@ -67,6 +67,8 @@ mod test {
             .inspect(|n| println!("{:?}",n))
             .take_while(|node| node.ne(&"ZZZ") )
             .count() + 1;
+
+
 
         assert_eq!(count,6)
     }
