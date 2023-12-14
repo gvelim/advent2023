@@ -6,28 +6,13 @@ use crate::{
     network::Network
 };
 
-fn gcd(a: usize, b: usize) -> usize {
-    match ((a, b), (a & 1, b & 1)) {
-        _ if a == b => a,
-        ((_, 0), _) => a,
-        ((0, _), _) => b,
-        (_, (0, 1) | (1, 0)) => gcd(a >> 1, b),
-        (_, (0, 0)) => gcd(a >> 1, b >> 1) << 1,
-        (_, (1, 1)) => {
-            let (a, b) = (a.min(b), a.max(b));
-            gcd((b - a) >> 1, a)
-        }
-        _ => unreachable!(),
-    }
-}
-
 fn main() {
     let input = std::fs::read_to_string("./src/bin/day8/input.txt").expect("Ops!");
     let split = input.split("\n\n").next().unwrap();
-    let turns_len = split.len();
     let mut turns = Directions::parse(split);
     let mut net = Network::parse(input.as_str());
 
+    let t = std::time::Instant::now();
     let mut run_part = |start: &str, net: &mut Network, cmp: fn(&str) -> bool| {
         net.iter(start, &mut turns)
             // .inspect(|n| print!("{:?},",n))
@@ -35,24 +20,27 @@ fn main() {
             .count() + 1
     };
 
-    println!("\nPart 1: Count {:?}",
-             run_part("AAA", &mut net, |n| !n.eq("ZZZ"))
+    println!("\nPart 1: Steps {:?} - {:?}",
+             run_part("AAA", &mut net, |n| !n.eq("ZZZ")),
+             t.elapsed()
     );
 
-    let mut a_nodes = net.net.keys().filter(|s| s.ends_with('A')).copied().collect::<Vec<_>>();
-    a_nodes.sort();
-    println!("{:?}",(&a_nodes,&turns_len));
+    let t = std::time::Instant::now();
+    let a_nodes = net.net.keys().filter(|s| s.ends_with('A')).copied().collect::<Vec<_>>();
+    // a_nodes.sort();
+    println!("{:?}",a_nodes);
 
     let count = a_nodes.iter()
         .inspect(|n| print!("{:?} -> ",n))
         .map(|node| {
             let sum = run_part(node, &mut net, |n| !n.ends_with('Z'));
-            println!("Part 2: Count {:?}", sum);
+            println!("Count {:?}", sum);
             sum
         })
-        .reduce(|a,b| (b*a)/gcd(b,a));
+        .reduce(|a,b| num::integer::lcm(a,b))
+        .unwrap();
 
-    println!("\nPart 2: Count {:?}",count);
+    println!("Part 2: Steps {:?} - {:?}",count, t.elapsed());
 }
 
 #[cfg(test)]
@@ -88,9 +76,11 @@ mod test {
                 println!("Part 2: Count {:?}", sum);
                 sum
             })
-            .reduce(|a,b| (b*a)/gcd(b,a));
+            .reduce(|a,b| num::integer::lcm(a,b))
+            .unwrap();
 
-        assert_eq!(lcm,Some(6))
+        println!("Total steps: {lcm}");
+        assert_eq!(lcm,6)
     }
 
     #[test]
