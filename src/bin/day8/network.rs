@@ -1,25 +1,25 @@
 use std::collections::HashMap;
-use crate::directions::Directions;
 
 #[derive(Debug,PartialEq)]
 pub(crate) struct Network<'a> {
     pub(crate) net: HashMap<&'a str,(&'a str, &'a str)>,
 }
+
 impl Network<'_> {
 
-    pub(crate) fn iter<'a>(&'a mut self, start: &'a str, turns: impl Iterator<Item=Directions>) -> MapIter<'a, impl Iterator<Item=Directions>> {
-        MapIter { net: &self.net, start, turns }
+    pub(crate) fn iter<'a>(&'a mut self, start: &'a str, turns: impl Iterator<Item=char>) -> NetworkIter<'a, impl Iterator<Item=char>> {
+        NetworkIter { net: &self.net, start, turns }
     }
-    pub(crate) fn par_iter<'a>(&'a mut self, start: &'a [&'a str], turns: impl Iterator<Item=Directions>) -> ParMapIter<'a, impl Iterator<Item=Directions>> {
-        ParMapIter { net: &self.net, turns,
-            start: start.iter().map(|&s| s).collect::<Vec<_>>()
+
+    pub(crate) fn par_iter<'a>(&'a mut self, start: &'a [&'a str], turns: impl Iterator<Item=char>) -> ParNetworkIter<'a, impl Iterator<Item=char>> {
+        ParNetworkIter { net: &self.net, turns,
+            start: start.to_vec()
         }
     }
 
-    pub(crate)  fn parse(s: &str) -> Network<'_> {
-        let mut split = s.split("\n\n").skip(1);
+    pub(crate) fn parse(s: &str) -> Network<'_> {
         Network {
-            net: split.next().unwrap().lines()
+            net: s.lines()
                 .map(|line| {
                     let mut iter = line.split([' ', '=', '(', ')', ','])
                         .filter(|&s| !s.is_empty());
@@ -30,20 +30,21 @@ impl Network<'_> {
     }
 }
 
-pub(crate) struct MapIter<'a,I> where I: Iterator<Item=Directions> {
+pub(crate) struct NetworkIter<'a,I> where I: Iterator<Item=char> {
     net: &'a HashMap<&'a str,(&'a str,&'a str)>,
     start: &'a str,
     turns: I
 }
-impl<'a, I> Iterator for MapIter<'a, I> where I: Iterator<Item=Directions> {
+
+impl<'a, I> Iterator for NetworkIter<'a, I> where I: Iterator<Item=char> {
     type Item = &'a str;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some((left,right)) = self.net.get(self.start) {
             self.start = match self.turns.next() {
-                None => unreachable!(),
-                Some(Directions::Left) => left,
-                Some(Directions::Right) => right
+                Some('L') => left,
+                Some('R') => right,
+                _ => unreachable!()
             };
             Some(self.start)
         } else {
@@ -52,12 +53,13 @@ impl<'a, I> Iterator for MapIter<'a, I> where I: Iterator<Item=Directions> {
     }
 }
 
-pub(crate) struct ParMapIter<'a,I> where I: Iterator<Item=Directions> {
+pub(crate) struct ParNetworkIter<'a,I> where I: Iterator<Item=char> {
     net: &'a HashMap<&'a str,(&'a str,&'a str)>,
     start: Vec<&'a str>,
     turns: I
 }
-impl<'a, I> Iterator for ParMapIter<'a, I> where I: Iterator<Item=Directions> {
+
+impl<'a, I> Iterator for ParNetworkIter<'a, I> where I: Iterator<Item=char> {
     type Item = Vec<&'a str>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -66,8 +68,9 @@ impl<'a, I> Iterator for ParMapIter<'a, I> where I: Iterator<Item=Directions> {
             .map(|node|
                 match turn {
                     None => unreachable!(),
-                    Some(Directions::Left) => self.net.get(node).and_then(|(l,_)| Some(*l)).unwrap(),
-                    Some(Directions::Right) => self.net.get(node).and_then(|(_,r)| Some(*r)).unwrap()
+                    Some('L') => self.net.get(node).map(|(l,_)| *l).unwrap(),
+                    Some('R') => self.net.get(node).map(|(_,r)| *r).unwrap(),
+                    _ => unreachable!()
                 }
             )
             .collect::<Vec<_>>();

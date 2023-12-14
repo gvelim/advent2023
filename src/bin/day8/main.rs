@@ -1,16 +1,10 @@
-mod directions;
 mod network;
 
-use crate::{
-    directions::*,
-    network::Network
-};
+use crate::network::Network;
 
 fn main() {
     let input = std::fs::read_to_string("./src/bin/day8/input.txt").expect("Ops!");
-    let split = input.split("\n\n").next().unwrap();
-    let mut turns = Directions::parse(split);
-    let mut net = Network::parse(input.as_str());
+    let (mut turns, mut net) = Map::parse(input.as_str());
 
     let t = std::time::Instant::now();
     let mut run_part = |start: &str, net: &mut Network, cmp: fn(&str) -> bool| {
@@ -27,7 +21,6 @@ fn main() {
 
     let t = std::time::Instant::now();
     let a_nodes = net.net.keys().filter(|s| s.ends_with('A')).copied().collect::<Vec<_>>();
-    // a_nodes.sort();
     println!("{:?}",a_nodes);
 
     let count = a_nodes.iter()
@@ -37,26 +30,34 @@ fn main() {
             println!("Count {:?}", sum);
             sum
         })
-        .reduce(|a,b| num::integer::lcm(a,b))
+        .reduce(num::integer::lcm )
         .unwrap();
 
     println!("Part 2: Steps {:?} - {:?}",count, t.elapsed());
+}
+
+struct Map;
+impl Map {
+    fn parse(input: &str) -> (impl Iterator<Item=char> + '_,Network) {
+        let mut split = input.split("\n\n");
+        (
+            split.next().unwrap().chars().cycle(),
+            Network::parse(split.next().unwrap())
+        )
+    }
 }
 
 #[cfg(test)]
 mod test {
     use std::collections::HashMap;
     use super::*;
-    use super::Directions::*;
 
     static INPUT_P1: &str = "LLR\n\nAAA = (BBB, BBB)\nBBB = (AAA, ZZZ)\nZZZ = (ZZZ, ZZZ)";
     static INPUT_P2: &str = "LR\n\n11A = (11B, XXX)\n11B = (XXX, 11Z)\n11Z = (11B, XXX)\n22A = (22B, XXX)\n22B = (22C, 22C)\n22C = (22Z, 22Z)\n22Z = (22B, 22B)\nXXX = (XXX, XXX)";
 
     #[test]
     fn test_network_lcm() {
-        let mut split = INPUT_P2.split("\n\n");
-        let mut turns = Directions::parse(split.next().unwrap());
-        let mut net = Network::parse(INPUT_P2);
+        let (mut turns,mut net) = Map::parse(INPUT_P2);
 
         let mut run_part = |start: &str, net: &mut Network, cmp: fn(&str) -> bool| {
             net.iter(start, &mut turns)
@@ -76,7 +77,7 @@ mod test {
                 println!("Part 2: Count {:?}", sum);
                 sum
             })
-            .reduce(|a,b| num::integer::lcm(a,b))
+            .reduce(num::integer::lcm)
             .unwrap();
 
         println!("Total steps: {lcm}");
@@ -85,9 +86,7 @@ mod test {
 
     #[test]
     fn test_network_parallel_traversing() {
-        let mut split = INPUT_P2.split("\n\n");
-        let turns = Directions::parse(split.next().unwrap());
-        let mut net = Network::parse(INPUT_P2);
+        let (turns,mut net) = Map::parse(INPUT_P2);
 
         let mut a_nodes = net.net.keys().filter(|s| s.ends_with('A')).copied().collect::<Vec<_>>();
         a_nodes.sort();
@@ -105,9 +104,7 @@ mod test {
 
     #[test]
     fn test_network_traversing() {
-        let mut split = INPUT_P1.split("\n\n");
-        let turns = Directions::parse(split.next().unwrap());
-        let mut net = Network::parse(INPUT_P1);
+        let (turns,mut net) = Map::parse(INPUT_P1);
 
         let count = net.iter("AAA", turns)
             .inspect(|n| println!("{:?}",n))
@@ -119,18 +116,17 @@ mod test {
 
     #[test]
     fn test_parse_directions() {
-        let mut split = INPUT_P1.split("\n\n");
-        let turns = Directions::parse(split.next().unwrap());
+        let (turns,_) = Map::parse(INPUT_P1);
         let out = turns.take(5).collect::<Vec<_>>();
         println!("{:?}",out);
         assert_eq!(
-            vec![Left, Left, Right, Left, Left],
+            vec!['L', 'L', 'R', 'L', 'L'],
             out
         );
     }
     #[test]
     fn test_parse_nodes() {
-        let net = Network::parse(INPUT_P1);
+        let (_,net) = Map::parse(INPUT_P1);
 
         println!("{:?}",net);
         assert_eq!(
