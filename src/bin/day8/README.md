@@ -82,6 +82,17 @@ For part 2, Brute forcing the solution could take up to trillions iterations!! H
 
 Hence which each parallel run having its' own fixed period, the total number of steps for achieving the part 2 goal is equal to the **Least Common Multiple** of all fixed periods. Hence the solution is to first find the fixed periods per run and then extract the LCM value.
 ```
+Based on sample puzzle input
+  ["11A", "22A"]
+1 ["11B", "22B"] 1
+2 ["11Z", "22C"] 2 <-- only one 'Z', carry on - Fixed period for run starting at 11A
+1 ["11B", "22Z"] 3 <-- only one 'Z', carry on - Fixed period for run starting at 22A
+2 ["11Z", "22B"] 1 <-- only one 'Z', carry on - 11A period repeats
+1 ["11B", "22C"] 2
+2 ["11Z", "22Z"] 3 <-- Both nodes ending in 'Z'; finished (least common multiple = 6)
+The least common multiple of 2 and 3 is 6.
+
+Based on puzzle input:
 "AAA" -> repeats every 20093 steps
 "CVA" -> repeats every 22357 steps
 "LDA" -> repeats every 16697 steps
