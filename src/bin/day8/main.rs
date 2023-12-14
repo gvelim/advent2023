@@ -4,18 +4,12 @@ use crate::network::Network;
 
 fn main() {
     let input = std::fs::read_to_string("./src/bin/day8/input.txt").expect("Ops!");
-    let (mut turns, mut net) = Map::parse(input.as_str());
+    let (mut turns, net) = Map::parse(input.as_str());
 
     let t = std::time::Instant::now();
-    let mut run_part = |start: &str, net: &mut Network, cmp: fn(&str) -> bool| {
-        net.iter(start, &mut turns)
-            // .inspect(|n| print!("{:?},",n))
-            .take_while(|node| cmp(node))
-            .count() + 1
-    };
-
     println!("\nPart 1: Steps {:?} - {:?}",
-             run_part("AAA", &mut net, |n| !n.eq("ZZZ")),
+             net.iter("AAA", &mut turns)
+                 .take_while(|node| !node.eq(&"ZZZ")).count() + 1,
              t.elapsed()
     );
 
@@ -23,22 +17,20 @@ fn main() {
     let a_nodes = net.net.keys().filter(|s| s.ends_with('A')).copied().collect::<Vec<_>>();
     println!("{:?}",a_nodes);
 
-    let count = a_nodes.iter()
-        .inspect(|n| print!("{:?} -> ",n))
-        .map(|node| {
-            let sum = run_part(node, &mut net, |n| !n.ends_with('Z'));
-            println!("Count {:?}", sum);
-            sum
-        })
+    let steps = a_nodes.iter()
+        .map(|node|
+            net.iter(node, &mut turns)
+                .take_while(|node| !node.ends_with(&"Z")).count() + 1
+        )
         .reduce(num::integer::lcm )
         .unwrap();
 
-    println!("Part 2: Steps {:?} - {:?}",count, t.elapsed());
+    println!("Part 2: Steps {:?} - {:?}", steps, t.elapsed());
 }
 
 struct Map;
 impl Map {
-    fn parse(input: &str) -> (impl Iterator<Item=char> + '_,Network) {
+    fn parse(input: &str) -> (impl Iterator<Item=char> + '_, Network) {
         let mut split = input.split("\n\n");
         (
             split.next().unwrap().chars().cycle(),
@@ -57,24 +49,17 @@ mod test {
 
     #[test]
     fn test_network_lcm() {
-        let (mut turns,mut net) = Map::parse(INPUT_P2);
+        let (mut turns, net) = Map::parse(INPUT_P2);
 
-        let mut run_part = |start: &str, net: &mut Network, cmp: fn(&str) -> bool| {
-            net.iter(start, &mut turns)
-                // .inspect(|n| print!("{:?},",n))
-                .take_while(|node| cmp(node))
-                .count() + 1
-        };
-
-        let mut a_nodes = net.net.keys().filter(|s| s.ends_with('A')).copied().collect::<Vec<_>>();
-        a_nodes.sort();
+        let a_nodes = net.net.keys().filter(|s| s.ends_with('A')).copied().collect::<Vec<_>>();
         println!("{:?}",a_nodes);
 
         let lcm = a_nodes.iter()
             .inspect(|n| print!("{:?} -> ",n))
             .map(|node| {
-                let sum = run_part(node, &mut net, |n| !n.ends_with('Z'));
-                println!("Part 2: Count {:?}", sum);
+                let sum = net.iter(node, &mut turns)
+                    .take_while(|node| !node.ends_with(&"Z")).count() + 1;
+                println!("Steps {:?}", sum);
                 sum
             })
             .reduce(num::integer::lcm)
@@ -86,10 +71,9 @@ mod test {
 
     #[test]
     fn test_network_parallel_traversing() {
-        let (turns,mut net) = Map::parse(INPUT_P2);
+        let (turns, net) = Map::parse(INPUT_P2);
 
-        let mut a_nodes = net.net.keys().filter(|s| s.ends_with('A')).copied().collect::<Vec<_>>();
-        a_nodes.sort();
+        let a_nodes = net.net.keys().filter(|s| s.ends_with('A')).copied().collect::<Vec<_>>();
         println!("{:?}",a_nodes);
 
         let count = net.par_iter(&a_nodes, turns)
@@ -104,7 +88,7 @@ mod test {
 
     #[test]
     fn test_network_traversing() {
-        let (turns,mut net) = Map::parse(INPUT_P1);
+        let (turns, net) = Map::parse(INPUT_P1);
 
         let count = net.iter("AAA", turns)
             .inspect(|n| println!("{:?}",n))
