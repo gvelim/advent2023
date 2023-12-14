@@ -12,7 +12,7 @@ fn main() {
     let turns = Directions::parse(split.next().unwrap());
     let mut net = Network::parse(input.as_str());
 
-    let count = net.iter(&"AAA".to_string(), turns)
+    let count = net.iter("AAA", turns)
         .inspect(|n| print!("{:?},",n))
         .take_while(|node| node.ne(&"ZZZ") )
         .count() + 1;
@@ -34,7 +34,7 @@ mod test {
         let turns = Directions::parse(split.next().unwrap());
         let mut net = Network::parse(INPUT);
 
-        let count = net.iter(&"AAA".to_string(), turns)
+        let count = net.iter("AAA", turns)
             .inspect(|n| println!("{:?}",n))
             .take_while(|node| node.ne(&"ZZZ") )
             .count() + 1;
@@ -55,7 +55,7 @@ mod test {
     }
     #[test]
     fn test_parse_nodes() {
-        let mut net = Network::parse(INPUT);
+        let net = Network::parse(INPUT);
 
         println!("{:?}",net);
         assert_eq!(
