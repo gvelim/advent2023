@@ -1,29 +1,28 @@
 mod directions;
-mod node;
-mod map;
+mod network;
 
 use crate::{
     directions::*,
-    node::*,
-    map::Map
+    network::Network
 };
 
 fn main() {
     let input = std::fs::read_to_string("./src/bin/day8/input.txt").expect("Ops!");
     let mut split = input.split("\n\n");
     let turns = Directions::parse(split.next().unwrap());
-    let mut net = input.parse::<Map>().expect("Ops");
+    let mut net = Network::parse(input.as_str());
 
     let count = net.iter(&"AAA".to_string(), turns)
         .inspect(|n| print!("{:?},",n))
         .take_while(|node| node.ne(&"ZZZ") )
-        .count();
+        .count() + 1;
 
-    println!("\nPart 1: Count {}",count+1);
+    println!("\nPart 1: Count {}",count);
 }
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashMap;
     use super::*;
     use super::Directions::*;
 
@@ -33,14 +32,14 @@ mod test {
     fn test_network_traversing() {
         let mut split = INPUT.split("\n\n");
         let turns = Directions::parse(split.next().unwrap());
-        let mut net = INPUT.parse::<Map>().expect("Ops");
+        let mut net = Network::parse(INPUT);
 
         let count = net.iter(&"AAA".to_string(), turns)
             .inspect(|n| println!("{:?}",n))
             .take_while(|node| node.ne(&"ZZZ") )
-            .count();
+            .count() + 1;
 
-        assert_eq!(count+1,6)
+        assert_eq!(count,6)
     }
 
     #[test]
@@ -56,16 +55,14 @@ mod test {
     }
     #[test]
     fn test_parse_nodes() {
-        let mut split = INPUT.split("\n\n").skip(1);
-        let node = split.next().unwrap().lines()
-            .map(|line| line.parse::<Node>().expect("Ops"))
-            .next()
-            .expect("Ops!");
+        let mut net = Network::parse(INPUT);
 
-        println!("{:?}",node);
+        println!("{:?}",net);
         assert_eq!(
-            Node { name: "AAA".to_string(), left: "BBB".to_string(), right: "BBB".to_string() },
-            node
-        );
+            Network { net: HashMap::from([
+                ("ZZZ", ("ZZZ", "ZZZ")), ("AAA", ("BBB", "BBB")), ("BBB", ("AAA", "ZZZ"))
+            ])},
+            net
+        )
     }
 }
