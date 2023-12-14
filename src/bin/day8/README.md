@@ -67,4 +67,14 @@ Output:
 1. We parse the Network input into a `HashMap` that holds `(Key: Node Name, Value: (Left Node, Right Node))`, for example line `11A = (11B, XXX)` turns in `(Key:"11A", Value:("11B","XXX"))`
 2. We parse directions into a cyclical `Iterator`, that is, when it gives the last item, the next one will be the first again i.e. `"LRLR".chars().cycle()` will continuously provide the next direction.
 3. For part 1, and in order to traverse the network, the `Network` provides a Network `Iterator` with inputs (a) **starting `node`** and (b) the **directions `Iterator`**. The network `Iterator` will always produce the next `node` 
-4. For part 2, similarly to (3) above however we use a different parallel Iterator with input (a) a list of starting `nodes` and (b) directions `Iterator`. The parallel `Iterator` will then produce the list of `nodes` following, which in turn can be assessed whether they meet the end condition.
+4. For part 2, the total is equal to the **Least Common Multiple** of all runs. Each run has a fixed period in terms of steps to goal, hence when all periods are combined together, the collective goal is expressed by the LCM value., 
+```
+"AAA" -> Count 20093
+"CVA" -> Count 22357
+"LDA" -> Count 16697
+"LHA" -> Count 14999
+"RHA" -> Count 17263
+"VGA" -> Count 20659
+
+Part 2: Least Common Multiple 22103062509257
+```

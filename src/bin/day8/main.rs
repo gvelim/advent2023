@@ -6,6 +6,21 @@ use crate::{
     network::Network
 };
 
+fn gcd(a: usize, b: usize) -> usize {
+    match ((a, b), (a & 1, b & 1)) {
+        _ if a == b => a,
+        ((_, 0), _) => a,
+        ((0, _), _) => b,
+        (_, (0, 1) | (1, 0)) => gcd(a >> 1, b),
+        (_, (0, 0)) => gcd(a >> 1, b >> 1) << 1,
+        (_, (1, 1)) => {
+            let (a, b) = (a.min(b), a.max(b));
+            gcd((b - a) >> 1, a)
+        }
+        _ => unreachable!(),
+    }
+}
+
 fn main() {
     let input = std::fs::read_to_string("./src/bin/day8/input.txt").expect("Ops!");
     let split = input.split("\n\n").next().unwrap();
@@ -28,21 +43,16 @@ fn main() {
     a_nodes.sort();
     println!("{:?}",(&a_nodes,&turns_len));
 
-    a_nodes.iter()
+    let count = a_nodes.iter()
         .inspect(|n| print!("{:?} -> ",n))
-        .for_each(|node| {
+        .map(|node| {
             let sum = run_part(node, &mut net, |n| !n.ends_with('Z'));
-            println!("Part 2: Count {:?}", sum)
-        });
+            println!("Part 2: Count {:?}", sum);
+            sum
+        })
+        .reduce(|a,b| (b*a)/gcd(b,a));
 
-    // let count = net.par_iter(&a_nodes, turns)
-    //     // .inspect(|n| println!("{:?}",n))
-    //     .take_while(|nodes|{
-    //         !nodes.iter().all(|node| node.ends_with("Z"))
-    //     })
-    //     .count() + 1;
-    //
-    // println!("\nPart 2: Count {}",count);
+    println!("\nPart 2: Count {:?}",count);
 }
 
 #[cfg(test)]
