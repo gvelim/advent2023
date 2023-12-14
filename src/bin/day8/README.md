@@ -1,6 +1,8 @@
 # Day 8
 ## Input
-You are given a "map" on how to navigate the desert. The contains a list of left/right instructions, and the rest of the document seem to describe some kind of network of labeled nodes
+You are given a "map" on how to navigate the desert. The map contains 
+* a list of left/right instructions, and
+* the rest of the document seem to describe some kind of network of labeled nodes
 ```
 RL
 
@@ -12,7 +14,8 @@ EEE = (EEE, EEE)
 GGG = (GGG, GGG)
 ZZZ = (ZZZ, ZZZ)
 ```
-Starting with `AAA`, you need to look up the next element based on the next left/right instruction in your input. In this example, start with `AAA` and go right (R) by choosing the right element of `AAA`, `CCC`. Then, `L` means to choose the left element of `CCC`, `ZZZ`. By following the left/right instructions, you reach `ZZZ` in `2` steps
+Assume we need to navigate from `AAA` to `ZZZ`. Starting with `AAA`, you need to look up the next element based on the next left/right instruction in your input. In this example, start with `AAA` and go right (R) by choosing the right element of `AAA`, `CCC`. Then, `L` means to choose the left element of `CCC`, `ZZZ`. By following the left/right instructions, you reach `ZZZ` in `2` steps
+
 ## Part 1
 Starting at `AAA`, follow the left/right instructions. How many steps are required to reach `ZZZ`?
 ```
@@ -36,7 +39,7 @@ Output:
 6 steps
 ```
 ## Part 2
-Start at every node that ends with `A` and follow all of the paths at the same time until they all simultaneously end up at nodes that end with `Z`
+Start concurently, at every node that ends with `A` and follow all of the paths at the same time until they all simultaneously end up at nodes that end with `Z`. How many steps are required to reach the place where all nodes are ending with `Z`?
 ```
 Input: 
 
@@ -64,17 +67,25 @@ Output:
 6 Steps
 ```
 ## Approach
-1. We parse the Network input into a `HashMap` that holds `(Key: Node Name, Value: (Left Node, Right Node))`, for example line `11A = (11B, XXX)` turns in `(Key:"11A", Value:("11B","XXX"))`
+1. We parse the Network input into a `HashMap` that holds `(Key: Node Name, Value: (Left Node, Right Node))`, for example line `11A = (11B, XXX)` turns in `(Key:"11A", Value:("11B","XXX"))`.
 2. We parse directions into a cyclical `Iterator`, that is, when it gives the last item, the next one will be the first again i.e. `"LRLR".chars().cycle()` will continuously provide the next direction.
-3. For part 1, and in order to traverse the network, the `Network` provides a Network `Iterator` with inputs (a) **starting `node`** and (b) the **directions `Iterator`**. The network `Iterator` will always produce the next `node` 
-4. For part 2, the total is equal to the **Least Common Multiple** of all runs. Each run has a fixed period in terms of steps to goal, hence when all periods are combined together, the collective goal is expressed by the LCM value., 
-```
-"AAA" -> Count 20093
-"CVA" -> Count 22357
-"LDA" -> Count 16697
-"LHA" -> Count 14999
-"RHA" -> Count 17263
-"VGA" -> Count 20659
 
-Part 2: Least Common Multiple 22103062509257
+
+For part 1, and in order to traverse the network, we can create a Network `Iterator` that takes (a) a **starting `node`** as `current` and (b) the **directions `Iterator`**. The Network `Iterator` will always produce the next `node` using 
+1. the `HashMap::get(current) -> (left node,right node)`
+2. and take the next instruction from the direction iterator 
+3. to decide whether `current` will take the `left node` or `right node` value.
+4. then repeat step 1 until the `current` == `target node`
+
+   
+For part 2, Brute forcing the solution could take up to trillions iterations!! Hence, the total number of steps is equal to the **Least Common Multiple** of all parallel runs. Each run has a fixed period in terms of steps to goal. Those periods repeat individually until all coincide at a single point where all nodes end with `Z`, this is the LCM value and the correct answer. 
+```
+"AAA" -> steps 20093
+"CVA" -> steps 22357
+"LDA" -> steps 16697
+"LHA" -> steps 14999
+"RHA" -> steps 17263
+"VGA" -> steps 20659
+
+Part 2: Least Common Multiple = 22103062509257
 ```
