@@ -81,14 +81,16 @@ mod test {
         a_nodes.sort();
         println!("{:?}",a_nodes);
 
-        a_nodes.iter()
+        let lcm = a_nodes.iter()
             .inspect(|n| print!("{:?} -> ",n))
-            .for_each(|node| {
+            .map(|node| {
                 let sum = run_part(node, &mut net, |n| !n.ends_with('Z'));
-                println!("Part 2: Count {:?}", sum)
-            });
+                println!("Part 2: Count {:?}", sum);
+                sum
+            })
+            .reduce(|a,b| (b*a)/gcd(b,a));
 
-        assert_eq!(6,6)
+        assert_eq!(lcm,Some(6))
     }
 
     #[test]
@@ -121,8 +123,6 @@ mod test {
             .inspect(|n| println!("{:?}",n))
             .take_while(|node| node.ne(&"ZZZ") )
             .count() + 1;
-
-
 
         assert_eq!(count,6)
     }
