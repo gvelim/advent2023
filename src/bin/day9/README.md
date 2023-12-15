@@ -59,9 +59,7 @@ History: [45, 30, 21, 16, 13, 10] } -> 5
 Sum of backward predictions = 2
 ```
 ## Approach
-The below function reduces the input recursively until the reduced array is full of zeros.
-Once the condition is reached the recursion unwinds by returning the SUM of last numbers in last + current sequence.
-
+We reduce the input recursively until the resulting array is full of zeros. Once the condition is reached the recursion unwinds by returning the SUM of last numbers in last + current sequence, i.e. `SUM(.. SUM( SUM( SUM(last + current) + current ) + current ) .. + current)`
 ```
 10  13  16  21  30  45 --reduce(hist)           -> 23+45=68
    3   3   5   9  15    --reduce(hist)        -> 8+15=23
