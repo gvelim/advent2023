@@ -3,7 +3,23 @@ mod sequence;
 use crate::sequence::{Sequence,Number};
 
 fn main() {
+    let input = std::fs::read_to_string("src/bin/day9/input.txt").expect("Ops!");
+    let mut seqs = input.lines()
+        .map(|line| line.parse::<Sequence>().expect("Ops!"))
+        .collect::<Vec<_>>();
 
+    let sum = seqs.iter_mut()
+        .map(|seq| {
+            let a = seq.next();
+            (seq, a)
+        })
+        .map(|(s,r)| {
+            println!("{:?} -> {:?}",s,r);
+            r.unwrap()
+        })
+        .sum::<Number>();
+
+    println!("Part 1 - Sum of predictions: {sum}");
 }
 
 #[cfg(test)]
