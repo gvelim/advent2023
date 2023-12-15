@@ -12,18 +12,16 @@ impl Sequence {
         let reduced = history.windows(2).map(|a| a[1]-a[0]).collect::<Vec<_>>();
         if reduced.iter().all(|d| d.eq(&0)) {
             return history[0];
-        } else {
-            Self::predict_next(&reduced) + history[reduced.len()]
         }
+        Self::predict_next(&reduced) + history[reduced.len()]
     }
 
     pub(crate) fn predict_bwd(history: &[i32]) -> i32 {
         let reduced = history.windows(2).map(|a| a[0]-a[1]).collect::<Vec<_>>();
         if reduced.iter().all(|d| d.eq(&0)) {
             return history[0];
-        } else {
-            history[reduced.len()] - Self::predict_bwd(&reduced)
         }
+        history[reduced.len()] - Self::predict_bwd(&reduced)
     }
 }
 
