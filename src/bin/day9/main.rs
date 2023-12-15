@@ -8,19 +8,21 @@ fn main() {
         .map(|line| line.parse::<Sequence>().expect("Ops!"))
         .collect::<Vec<_>>();
 
+    let t = std::time::Instant::now();
     let sum = seqs
         .iter_mut()
         .map(|seq| seq.get_fwd_predictor().next().unwrap() )
         .sum::<Number>();
 
-    println!("Part 1 - Sum of forward predictions: {sum}");
+    println!("Part 1 - Sum of forward predictions: {sum} - {:?}", t.elapsed());
 
+    let t = std::time::Instant::now();
     let sum = seqs
         .iter_mut()
         .map(|seq| seq.get_bkwd_predictor().next().unwrap() )
         .sum::<Number>();
 
-    println!("Part 2 - Sum of backward predictions: {sum}");
+    println!("Part 2 - Sum of backward predictions: {sum} - {:?}", t.elapsed());
 
 }
 
