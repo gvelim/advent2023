@@ -8,18 +8,16 @@ fn main() {
         .map(|line| line.parse::<Sequence>().expect("Ops!"))
         .collect::<Vec<_>>();
 
-    let sum = seqs.iter_mut()
-        .map(|seq| seq.next().unwrap() )
+    let sum = seqs
+        .iter_mut()
+        .map(|seq| seq.get_fwd_predictor().next().unwrap() )
         .sum::<Number>();
 
     println!("Part 1 - Sum of forward predictions: {sum}");
 
-    seqs.iter_mut().for_each(|seq| seq.history.reverse());
-
-    let sum = seqs.iter_mut()
-        .map(|seq| {
-            Sequence::predict_bwd(&seq.history)
-        })
+    let sum = seqs
+        .iter_mut()
+        .map(|seq| seq.get_bkwd_predictor().next().unwrap() )
         .sum::<Number>();
 
     println!("Part 2 - Sum of backward predictions: {sum}");
@@ -37,11 +35,9 @@ mod test {
             .map(|line| line.parse::<Sequence>().expect("Ops!"))
             .collect::<Vec<_>>();
 
-        seqs.iter_mut().for_each(|seq| seq.history.reverse());
-
         let sum = seqs.iter_mut()
             .map(|seq| {
-                let a = Sequence::predict_bwd(&seq.history);
+                let a = seq.get_bkwd_predictor().next().unwrap();
                 (seq, a)
             })
             .map(|(s,r)| {
@@ -60,7 +56,7 @@ mod test {
 
         let sum = seqs.iter_mut()
             .map(|seq| {
-                let a = seq.next();
+                let a = seq.get_fwd_predictor().next();
                 (seq, a)
             })
             .map(|(s,r)| {
