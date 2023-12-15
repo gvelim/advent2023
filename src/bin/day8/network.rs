@@ -71,16 +71,14 @@ impl<'a, I> Iterator for ParNetworkIter<'a, I> where I: Iterator<Item=char> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let turn = self.turns.next();
-        self.start = self.start.iter()
-            .map(|node|
-                match turn {
-                    None => unreachable!(),
+        self.start.iter_mut()
+            .for_each(|node|
+                *node = match turn {
                     Some('L') => self.net.net.get(node).map(|(l,_)| *l).unwrap(),
                     Some('R') => self.net.net.get(node).map(|(_,r)| *r).unwrap(),
                     _ => unreachable!()
                 }
-            )
-            .collect::<Vec<_>>();
+            );
         Some(self.start.clone())
     }
 }
