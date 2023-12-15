@@ -59,7 +59,7 @@ impl FromStr for Seeds {
             .split(':')
             .last().unwrap()
             .split_whitespace()
-            .map(|num| u64::from_str_radix(num.trim(),10).expect("Seeds:Ops!"))
+            .map(|num| num.trim().parse::<u64>().expect("Seeds:Ops!"))
             .collect::<Vec<_>>()
         ))
     }

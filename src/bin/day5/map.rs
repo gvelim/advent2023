@@ -42,8 +42,8 @@ impl Map {
                 }
             })
             .next()
-            .and_then(|o| Some((o, self.dest)))
-            .or_else(|| Some((input, self.dest)))
+            .map(|o| (o, self.dest))
+            .or( Some((input, self.dest)))
             .unwrap()
     }
 }

@@ -22,7 +22,7 @@ fn extract_first_last_part1(inp: &str) -> Option<u32> {
     let mut tmp = vec![];
 
     inp.chars()
-        .filter(|c| c.is_digit(10))
+        .filter(|c| c.is_ascii_digit())
         .for_each(|c| tmp.push(c.to_digit(10).expect("Failed to convert")) );
 
     tmp.is_empty()
@@ -76,7 +76,7 @@ fn extract_first_last_part2(input: &str) -> Option<u32> {
         // get first digit or return None
         .next()
         // and then get the last digit otherwise reuse the first digit
-        .and_then(|ret| Some(ret * 10 + parser.last().unwrap_or(ret)))
+        .map(|ret| ret * 10 + parser.last().unwrap_or(ret))
 }
 
 #[cfg(test)]

@@ -20,7 +20,7 @@ impl FromStr for Card {
 
         Ok(Card {
             id : u32::from_str(split.next().unwrap().split_ascii_whitespace().last().unwrap()).expect("id:Ops!"),
-            elf_nums: split.next().unwrap().parse::<Numbers>().ok().expect("elf_nums Ops!"),
+            elf_nums: split.next().unwrap().parse::<Numbers>().expect("elf_nums Ops!"),
         })
     }
 }
@@ -31,10 +31,10 @@ impl Rounds {
     pub(crate) fn parse_rounds(input: &str) -> impl Iterator<Item=(Card, Numbers)> + '_ {
         input.lines()
             .map(|line| {
-                let mut split = line.split("|");
+                let mut split = line.split('|');
                 let mut card = split.next().unwrap().parse::<Card>().expect("Card:Ops");
                 let numbers = card.elf_nums;
-                card.elf_nums = split.next().unwrap().parse::<Numbers>().ok().expect("elf_nums Ops!");
+                card.elf_nums = split.next().unwrap().parse::<Numbers>().expect("elf_nums Ops!");
                 (card,numbers)
             } )
     }

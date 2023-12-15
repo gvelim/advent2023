@@ -13,7 +13,7 @@ impl EngineSchematic {
         let len = self.len;
         self.partnums.iter()
             .filter(move |pn| {
-                self.symbols.iter().any(|s| pn.is_touching(&s,len))
+                self.symbols.iter().any(|s| pn.is_touching(s,len))
             })
     }
     pub(crate) fn get_gears_part_numbers(&self, gear: char) -> impl Iterator<Item=Vec<&PartNumber>> {
@@ -54,7 +54,7 @@ impl FromStr for EngineSchematic {
         let make_part_number = |buf: &Vec<(usize, char)>| {
             let number = buf.iter().map(|(_,c)| c).collect::<String>();
             PartNumber {
-                number: u32::from_str_radix(number.as_str(), 10).expect("Ops!"),
+                number: number.parse::<u32>().expect("Ops!"),
                 pos: (buf[0].0 ..= buf.last().expect("Ops").0),
             }
         };

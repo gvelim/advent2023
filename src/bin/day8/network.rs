@@ -12,7 +12,7 @@ impl Network<'_> {
         start: &'a str,
         turns: impl Iterator<Item=char>
     ) -> NetworkIter<'a, impl Iterator<Item=char>> {
-        NetworkIter { net: &self, start, turns }
+        NetworkIter { net: self, start, turns }
     }
 
     pub(crate) fn par_iter<'a>(
@@ -21,7 +21,7 @@ impl Network<'_> {
         turns: impl Iterator<Item=char>
     ) -> ParNetworkIter<'a, impl Iterator<Item=char>> {
         ParNetworkIter {
-            net: &self, turns,
+            net: self, turns,
             start: start.to_vec()
         }
     }

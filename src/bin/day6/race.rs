@@ -33,9 +33,9 @@ impl  Race {
         let mut output = 0;
         range.any(|charge| {
             output = charge;
-            self.record < Boat::distance_travelled(charge as u64, self.duration)
+            self.record < Boat::distance_travelled(charge, self.duration)
         });
-        output as u64
+        output
     }
 
     pub(crate) fn find_upper_winning_charge(&self) -> u64 {
@@ -44,9 +44,9 @@ impl  Race {
         let mut output = 0;
         range.any(|charge| {
             output = charge;
-            self.record < Boat::distance_travelled(charge as u64, self.duration)
+            self.record < Boat::distance_travelled(charge, self.duration)
         });
-        output as u64
+        output
     }
 
     pub(crate) fn parse_races(input: &str) -> impl Iterator<Item=Race> + '_{
@@ -64,9 +64,9 @@ impl  Race {
     pub(crate) fn parse_whole_numbers(input: &str) -> Result<Race,ParseIntError> {
         let mut split = input.split('\n');
         let time = split.next().unwrap().split(':').last().unwrap()
-            .split_ascii_whitespace().map(|c| c.chars()).flatten().collect::<String>();
+            .split_ascii_whitespace().flat_map(|c| c.chars()).collect::<String>();
         let dist = split.next().unwrap().split(':').last().unwrap()
-            .split_ascii_whitespace().map(|c| c.chars()).flatten().collect::<String>();
+            .split_ascii_whitespace().flat_map(|c| c.chars()).collect::<String>();
 
         Ok(Race {
             duration: u64::from_str(time.as_str())?,

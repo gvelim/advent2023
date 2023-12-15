@@ -1,14 +1,10 @@
 use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Debug,Default)]
 pub struct Run {
     pub(crate) red: u32, pub(crate) green: u32, pub(crate) blue: u32
 }
-impl Default for Run {
-    fn default() -> Self {
-        Run { red: 0, green: 0, blue: 0 }
-    }
-}
+
 impl FromStr for Run {
     type Err = ();
 
@@ -23,7 +19,7 @@ impl FromStr for Run {
             .split(',')
             .map(|picked| {
                 let mut split = picked.trim().split_ascii_whitespace();
-                let count = u32::from_str_radix(split.next().unwrap(), 10).expect("Ops!");
+                let count = split.next().unwrap().parse::<u32>().expect("Ops!");
                 let colour = match split.next().unwrap() {
                     "red" => Colour::Red,
                     "green" => Colour::Green,

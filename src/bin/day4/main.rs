@@ -29,9 +29,12 @@ fn main() {
         })
         .map(|(card, wins)| {
             let card_copies = *part2.get(&card.id).unwrap();
-            (card.id+1 ..=card.id + wins as u32)
+            (card.id+1 ..=card.id + wins)
                 .all(|next_card|
-                    part2.get_mut(&next_card).and_then(|next_card_copies| Some(*next_card_copies += card_copies) ).is_some()
+                    part2.get_mut(&next_card).map(|next_card_copies| {
+                        *next_card_copies += card_copies;
+                        Some(())
+                    } ).is_some()
                 );
             card_copies
         })
