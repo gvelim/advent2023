@@ -6,6 +6,44 @@ pub(crate) type Number = i32;
 pub(crate) struct Sequence {
     pub(crate) history: Vec<Number>
 }
+
+impl Sequence {
+    fn predict_next(history: &[i32]) -> i32 {
+        // println!("H: {:?}", history);
+        let reduced = history.windows(2).map(|a| a[1]-a[0]).collect::<Vec<_>>();
+        if reduced.iter().all(|d| d.eq(&0)) {
+            return history[0];
+        } else {
+            let a = Self::predict_next(&reduced) + history[reduced.len()];
+            // println!("{:?}",(&history, &reduced));
+            a
+        }
+    }
+
+    pub(crate) fn predict_bwd(history: &[i32]) -> i32 {
+        // println!("H: {:?}", history);
+        let reduced = history.windows(2).map(|a| a[0]-a[1]).collect::<Vec<_>>();
+        if reduced.iter().all(|d| d.eq(&0)) {
+            return history[0];
+        } else {
+            let a = history[reduced.len()] - Self::predict_bwd(&reduced);
+            // println!("{:?} - {a}",(&history, &reduced));
+            a
+        }
+    }
+}
+
+impl Iterator for Sequence {
+    type Item = Number;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let p = Sequence::predict_next(&self.history);
+        self.history.push(p);
+        Some(p)
+    }
+}
+
+
 impl FromStr for Sequence {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -14,28 +52,5 @@ impl FromStr for Sequence {
                 .map(|s| s.parse::<Number>().expect("Ops!"))
                 .collect::<Vec<_>>()
         })
-    }
-}
-
-impl Sequence {
-    fn predict(history: &[i32]) -> i32 {
-        // println!("H: {:?}", history);
-        let reduced = history.windows(2).map(|a| a[1]-a[0]).collect::<Vec<_>>();
-        if reduced.iter().all(|d| d.eq(&0)) {
-            return history[0];
-        } else {
-            let a = Self::predict(&reduced) + history[reduced.len()];
-            // println!("{:?}",(&history, &reduced));
-            a
-        }
-    }
-
-}
-impl Iterator for Sequence {
-    type Item = Number;
-    fn next(&mut self) -> Option<Self::Item> {
-        let p = Sequence::predict(&self.history);
-        self.history.push(p);
-        Some(p)
     }
 }
