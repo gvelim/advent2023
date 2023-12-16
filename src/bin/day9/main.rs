@@ -1,4 +1,5 @@
 mod sequence;
+mod predictor;
 
 use crate::sequence::{Sequence,Number};
 
