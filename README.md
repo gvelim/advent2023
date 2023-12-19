@@ -10,3 +10,4 @@ Coding challenges in Rust
 * [Day 7](./src/bin/day7) - Game of Camel Cards
 * [Day 8](./src/bin/day8) - Haunted Wasteland
 * [Day 9](./src/bin/day9) - Mirage Maintenance
+* [Day 10](./src/bin/day10) - Pipe Maze
