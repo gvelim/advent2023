@@ -1,0 +1,80 @@
+# Day 10
+## Input
+You make a quick sketch of all the surface pipes you can see (your puzzle input).  The pipes are arranged in a two-dimensional grid of tiles:
+```
+..F7.
+.FJ|.
+SJ.L7
+|F--J
+LJ...
+```
+- `|` is a vertical pipe connecting `north` and `south`.
+- `-` is a horizontal pipe connecting `east` and `west`. 
+- `L` is a 90-degree bend connecting `north` and `east`.
+- `J` is a 90-degree bend connecting `north` and `west`. 
+- `7` is a 90-degree bend connecting `south` and `west`. 
+- `F` is a 90-degree bend connecting `south` and `east`. 
+- `.` is ground; there is no pipe in this tile. 
+- `S` is the starting position of the animal; there is a pipe on this tile, but your sketch doesn't show what shape the pipe has.
+
+Based on the acoustics of the animal's scurrying, you're confident the pipe that contains the animal is **one large, continuous loop**.
+
+
+## Part 1
+Find the single giant loop starting at `S`. How many steps along the loop does it take to get from the starting position to the point farthest from the starting position?
+```
+'J', 'F', 'J', 'F', '7', '|', 'L', '7', 'J', '-', '-', 'F', 'J', 'L', '|'
+                                    ^
+                        Point further out - Step 8 
+```
+## Part 2
+You quickly reach the farthest point of the loop, but the animal never emerges. Maybe its nest is within the area enclosed by the loop?
+```
+...........  =>  ...........
+.S-------7.  =>  .S-------7.
+.|F-----7|.  =>  .|F-----7|.
+.||.....||.  =>  .||OOOOO||.
+.||.....||.  =>  .||OOOOO||.
+.|L-7.F-J|.  =>  .|L-7OF-J|.
+.|..|.|..|.  =>  .|II|O|II|.
+.L--J.L--J.  =>  .L--JOL--J.
+...........  =>  .....O.....
+```
+The above loop encloses merely four tiles - the two pairs of `.` in the southwest and southeast (marked `I` below). The middle `.` tiles (marked `O` below) are not in the loop
+
+Figure out whether you have time to search for the nest by calculating the area within the loop. How many tiles are enclosed by the loop?
+```
+```
+## Approach
+The key logic is about navigating each step considering 
+1. output direction of the pipe we are standing on; current tile, 
+2. input direction of pipe we are moving into next
+
+For example, we can move into pipe `L` only from directions
+1. `down`/`south`
+2. `left`/`west`
+
+The below logic will return 
+1. new direction vector given (a) `self` as current direction vector and (b) `pipe` we are about to step on
+2. OR, `None` for all other combinations
+```rust
+enum Direction { Up, Right, Down, Left }
+impl Direction {
+    pub(crate) fn pipe_exit(&self, pipe: char) -> Option<Self> {
+        use Direction::*;
+        match (self, pipe) {
+            (Left | Right, '-') => Some(*self),
+            (Up | Down, '|') => Some(*self),
+            (Down, 'L') => Some(Right),
+            (Left, 'L') => Some(Up),
+            (Down, 'J') => Some(Left),
+            (Right, 'J') => Some(Up),
+            (Up, '7') => Some(Left),
+            (Right, '7') => Some(Down),
+            (Up, 'F') => Some(Right),
+            (Left, 'F') => Some(Down),
+            _ => None
+        }
+    }
+}
+```

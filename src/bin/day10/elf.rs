@@ -14,7 +14,7 @@ pub(crate) struct Elf<'a> {
 }
 
 impl Elf<'_> {
-    pub(crate) fn possible_directions(&self) -> Vec<Direction> {
+    pub(crate) fn valid_directions(&self) -> Vec<Direction> {
         vec![
             self.field.get_pipe((self.pos.0-1,self.pos.1)).and_then(|p| Left.pipe_exit(p)),
             self.field.get_pipe((self.pos.0+1,self.pos.1)).and_then(|p| Right.pipe_exit(p)),
@@ -24,7 +24,7 @@ impl Elf<'_> {
             .filter_map(|&d| d)
             .collect::<Vec<_>>()
     }
-    fn step_one(&mut self) -> Option<char> {
+    fn step_over(&mut self) -> Option<char> {
         let pos = match self.dir {
             Up => (self.pos.0, self.pos.1-1),
             Right => (self.pos.0+1, self.pos.1),
@@ -50,6 +50,6 @@ impl Iterator for Elf<'_> {
     type Item = char;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.step_one()
+        self.step_over()
     }
 }

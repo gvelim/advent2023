@@ -10,13 +10,12 @@ fn main() {
 
     let mut elf = f.get_walking_elf(None);
 
-    let dirs = elf.possible_directions();
+    let dirs = elf.valid_directions();
     println!("Available directions {:?}",dirs);
-    elf.dir = *dirs.iter().next().expect("Ops! cannot find valid direction to go!");
+    elf.dir = if dirs.is_empty() { panic!("Ops! cannot find valid direction to go!") } else { dirs[0] };
 
     let count = elf
         .take_while(|p| 'S'.ne(p))
-        // .inspect(|p| print!("{p},"))
         .count() + 1;
 
     println!("Part 1 : Total steps: {}, furthest away: {}", count, count/2)
@@ -35,7 +34,9 @@ mod test {
         let elf = f.get_walking_elf(None);
 
         assert_eq!(
-            elf.take(16).collect::<Vec<_>>(),
+            elf.take(16)
+                .inspect(|p| print!("'{p}', "))
+                .collect::<Vec<_>>(),
             ['J', 'F', 'J', 'F', '7', '|', 'L', '7', 'J', '-', '-', 'F', 'J', 'L', '|']
         );
     }
