@@ -25,6 +25,7 @@ fn main() {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use crate::direction::Direction::{Down, Left, Right, Up};
     static INPUT: &str = "..F7.\n.FJ|.\nSJ.L7\n|F--J\nLJ...";
 
