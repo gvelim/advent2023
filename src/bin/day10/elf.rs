@@ -24,7 +24,12 @@ impl Elf<'_> {
             .filter_map(|&d| d)
             .collect::<Vec<_>>()
     }
-    fn step_over(&mut self) -> Option<char> {
+}
+
+impl Iterator for Elf<'_> {
+    type Item = (char,(usize,usize));
+
+    fn next(&mut self) -> Option<Self::Item> {
         let pos = match self.dir {
             Up => (self.pos.0, self.pos.1-1),
             Right => (self.pos.0+1, self.pos.1),
@@ -40,16 +45,8 @@ impl Elf<'_> {
                     .and_then(|dir| {
                         self.pos = pos;
                         self.dir = dir;
-                        Some(p)
+                        Some((p,pos))
                     })
             )
-    }
-}
-
-impl Iterator for Elf<'_> {
-    type Item = char;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.step_over()
     }
 }
