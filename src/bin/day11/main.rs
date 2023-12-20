@@ -12,7 +12,16 @@ fn main() {
 #[cfg(test)]
 mod test {
     use super::*;
-    
+
+    #[test]
+    fn test_expand_x() {
+        let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
+        let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
+
+        universe.expand_x();
+        println!("{:?}",universe);
+
+    }
     #[test]
     fn test_universe_gaps() {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");

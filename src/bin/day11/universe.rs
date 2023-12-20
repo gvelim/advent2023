@@ -5,25 +5,44 @@ use crate::galaxy::Galaxy;
 pub(crate) struct Universe {
     width: usize,
     length: usize,
-    clusters: Vec<Vec<Galaxy>>,
-    x_gap: Vec<u8>,
-    y_gap: Vec<u8>,
+    pub(crate) clusters: Vec<Vec<Galaxy>>,
+    x_gap: Vec<usize>,
+    y_gap: Vec<usize>,
 }
 
 impl Universe {
-    fn expand(&mut self) {
-        todo!()
-    }
-    pub(crate) fn get_gap_x(&self) -> impl Iterator<Item = usize> + '_ {
+    pub(crate) fn expand_x(&mut self) {
+        let mut gap = vec![];
+
         self.x_gap.iter()
             .enumerate()
-            .filter(|(_,count)| 0u8.eq(count) )
+            .filter(|&(_,count)| 0.eq(count) )
+            .map(|(x,_)| x)
+            .enumerate()
+            .for_each(|(i,x)|{
+
+                self.clusters.iter_mut()
+                    .flatten()
+                    .filter(|g| g.pos.0.gt(&(x + i)) )
+                    .for_each(|g| g.pos.0 += 1 );
+
+                gap.push(x + i);
+            });
+
+        self.width += gap.len();
+        gap.into_iter().for_each(|idx| self.x_gap.insert(idx,0))
+    }
+
+    pub(crate) fn get_gap_x(&self) -> impl Iterator<Item = usize> + DoubleEndedIterator + '_ {
+        self.x_gap.iter()
+            .enumerate()
+            .filter(|&(_,count)| 0.eq(count) )
             .map(|(i,_)| i)
     }
-    pub(crate) fn get_gap_y(&self) -> impl Iterator<Item = usize> + '_ {
+    pub(crate) fn get_gap_y(&self) -> impl Iterator<Item = usize> + DoubleEndedIterator + '_ {
         self.y_gap.iter()
             .enumerate()
-            .filter(|(_,count)| 0u8.eq(count) )
+            .filter(|&(_,count)| 0.eq(count) )
             .map(|(i,_)| i)
     }
 }
@@ -43,9 +62,9 @@ impl FromStr for Universe {
         lines
             .enumerate()
             .for_each(|(y, line)| {
-                let cluster = line.chars()
+                line.chars()
                     .enumerate()
-                    .inspect(|&(x, c)| x_gap[x] += '#'.eq(&c) as u8)
+                    .inspect(|&(x, c)| x_gap[x] += '#'.eq(&c) as usize)
                     .filter(|(_, c)| '#'.eq(c))
                     .inspect(|_| y_gap[y] += 1)
                     .map(|(x, _)| Galaxy { pos: (x, y) })
