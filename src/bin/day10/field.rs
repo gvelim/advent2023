@@ -13,7 +13,9 @@ impl Field {
         let (curr, upper_bound) = (
             pos.1*self.width + pos.0, (pos.1+1)*self.width - 1
         );
-        self.data[curr+1..=upper_bound].iter()
+        self.data.iter()
+            .skip(curr+1)
+            .take(upper_bound-curr)
             .take_while(|c| '.'.ne(c))
             .find(|&c| ['F','J','L','7','|'].contains(c))
     }
@@ -21,7 +23,9 @@ impl Field {
         let (lower_bound, curr) = (
             (pos.1)*self.width, pos.1*self.width + pos.0
         );
-        self.data[lower_bound..curr].iter()
+        self.data.iter()
+            .skip(lower_bound)
+            .take(curr-lower_bound)
             .rev()
             .take_while(|c| '.'.ne(c))
             .find(|&c| ['F','J','L','7','|'].contains(c))
