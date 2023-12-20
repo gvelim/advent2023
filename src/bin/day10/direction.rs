@@ -29,6 +29,7 @@ impl Direction {
             (Right, '7') => Some(Down),
             (Up, 'F') => Some(Right),
             (Left, 'F') => Some(Down),
+            (_, 'S') => Some(*self),
             _ => None
         }
     }
