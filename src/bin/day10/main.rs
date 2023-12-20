@@ -30,10 +30,19 @@ fn main() {
             cmp => cmp
         });
 
-    let tiles = steps.group_by_mut(|(_,a),(_,b)| a.1 == b.1 )
-        .map(|pipe|{
+    let tiles = steps
+        // As we'll be scanning line by line we need to
+        // group all pipes by `y`, hence extracting the odd/even pairs of pipes
+        // and hence measure the number of tiles within each valid pair
+        .group_by_mut(|(_,a),(_,b)| a.1 == b.1 )
+        // scan a line at a time for pairs of pipes
+        .map(|line|{
             let mut dash = 0;
-            pipe.iter_mut()
+            line.iter_mut()
+                // clean up needs to be done before we extract the pipe pairs
+                // Remove '-' as we don't need horizontal pipes,
+                // Remove 'J' from cases like 'FJ' or 'F--J' as 'J' is outer wall
+                // Remove 'L' from cases like 'L7' or 'L--7' as 'L' is outer wall
                 .filter_map(|p| {
                     let (left,right) = f.left_right_excluding(p.1,'-');
                     match p.0 {
@@ -46,14 +55,19 @@ fn main() {
                         }
                     }
                 })
+                // collect valid vertical pipes pairs
                 .collect::<Vec<_>>()
+                // pair up vertical pipes up
                 .chunks(2)
+                // measure the distance from each pair
                 .map(|pair| {
-                    let [(_,a),(_,b)] = pair else { todo!() };
+                    let [(_,a),(_,b)] = pair else { unreachable!() };
                     b.0 - a.0 - 1
                 })
+                // Sum up the pairs for this line
                 .sum::<usize>()
         })
+        // Sum up all lines
         .sum::<usize>();
 
     println!("Part 2 : Total tiles {}", tiles);
