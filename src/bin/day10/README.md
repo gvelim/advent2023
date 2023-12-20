@@ -108,7 +108,7 @@ To achieve this we need to perform the following steps
 Sort & Group-By ->  Clean-up -> Pair up       -> Count
 .............       
 .S---------7.       S7          'S7'            -> 0
-.|..F-7.F7.|.       |..F7F7.|   |..F, 7F, 7.|   -> 4
+.|..F-7.F7.|.       |..F7.F7.|  |..F, 7.F, 7.|  -> 4
 .|.FJ.|.|L7|.       |.F|.|7|    |.F, |.|, 7|    -> 2
 .|FJ..L-J.||.  =>   |FLJ||      |F, LJ, ||      -> 0
 .|L-7...F-J|.       |7F|        |7, F|          -> 0
