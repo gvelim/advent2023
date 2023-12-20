@@ -10,6 +10,7 @@ fn main() {
     let input = std::fs::read_to_string("src/bin/day10/input.txt").expect("Can't read input");
     let f = Field::parse(input.as_str(),'S');
 
+    let t = std::time::Instant::now();
     let mut elf = f.get_walking_elf(None);
 
     let dirs = elf.valid_directions();
@@ -17,8 +18,9 @@ fn main() {
     elf.dir = if dirs.is_empty() { panic!("Ops! cannot find valid direction to go!") } else { dirs[0] };
 
     let count = elf.traverse_pipes('S').len();
-    println!("Part 1 : Total steps: {}, furthest away: {}", count, count/2);
+    println!("Part 1 : Total steps: {}, furthest away: {} - {:?}", count, count/2, t.elapsed());
 
+    let t = std::time::Instant::now();
     let tiles = elf
         // As we'll be scanning line by line we need to
         // group all pipes by `y`, hence extracting the odd/even pairs of pipes
@@ -29,16 +31,17 @@ fn main() {
             let mut pipes_removed = 0;
             line.iter_mut()
                 // clean up needs to be done before we extract the pipe pairs
-                // Remove '-' as we don't need horizontal pipes,
-                // Remove 'J' from cases like 'FJ' or 'F--J' as 'J' is outer wall
-                // Remove 'L' from cases like 'L7' or 'L--7' as 'L' is outer wall
                 .filter_map(|p| {
                     match p.0 {
+                        // Remove '-' as we don't need horizontal pipes & count as removed,
                         '-' => { pipes_removed += 1; None },
-                        'J' if f.left_excluding(p.1,'-')
+                        // Remove 'J' from cases like 'FJ' or 'F--J' as 'J' is outer wall, & count as removed
+                        'J' if f.connects_left_with(p.1)
                             .is_some_and(|c| 'F'.eq(c)) => { pipes_removed += 1; None },
-                        'L' if f.right_excluding(p.1,'-')
+                        // Remove 'L' from cases like 'L7' or 'L--7' as 'L' is outer wall, & count as removed
+                        'L' if f.connects_right_with(p.1)
                             .is_some_and(|c| '7'.eq(c)) => { pipes_removed += 1; None },
+                        // capture valid pipe and offset `x` by removals count
                         _ => {
                             p.1.0 -= pipes_removed;
                             Some(p)
@@ -60,7 +63,7 @@ fn main() {
         // Sum up all lines
         .sum::<usize>();
 
-    println!("Part 2 : Total tiles {}", tiles);
+    println!("Part 2 : Total tiles {} - {:?}", tiles, t.elapsed());
 }
 
 #[cfg(test)]
@@ -98,9 +101,9 @@ mod test {
                     .filter_map(|p| {
                         match p.0 {
                             '-' => { pipes_removed += 1; None },
-                            'J' if f.left_excluding(p.1,'-')
+                            'J' if f.connects_left_with(p.1)
                                 .is_some_and(|c| 'F'.eq(c)) => { pipes_removed += 1; None },
-                            'L' if f.right_excluding(p.1,'-')
+                            'L' if f.connects_right_with(p.1)
                                 .is_some_and(|c| '7'.eq(c)) => { pipes_removed += 1; None },
                             _ => {
                                 p.1.0 -= pipes_removed;
@@ -127,14 +130,14 @@ mod test {
     fn test_left_right() {
         let f = Field::parse(INPUT_PART2, 'S');
 
-        println!("{:?}", f.right_excluding((1,1),'-'));
-        println!("{:?}", f.left_excluding((1,1),'-'));
-        println!("{:?}", f.right_excluding((4,2),'-'));
-        println!("{:?}", f.left_excluding((4,2),'-'));
-        println!("{:?}", f.right_excluding((3,3),'-'));
-        println!("{:?}", f.left_excluding((3,3),'-'));
-        println!("{:?}", f.right_excluding((2,5),'-'));
-        println!("{:?}", f.left_excluding((2,5),'-'));
+        println!("{:?}", f.connects_right_with((1, 1)));
+        println!("{:?}", f.connects_left_with((1, 1)));
+        println!("{:?}", f.connects_right_with((4, 2)));
+        println!("{:?}", f.connects_left_with((4, 2)));
+        println!("{:?}", f.connects_right_with((3, 3)));
+        println!("{:?}", f.connects_left_with((3, 3)));
+        println!("{:?}", f.connects_right_with((2, 5)));
+        println!("{:?}", f.connects_left_with((2, 5)));
 
     }
     #[test]
