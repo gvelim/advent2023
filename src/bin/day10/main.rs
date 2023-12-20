@@ -7,7 +7,7 @@ mod elf;
 mod pipeloop;
 
 use crate::field::Field;
-use crate::pipeloop::PipeLoop;
+use crate::pipeloop::{PipeLoopCutter, Step};
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day10/input.txt").expect("Can't read input");
@@ -24,7 +24,7 @@ fn main() {
     println!("Part 1 : Total steps: {}, furthest away: {} - {:?}", path.len(), path.len()/2, t.elapsed());
 
     // pre-allocated memory buffer to process each line, so we avoid repeated heap allocations
-    let mut pairs: Vec<_> = Vec::with_capacity(20);
+    let mut pairs: Vec<&Step> = Vec::with_capacity(20);
 
     let t = std::time::Instant::now();
     let tiles = path
@@ -37,7 +37,7 @@ fn main() {
             // clear memory for processing the new line
             pairs.clear();
             // clean & collect valid vertical pipes pairs
-            PipeLoop::scanline_cleaner(line, &f)
+            line.get_valid_pairs(&f)
                 .collect_into(&mut pairs);
             // pair up vertical pipes remaining
             pairs.chunks(2)
@@ -59,6 +59,8 @@ fn main() {
 mod test {
     use super::*;
     use crate::direction::Direction::{Down, Left, Right, Up};
+    use crate::pipeloop::Step;
+
     static INPUT_PART1: &str = "..F7.\n.FJ|.\nSJ.L7\n|F--J\nLJ...";
     static INPUT_PART2: &str = ".............\n\
                                 .S---------7.\n\
@@ -84,8 +86,8 @@ mod test {
             .order_by_scan_lines()
             .inspect(|c| println!("Group: {:?}",c))
             .map(|pipe|{
-                PipeLoop::scanline_cleaner(pipe, &f)
-                    .collect::<Vec<_>>()
+                pipe.get_valid_pairs(&f)
+                    .collect::<Vec<&Step>>()
                     .chunks(2)
                     .inspect(|c| print!("Pair: {:?} -> ",c))
                     .map(|pair| {

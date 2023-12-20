@@ -12,23 +12,28 @@ impl PipeLoop {
         self.path.len()
     }
     pub(crate) fn order_by_scan_lines(&mut self) -> impl Iterator<Item=&mut [Step]> + '_ {
-        self.path.sort_by(|(_,a),(_,b)|
+        self.path.sort_by(|(_, a), (_, b)|
             match a.1.cmp(&b.1) {
                 Ordering::Equal => a.0.cmp(&b.0),
                 cmp => cmp
             });
 
-        self.path.group_by_mut(|(_,a),(_,b)| a.1 == b.1 )
+        self.path.group_by_mut(|(_, a), (_, b)| a.1 == b.1)
     }
-    pub(crate) fn scanline_cleaner<'a>(
-        line: &'a mut [Step],
-        f: &'a Field
-    ) -> impl Iterator<Item=&'a mut Step>
-    {
-        let mut pipes_removed = 0;
-        // clear memory for processing the new line
+}
 
-        line.iter_mut()
+pub(crate) trait PipeLoopCutter {
+    type Output;
+    fn get_valid_pairs(&mut self, f: &Field) -> impl Iterator<Item=&Self::Output>;
+}
+
+impl PipeLoopCutter for [Step] {
+    type Output = Step;
+
+    fn get_valid_pairs(&mut self, f: &Field) -> impl Iterator<Item=&Self::Output> {
+        let mut pipes_removed = 0;
+
+        self.iter_mut()
             // clean up needs to be done before we extract the pipe pairs
             .filter_map(move |p| {
                 match p.0 {
@@ -43,10 +48,9 @@ impl PipeLoop {
                     // capture valid pipe and offset `x` by removals count
                     _ => {
                         p.1.0 -= pipes_removed;
-                        Some(p)
+                        Some(&*p)
                     }
                 }
             })
     }
-
 }
