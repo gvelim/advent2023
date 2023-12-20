@@ -9,17 +9,22 @@ pub(crate) struct Field {
 }
 
 impl Field {
-    pub(crate) fn right_excluding(&self, pos:(usize,usize), pipe:char) -> Option<&char> {
+    pub(crate) fn connects_right_with(&self, pos:(usize, usize)) -> Option<&char> {
         let (curr, upper_bound) = (
             pos.1*self.width + pos.0, (pos.1+1)*self.width - 1
         );
-        self.data[curr+1..=upper_bound].iter().find(|&c| pipe.ne(c))
+        self.data[curr+1..=upper_bound].iter()
+            .take_while(|c| '.'.ne(c))
+            .find(|&c| ['F','J','L','7','|'].contains(c))
     }
-    pub(crate) fn left_excluding(&self, pos:(usize,usize), pipe:char) -> Option<&char> {
+    pub(crate) fn connects_left_with(&self, pos:(usize, usize)) -> Option<&char> {
         let (lower_bound, curr) = (
             (pos.1)*self.width, pos.1*self.width + pos.0
         );
-        self.data[lower_bound..curr].iter().rev().find(|&c| pipe.ne(c))
+        self.data[lower_bound..curr].iter()
+            .rev()
+            .take_while(|c| '.'.ne(c))
+            .find(|&c| ['F','J','L','7','|'].contains(c))
     }
 
     pub(crate) fn get_pipe(&self, pos: (usize, usize)) -> Option<char> {

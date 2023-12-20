@@ -31,7 +31,7 @@ impl Elf<'_> {
         self.path.group_by_mut(|(_,a),(_,b)| a.1 == b.1 )
     }
     pub(crate) fn valid_directions(&self) -> Vec<Direction> {
-        vec![
+        [
             self.field.get_pipe((self.pos.0-1,self.pos.1)).and_then(|p| Left.pipe_exit(p)),
             self.field.get_pipe((self.pos.0+1,self.pos.1)).and_then(|p| Right.pipe_exit(p)),
             self.field.get_pipe((self.pos.0,self.pos.1-1)).and_then(|p| Up.pipe_exit(p)),
@@ -58,10 +58,10 @@ impl Iterator for Elf<'_> {
                 // Can we enter the new pipe from current direction ?
                 self.dir.pipe_exit(p)
                     // new pipe is connected to current hence move one step
-                    .and_then(|dir| {
+                    .map(|dir| {
                         self.pos = pos;
                         self.dir = dir;
-                        Some((p,pos))
+                        (p,pos)
                     })
             )
     }
