@@ -93,9 +93,9 @@ mod test {
             .inspect(|d| print!("{:?}",d))
             .map(|(card, wins)| {
                 let copies = *part2.get(&card.id).unwrap();
-                (card.id+1 ..=card.id + wins as u32)
+                (card.id+1 ..=card.id + wins)
                     .all(|next_card|
-                        part2.get_mut(&next_card).and_then(|d| Some(*d += copies )).is_some()
+                        part2.get_mut(&next_card).map(|d| *d += copies ).is_some()
                 );
                 copies
             })

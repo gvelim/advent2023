@@ -1,4 +1,5 @@
 #![feature(slice_group_by)]
+#![feature(iter_collect_into)]
 
 mod field;
 mod direction;
@@ -20,6 +21,9 @@ fn main() {
     let count = elf.traverse_pipes('S').len();
     println!("Part 1 : Total steps: {}, furthest away: {} - {:?}", count, count/2, t.elapsed());
 
+    // pre-allocated memory buffer to process each line, so we avoid repeated heap allocations
+    let mut pairs: Vec<_> = Vec::with_capacity(20);
+
     let t = std::time::Instant::now();
     let tiles = elf
         // As we'll be scanning line by line we need to
@@ -29,6 +33,8 @@ fn main() {
         // scan a line at a time for pairs of pipes
         .map(|line|{
             let mut pipes_removed = 0;
+            // clear memory for processing the new line
+            pairs.clear();
             line.iter_mut()
                 // clean up needs to be done before we extract the pipe pairs
                 .filter_map(|p| {
@@ -49,9 +55,9 @@ fn main() {
                     }
                 })
                 // collect valid vertical pipes pairs
-                .collect::<Vec<_>>()
-                // pair up vertical pipes up
-                .chunks(2)
+                .collect_into(&mut pairs);
+            // pair up vertical pipes remaining
+            pairs.chunks(2)
                 // measure the distance from each pair
                 .map(|pair| {
                     let [(_,a),(_,b)] = pair else { unreachable!() };
