@@ -33,11 +33,12 @@ fn main() {
                 // Remove 'J' from cases like 'FJ' or 'F--J' as 'J' is outer wall
                 // Remove 'L' from cases like 'L7' or 'L--7' as 'L' is outer wall
                 .filter_map(|p| {
-                    let (left,right) = f.left_right_excluding(p.1,'-');
                     match p.0 {
                         '-' => { pipes_removed += 1; None },
-                        'J' if left.is_some_and(|c| 'F'.eq(c)) => { pipes_removed += 1; None },
-                        'L' if right.is_some_and(|c| '7'.eq(c)) => { pipes_removed += 1; None },
+                        'J' if f.left_excluding(p.1,'-')
+                            .is_some_and(|c| 'F'.eq(c)) => { pipes_removed += 1; None },
+                        'L' if f.right_excluding(p.1,'-')
+                            .is_some_and(|c| '7'.eq(c)) => { pipes_removed += 1; None },
                         _ => {
                             p.1.0 -= pipes_removed;
                             Some(p)
@@ -95,11 +96,12 @@ mod test {
                 let mut pipes_removed = 0;
                 pipe.iter_mut()
                     .filter_map(|p| {
-                        let (left,right) = f.left_right_excluding(p.1,'-');
                         match p.0 {
                             '-' => { pipes_removed += 1; None },
-                            'J' if left.is_some_and(|c| 'F'.eq(c)) => { pipes_removed += 1; None },
-                            'L' if right.is_some_and(|c| '7'.eq(c)) => { pipes_removed += 1; None },
+                            'J' if f.left_excluding(p.1,'-')
+                                .is_some_and(|c| 'F'.eq(c)) => { pipes_removed += 1; None },
+                            'L' if f.right_excluding(p.1,'-')
+                                .is_some_and(|c| '7'.eq(c)) => { pipes_removed += 1; None },
                             _ => {
                                 p.1.0 -= pipes_removed;
                                 Some(p)
@@ -125,10 +127,14 @@ mod test {
     fn test_left_right() {
         let f = Field::parse(INPUT_PART2, 'S');
 
-        println!("{:?}", f.left_right_excluding((1,1),'-'));
-        println!("{:?}", f.left_right_excluding((4,2),'-'));
-        println!("{:?}", f.left_right_excluding((3,3),'-'));
-        println!("{:?}", f.left_right_excluding((2,5),'-'));
+        println!("{:?}", f.right_excluding((1,1),'-'));
+        println!("{:?}", f.left_excluding((1,1),'-'));
+        println!("{:?}", f.right_excluding((4,2),'-'));
+        println!("{:?}", f.left_excluding((4,2),'-'));
+        println!("{:?}", f.right_excluding((3,3),'-'));
+        println!("{:?}", f.left_excluding((3,3),'-'));
+        println!("{:?}", f.right_excluding((2,5),'-'));
+        println!("{:?}", f.left_excluding((2,5),'-'));
 
     }
     #[test]
