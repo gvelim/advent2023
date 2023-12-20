@@ -1,9 +1,12 @@
-use std::cmp::Ordering;
 use crate::{
     field::Field,
     direction::{
         Direction,
         Direction::{Down, Left, Right, Up}
+    },
+    pipeloop::{
+        PipeLoop,
+        Step
     }
 };
 
@@ -12,23 +15,13 @@ pub(crate) struct Elf<'a> {
     pub(crate) field: &'a Field,
     pub(crate) pos: (usize, usize),
     pub(crate) dir: Direction,
-    pub(crate) path: Vec<(char, (usize, usize))>
 }
 
 impl Elf<'_> {
-    pub(crate) fn traverse_pipes(&mut self, finish:char) -> &Vec<(char,(usize,usize))> {
-        self.path = self.take_while(|(p, _)| finish.ne(p)).collect::<Vec<_>>();
-        self.path.push(('S', self.field.start));
-        &self.path
-    }
-    pub(crate) fn order_by_scan_lines(&mut self) -> impl Iterator<Item=&mut [(char, (usize, usize))]> + '_ {
-        self.path.sort_by(|(_,a),(_,b)|
-            match a.1.cmp(&b.1) {
-                Ordering::Equal => a.0.cmp(&b.0),
-                cmp => cmp
-            });
-
-        self.path.group_by_mut(|(_,a),(_,b)| a.1 == b.1 )
+    pub(crate) fn traverse_pipes(&mut self, finish:char) -> PipeLoop {
+        let mut path = self.take_while(|(p, _)| finish.ne(p)).collect::<Vec<_>>();
+        path.push(('S', self.field.start));
+        PipeLoop { path }
     }
     pub(crate) fn valid_directions(&self) -> Vec<Direction> {
         [
@@ -43,7 +36,7 @@ impl Elf<'_> {
 }
 
 impl Iterator for Elf<'_> {
-    type Item = (char,(usize,usize));
+    type Item = Step;
 
     fn next(&mut self) -> Option<Self::Item> {
         let pos = match self.dir {

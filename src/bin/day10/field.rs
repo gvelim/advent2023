@@ -43,7 +43,6 @@ impl Field {
             field: self,
             pos: start.unwrap_or(self.start),
             dir: Right,
-            path: vec![]
         }
     }
     pub(crate) fn parse(s: &str, start: char) -> Field {
