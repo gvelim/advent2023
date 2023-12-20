@@ -96,24 +96,24 @@ To address Part 2 we will make use of an algorithm similar to **polygon fill**, 
 To achieve this we need to perform the following steps
 1. Sort and Group-by the loop coordinates by `y` and with each group sorted by `x`.
 2. For each line
-   3. Clean the line from redundant information 
-      4. Remove `-` as we don't need horizontal pipes, 
-      5. Remove `J` from cases like `FJ` or `F--J` as `J` is outer wall
-      6. Remove `L` from cases like `L7` or `L--7` as `L` is outer wall
-   7. Pair up together any pipes that have survived the clen-up
-   8. The number of tiles enclosed by the pair is equal to pair's `x` distance minus 1
-9. Sum up all lines for the total number of tiles enclosed by the loop
+   1. Clean the line from redundant information 
+      1. Remove `-` as we don't need horizontal pipes, 
+      2. Remove `J` from cases like `FJ` or `F--J` as `J` is outer wall
+      3. Remove `L` from cases like `L7` or `L--7` as `L` is outer wall
+   2. Pair up together any pipes that have survived the clen-up
+   3. The number of tiles enclosed by the pair is equal to pair's `x` distance minus 1
+3. Sum up all lines for the total number of tiles enclosed by the loop
 
 ```
-Sort & Group-By ->  Clean-up -> Pair up       -> Count
-.............       
-.S---------7.       S7          'S7'            -> 0
-.|..F-7.F7.|.       |..F7.F7.|  |..F, 7.F, 7.|  -> 4
-.|.FJ.|.|L7|.       |.F|.|7|    |.F, |.|, 7|    -> 2
-.|FJ..L-J.||.  =>   |FLJ||      |F, LJ, ||      -> 0
-.|L-7...F-J|.       |7F|        |7, F|          -> 0
-.|..|...|..|.       |..||..|    |..|, |..|      -> 4
-.L--J...L--J.       LJLJ        LJ, LJ          -> 0
+Sort & Group-By ->  Clean-up ->  Pair up          ->   Count
+.............        
+.S---------7.       S7           `S7`                  -> 0
+.|..F-7.F7.|.       |..F7.F7.|   `|..F`, `7.F`, `7.|`  -> 4
+.|.FJ.|.|L7|.       |.F.|.|7|    `|.F`, `|.|`, `7|`    -> 2
+.|FJ..L-J.||.  =>   |F..LJ.||    `|F`, `LJ`, `||`      -> 0
+.|L-7...F-J|.       |7...F|      `|7`, `F|`            -> 0
+.|..|...|..|.       |..|...|..|  `|..|`, `|..|`        -> 4
+.L--J...L--J.       LJ...LJ      `LJ`, `LJ`            -> 0
 .............       
 
 Total enclosed tiles = 10
