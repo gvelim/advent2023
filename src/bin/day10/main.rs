@@ -5,7 +5,6 @@ mod direction;
 mod elf;
 
 use crate::field::Field;
-use std::cmp::Ordering;
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day10/input.txt").expect("Can't read input");
@@ -17,27 +16,17 @@ fn main() {
     println!("Available directions {:?}",dirs);
     elf.dir = if dirs.is_empty() { panic!("Ops! cannot find valid direction to go!") } else { dirs[0] };
 
-    let mut steps = elf
-        .take_while(|(p, _)| 'S'.ne(p))
-        .collect::<Vec<_>>();
-    let count = &steps.iter().count();
-    println!("Part 1 : Total steps: {}, furthest away: {}", count, count/2 + 1);
+    let count = elf.traverse_pipes('S').len();
+    println!("Part 1 : Total steps: {}, furthest away: {}", count, count/2);
 
-    steps.push(('S', f.start));
-    steps.sort_by(|(_,a),(_,b)|
-        match a.1.cmp(&b.1) {
-            Ordering::Equal => a.0.cmp(&b.0),
-            cmp => cmp
-        });
-
-    let tiles = steps
+    let tiles = elf
         // As we'll be scanning line by line we need to
         // group all pipes by `y`, hence extracting the odd/even pairs of pipes
         // and hence measure the number of tiles within each valid pair
-        .group_by_mut(|(_,a),(_,b)| a.1 == b.1 )
+        .order_by_scan_lines()
         // scan a line at a time for pairs of pipes
         .map(|line|{
-            let mut dash = 0;
+            let mut pipes_removed = 0;
             line.iter_mut()
                 // clean up needs to be done before we extract the pipe pairs
                 // Remove '-' as we don't need horizontal pipes,
@@ -46,11 +35,11 @@ fn main() {
                 .filter_map(|p| {
                     let (left,right) = f.left_right_excluding(p.1,'-');
                     match p.0 {
-                        '-' => { dash += 1; None },
-                        'J' if left.is_some_and(|c| 'F'.eq(c)) => { dash += 1; None },
-                        'L' if right.is_some_and(|c| '7'.eq(c)) => { dash += 1; None },
+                        '-' => { pipes_removed += 1; None },
+                        'J' if left.is_some_and(|c| 'F'.eq(c)) => { pipes_removed += 1; None },
+                        'L' if right.is_some_and(|c| '7'.eq(c)) => { pipes_removed += 1; None },
                         _ => {
-                            p.1.0 -= dash;
+                            p.1.0 -= pipes_removed;
                             Some(p)
                         }
                     }
@@ -97,30 +86,22 @@ mod test {
         // println!("Available directions {:?}",dirs);
         elf.dir = Down; //if dirs.is_empty() { panic!("Ops! cannot find valid direction to go!") } else { dirs[0] };
 
-        let mut steps = elf
-            .take_while(|(p, _)| 'S'.ne(p))
-            .collect::<Vec<_>>();
+        elf.traverse_pipes('S');
 
-        steps.push(('S', f.start));
-        steps.sort_by(|(_,a),(_,b)|
-            match a.1.cmp(&b.1) {
-                Ordering::Equal => a.0.cmp(&b.0),
-                cmp => cmp
-            });
-
-        let tiles = steps.group_by_mut(|(_,a),(_,b)| a.1 == b.1 )
+        let tiles = elf
+            .order_by_scan_lines()
             .inspect(|c| println!("Group: {:?}",c))
             .map(|pipe|{
-                let mut dash = 0;
+                let mut pipes_removed = 0;
                 pipe.iter_mut()
                     .filter_map(|p| {
                         let (left,right) = f.left_right_excluding(p.1,'-');
                         match p.0 {
-                            '-' => { dash += 1; None },
-                            'J' if left.is_some_and(|c| 'F'.eq(c)) => { dash += 1; None },
-                            'L' if right.is_some_and(|c| '7'.eq(c)) => { dash += 1; None },
+                            '-' => { pipes_removed += 1; None },
+                            'J' if left.is_some_and(|c| 'F'.eq(c)) => { pipes_removed += 1; None },
+                            'L' if right.is_some_and(|c| '7'.eq(c)) => { pipes_removed += 1; None },
                             _ => {
-                                p.1.0 -= dash;
+                                p.1.0 -= pipes_removed;
                                 Some(p)
                             }
                         }
