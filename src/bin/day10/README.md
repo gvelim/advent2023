@@ -44,6 +44,17 @@ The above loop encloses merely four tiles - the two pairs of `.` in the southwes
 
 Figure out whether you have time to search for the nest by calculating the area within the loop. How many tiles are enclosed by the loop?
 ```
+.............  =>  ............. -> 0
+.S---------7.  =>  .S---------7. -> 0
+.|..F-7.F7.|.  =>  .|IIF-7IF7I|. -> 4
+.|.FJ.|.|L7|.  =>  .|IFJ.|I|L7|. -> 2
+.|FJ..L-J.||.  =>  .|FJ..L-J.||. -> 0
+.|L-7...F-J|.  =>  .|L-7...F-J|. -> 0
+.|..|...|..|.  =>  .|II|...|II|. -> 4
+.L--J...L--J.  =>  .L--J...L--J. -> 0
+.............  =>  ............. -> 0
+
+Total enclosed tiled = 10
 ```
 ## Approach
 ### Part 1
