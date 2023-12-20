@@ -97,9 +97,10 @@ To achieve this we need to perform the following steps
 1. Sort and Group-by the loop coordinates by `y` and with each group sorted by `x`.
 2. For each line
    1. Clean the line from redundant information 
-      1. Remove `-` as we don't need horizontal pipes, 
-      2. Remove `J` from cases like `FJ` or `F--J` as `J` is outer wall
-      3. Remove `L` from cases like `L7` or `L--7` as `L` is outer wall
+      1. Remove `-` as we don't need horizontal pipes,
+      2. Remove reduntant pipes, that is, pipes that when absent **do not alter** the enclosure bounds 
+         1. Remove `J` from cases like `FJ` or `F--J` as `J` is a **reduntant** to the `F` 
+         2. Remove `L` from cases like `L7` or `L--7` as `L` is a **reduntant** to the `7` 
    2. Pair up together any pipes that have survived the clen-up
    3. The number of tiles enclosed by the pair is equal to pair's `x` distance minus 1
 3. Sum up all lines for the total number of tiles enclosed by the loop
