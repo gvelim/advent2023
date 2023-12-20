@@ -30,23 +30,24 @@ mod test {
     use super::*;
     use crate::direction::Direction::{Down, Left, Right, Up};
     static INPUT_PART1: &str = "..F7.\n.FJ|.\nSJ.L7\n|F--J\nLJ...";
-    static INPUT_PART2: &str = "...........\n\
-                                .S-------7.\n\
-                                .|F-----7|.\n\
-                                .||.....||.\n\
-                                .||.....||.\n\
-                                .|L-7.F-J|.\n\
-                                .|..|.|..|.\n\
-                                .L--J.L--J.\n\
-                                ...........";
+    static INPUT_PART2: &str = ".............\n\
+                                .S---------7.\n\
+                                .|..F-7.F7.|.\n\
+                                .|.FJ.|.|L7|.\n\
+                                .|FJ..L-J.||.\n\
+                                .|L-7...F-J|.\n\
+                                .|..|...|..|.\n\
+                                .L--J...L--J.\n\
+                                .............";
     #[test]
     fn test_count_area() {
-        let f = Field::parse(INPUT_PART2, 'S');
+        let input = std::fs::read_to_string("src/bin/day10/sample1.txt").expect("Ops!");
+        let f = Field::parse(input.as_str(), 'S');
         let mut elf = f.get_walking_elf(None);
 
-        let dirs = elf.valid_directions();
-        println!("Available directions {:?}",dirs);
-        elf.dir = if dirs.is_empty() { panic!("Ops! cannot find valid direction to go!") } else { dirs[0] };
+        // let dirs = elf.valid_directions();
+        // println!("Available directions {:?}",dirs);
+        elf.dir = Down; //if dirs.is_empty() { panic!("Ops! cannot find valid direction to go!") } else { dirs[0] };
 
         let mut steps = elf
             .take_while(|(p, _)| 'S'.ne(p))
@@ -61,21 +62,24 @@ mod test {
 
         let tiles = steps.group_by_mut(|(_,a),(_,b)| a.1 == b.1 )
             .inspect(|c| println!("Group: {:?}",c))
-            .map(|d|{
+            .map(|pipe|{
                 let mut dash = 0;
-                d.iter_mut()
-                    .filter_map(|pipe|
-                        if '-'.ne(&pipe.0) {
-                            pipe.1.0 -= dash;
-                            Some(pipe)
-                        } else {
-                            dash += 1;
-                            None
+                pipe.iter_mut()
+                    .filter_map(|p| {
+                        let (left,right) = f.left_right_excluding(p.1,'-');
+                        match p.0 {
+                            '-' => { dash += 1; None },
+                            'J' if left.is_some_and(|c| 'F'.eq(c)) => { dash += 1; None },
+                            'L' if right.is_some_and(|c| '7'.eq(c)) => { dash += 1; None },
+                            _ => {
+                                p.1.0 -= dash;
+                                Some(p)
+                            }
                         }
-                    )
+                    })
                     .collect::<Vec<_>>()
                     .chunks(2)
-                    .inspect(|c| print!("Pair: {:?}",c))
+                    .inspect(|c| print!("Pair: {:?} -> ",c))
                     .map(|pair| {
                         let [(_,a),(_,b)] = pair else { todo!() };
                         b.0 - a.0 - 1
@@ -85,6 +89,18 @@ mod test {
             })
             .inspect(|c| println!("Sum: {:?}\n",c))
             .sum::<usize>();
+
+        assert_eq!(10,tiles);
+    }
+    #[test]
+    fn test_left_right() {
+        let f = Field::parse(INPUT_PART2, 'S');
+
+        println!("{:?}", f.left_right_excluding((1,1),'-'));
+        println!("{:?}", f.left_right_excluding((4,2),'-'));
+        println!("{:?}", f.left_right_excluding((3,3),'-'));
+        println!("{:?}", f.left_right_excluding((2,5),'-'));
+
     }
     #[test]
     fn test_pipe_waking() {
