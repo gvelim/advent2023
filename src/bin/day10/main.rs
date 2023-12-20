@@ -17,12 +17,46 @@ fn main() {
     println!("Available directions {:?}",dirs);
     elf.dir = if dirs.is_empty() { panic!("Ops! cannot find valid direction to go!") } else { dirs[0] };
 
-    let steps = elf
+    let mut steps = elf
         .take_while(|(p, _)| 'S'.ne(p))
-        .map(|(_,pos)| pos)
         .collect::<Vec<_>>();
     let count = &steps.iter().count();
     println!("Part 1 : Total steps: {}, furthest away: {}", count, count/2 + 1);
+
+    steps.push(('S', f.start));
+    steps.sort_by(|(_,a),(_,b)|
+        match a.1.cmp(&b.1) {
+            Ordering::Equal => a.0.cmp(&b.0),
+            cmp => cmp
+        });
+
+    let tiles = steps.group_by_mut(|(_,a),(_,b)| a.1 == b.1 )
+        .map(|pipe|{
+            let mut dash = 0;
+            pipe.iter_mut()
+                .filter_map(|p| {
+                    let (left,right) = f.left_right_excluding(p.1,'-');
+                    match p.0 {
+                        '-' => { dash += 1; None },
+                        'J' if left.is_some_and(|c| 'F'.eq(c)) => { dash += 1; None },
+                        'L' if right.is_some_and(|c| '7'.eq(c)) => { dash += 1; None },
+                        _ => {
+                            p.1.0 -= dash;
+                            Some(p)
+                        }
+                    }
+                })
+                .collect::<Vec<_>>()
+                .chunks(2)
+                .map(|pair| {
+                    let [(_,a),(_,b)] = pair else { todo!() };
+                    b.0 - a.0 - 1
+                })
+                .sum::<usize>()
+        })
+        .sum::<usize>();
+
+    println!("Part 2 : Total tiles {}", tiles);
 }
 
 #[cfg(test)]
