@@ -91,18 +91,18 @@ impl Direction {
 }
 ```
 ### Part 2
-To address Part 2 we will make use of an algorithm similar to **polygon fill**, where we scan each line for odd/even pairs of pipes. We then know that even pairs enclose the tiles we need to count.
+To address Part 2 we will make use of an algorithm similar to **polygon fill**, where we scan each line for a **pairs of vertical cuts**, where **odd pais fall outside** the loop and **even ones fall inside**. We then know that even pairs enclose the tiles we need to count.
 
 To achieve this we need to perform the following steps
-1. Sort and Group-by the loop coordinates by `y` and with each group sorted by `x`.
-2. For each line
+1. Sort and Group-by the loop coordinates by `y` and with each `y` group sorted by `x`.
+2. For each line we scan
    1. Clean the line from redundant information 
       1. Remove `-` as we don't need horizontal pipes,
-      2. Remove reduntant pipes, that is, pipes that when absent **do not alter** the enclosure bounds 
+      2. Remove reduntant pipes, that is, pipes that when removed **do not alter** the number of valid pairs formed by the line
          1. Remove `J` from cases like `FJ` or `F--J` as `J` is a **reduntant** to the `F` 
          2. Remove `L` from cases like `L7` or `L--7` as `L` is a **reduntant** to the `7` 
-   2. Pair up together any pipes that have survived the clen-up
-   3. The number of tiles enclosed by the pair is equal to pair's `x` distance minus 1
+   2. Pair up together those pipes survived the clean-up, hence we now have the **pairs of vertical cuts** for the line
+   3. The number of tiles enclosed by a pair is equal to pair's `x` distance minus 1
 3. Sum up all lines for the total number of tiles enclosed by the loop
 
 ```
