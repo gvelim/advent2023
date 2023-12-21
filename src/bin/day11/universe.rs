@@ -5,7 +5,7 @@ use crate::galaxy::Galaxy;
 pub(crate) struct Universe {
     width: usize,
     length: usize,
-    pub(crate) clusters: Vec<Vec<Galaxy>>,
+    pub(crate) clusters: Vec<Galaxy>,
     x_gap: Vec<usize>,
     y_gap: Vec<usize>,
 }
@@ -22,7 +22,6 @@ impl Universe {
             .for_each(|(i,x)|{
 
                 self.clusters.iter_mut()
-                    .flatten()
                     .filter(|g| g.pos.0.gt(&(x + i)) )
                     .for_each(|g| g.pos.0 += 1 );
 
@@ -31,6 +30,27 @@ impl Universe {
 
         self.width += gap.len();
         gap.into_iter().for_each(|idx| self.x_gap.insert(idx,0))
+    }
+
+    pub(crate) fn expand_y(&mut self) {
+        let mut gap = vec![];
+
+        self.y_gap.iter()
+            .enumerate()
+            .filter(|&(_,count)| 0.eq(count) )
+            .map(|(y,_)| y)
+            .enumerate()
+            .for_each(|(i,y)|{
+
+                self.clusters.iter_mut()
+                    .filter(|g| g.pos.1.gt(&(y + i)) )
+                    .for_each(|g| g.pos.1 += 1 );
+
+                gap.push(y + i);
+            });
+
+        self.length += gap.len();
+        gap.into_iter().for_each(|idx| self.y_gap.insert(idx,0))
     }
 
     pub(crate) fn get_gap_x(&self) -> impl Iterator<Item = usize> + DoubleEndedIterator + '_ {
@@ -57,7 +77,7 @@ impl FromStr for Universe {
         let length = input.len()/width;
         let mut x_gap = vec![0; width];
         let mut y_gap = vec![0; length];
-        let mut clusters = vec![vec![]; length];
+        let mut clusters = vec![];
 
         lines
             .enumerate()
@@ -68,7 +88,7 @@ impl FromStr for Universe {
                     .filter(|(_, c)| '#'.eq(c))
                     .inspect(|_| y_gap[y] += 1)
                     .map(|(x, _)| Galaxy { pos: (x, y) })
-                    .collect_into(&mut clusters[y]);
+                    .collect_into(&mut clusters);
             });
 
         Ok( Universe {
