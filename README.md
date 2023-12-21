@@ -11,3 +11,4 @@ Coding challenges in Rust
 * [Day 8](./src/bin/day8) - Haunted Wasteland
 * [Day 9](./src/bin/day9) - Mirage Maintenance
 * [Day 10](./src/bin/day10) - Pipe Maze
+* [Day 11](./src/bin/day11) - Cosmic Expansion
