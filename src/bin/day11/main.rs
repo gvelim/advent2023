@@ -1,4 +1,6 @@
 #![feature(iter_collect_into)]
+#![feature(isqrt)]
+
 mod universe;
 mod galaxy;
 
@@ -13,6 +15,20 @@ fn main() {
 mod test {
     use super::*;
 
+    #[test]
+    fn test_galaxy_distance() {
+        let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
+        let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
+
+        universe.expand_x();
+        universe.expand_y();
+        let cluster = universe.clusters;
+
+        assert_eq!(9, cluster[4].distance_to(&cluster[8]));
+        assert_eq!(15, cluster[0].distance_to(&cluster[6]));
+        assert_eq!(17, cluster[2].distance_to(&cluster[5]));
+        assert_eq!(5, cluster[7].distance_to(&cluster[8]));
+    }
     #[test]
     fn test_expand_universe() {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");

@@ -9,7 +9,7 @@ impl Galaxy {
         self.pos.0 += delta.0;
         self.pos.1 += delta.1;
     }
-    fn distance_to(&self, dst: Galaxy) -> usize {
-        todo!()
+    pub(crate) fn distance_to(&self, dst: &Galaxy) -> usize {
+        dst.pos.0.abs_diff(self.pos.0) + dst.pos.1.abs_diff(self.pos.1)
     }
 }
