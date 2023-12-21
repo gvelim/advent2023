@@ -8,6 +8,27 @@ use crate::universe::Universe;
 use crate::galaxy::Galaxy;
 
 fn main() {
+    let input = std::fs::read_to_string("src/bin/day11/input.txt").expect("Ops!");
+    let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
+
+    universe.expand_x();
+    universe.expand_y();
+
+    let galaxies = universe.clusters.clone();
+
+    let minsum = universe.clusters
+        .iter()
+        .enumerate()
+        .map(|(i,from)|{
+            galaxies
+                .iter()
+                .skip(i+1)
+                .map(|to| from.distance_to(to))
+                .sum::<usize>()
+        })
+        .sum::<usize>();
+
+    println!("Part 1 - Sum of shortest paths: {}",minsum);
 
 }
 
