@@ -16,6 +16,34 @@ mod test {
     use super::*;
 
     #[test]
+    fn test_sortest_path() {
+        let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
+        let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
+
+        universe.expand_x();
+        universe.expand_y();
+
+        let galaxies = universe.clusters.clone();
+
+        let minsum = universe.clusters
+            .iter()
+            .enumerate()
+            .map(|(i,from)|{
+                print!("{:?} -> ",from);
+                galaxies
+                    .iter()
+                    .skip(i+1)
+                    .inspect(|m| print!("{:?}:",m.pos))
+                    .map(|to| from.distance_to(to))
+                    .inspect(|m| print!("{m},"))
+                    .sum::<usize>()
+            })
+            .inspect(|m| println!(" = Sum: {m},"))
+            .sum::<usize>();
+
+        assert_eq!(minsum,374);
+    }
+    #[test]
     fn test_galaxy_distance() {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
         let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
