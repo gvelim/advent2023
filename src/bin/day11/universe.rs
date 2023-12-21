@@ -1,13 +1,13 @@
 use std::str::FromStr;
 use crate::galaxy::Galaxy;
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub(crate) struct Universe {
-    width: usize,
-    length: usize,
+    pub(crate) width: usize,
+    pub(crate) length: usize,
     pub(crate) clusters: Vec<Galaxy>,
-    x_gap: Vec<usize>,
-    y_gap: Vec<usize>,
+    pub(crate) x_gap: Vec<usize>,
+    pub(crate) y_gap: Vec<usize>,
 }
 
 impl Universe {
@@ -23,7 +23,7 @@ impl Universe {
 
                 self.clusters.iter_mut()
                     .filter(|g| g.pos.0.gt(&(x + i)) )
-                    .for_each(|g| g.pos.0 += 1 );
+                    .for_each(|g| g.shift_by((1,0)) );
 
                 gap.push(x + i);
             });
@@ -44,26 +44,13 @@ impl Universe {
 
                 self.clusters.iter_mut()
                     .filter(|g| g.pos.1.gt(&(y + i)) )
-                    .for_each(|g| g.pos.1 += 1 );
+                    .for_each(|g| g.shift_by((0,1))) ;
 
                 gap.push(y + i);
             });
 
         self.length += gap.len();
         gap.into_iter().for_each(|idx| self.y_gap.insert(idx,0))
-    }
-
-    pub(crate) fn get_gap_x(&self) -> impl Iterator<Item = usize> + DoubleEndedIterator + '_ {
-        self.x_gap.iter()
-            .enumerate()
-            .filter(|&(_,count)| 0.eq(count) )
-            .map(|(i,_)| i)
-    }
-    pub(crate) fn get_gap_y(&self) -> impl Iterator<Item = usize> + DoubleEndedIterator + '_ {
-        self.y_gap.iter()
-            .enumerate()
-            .filter(|&(_,count)| 0.eq(count) )
-            .map(|(i,_)| i)
     }
 }
 

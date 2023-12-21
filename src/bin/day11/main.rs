@@ -2,8 +2,8 @@
 mod universe;
 mod galaxy;
 
-use std::str::FromStr;
 use crate::universe::Universe;
+use crate::galaxy::Galaxy;
 
 fn main() {
 
@@ -18,33 +18,43 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
         let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
-        assert_eq!( universe.get_gap_x().collect::<Vec<_>>(), [2,5,8usize]);
-        assert_eq!( universe.get_gap_y().collect::<Vec<_>>(), [3,7usize] );
         universe.expand_x();
         universe.expand_y();
-        assert_eq!( universe.get_gap_x().collect::<Vec<_>>(), [2,3,6,7,10,11usize] );
-        assert_eq!( universe.get_gap_y().collect::<Vec<_>>(), [3,4,8,9usize] );
-        println!("{:?}", universe);
-    }
-    #[test]
-    fn test_universe_gaps() {
-        let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
-        let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
-
         assert_eq!(
-            universe.get_gap_x().collect::<Vec<_>>(),
-            [2,5,8usize]
-        );
-        assert_eq!(
-            universe.get_gap_y().collect::<Vec<_>>(),
-            [3,7usize]
+            universe,
+            Universe {
+                width: 13,
+                length: 12,
+                clusters: vec![
+                    Galaxy { pos: (4, 0) }, Galaxy { pos: (9, 1) },
+                    Galaxy { pos: (0, 2) }, Galaxy { pos: (8, 5) },
+                    Galaxy { pos: (1, 6) }, Galaxy { pos: (12, 7) },
+                    Galaxy { pos: (9, 10) }, Galaxy { pos: (0, 11) },
+                    Galaxy { pos: (5, 11) }
+                ],
+                x_gap: vec![2, 1, 0, 0, 1, 1, 0, 0, 1, 2, 0, 0, 1],
+                y_gap: vec![1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 2]
+            }
         );
     }
     #[test]
     fn test_parse_universe() {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
-        let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
-        
-        println!("{:?}",universe);
+
+        assert_eq!(
+            input.parse::<Universe>().expect("Failed to parse Universe!"),
+            Universe {
+                width: 10,
+                length: 10,
+                clusters: vec![
+                    Galaxy { pos: (3, 0) }, Galaxy { pos: (7, 1) }, Galaxy { pos: (0, 2) },
+                    Galaxy { pos: (6, 4) }, Galaxy { pos: (1, 5) }, Galaxy { pos: (9, 6) },
+                    Galaxy { pos: (7, 8) }, Galaxy { pos: (0, 9) }, Galaxy { pos: (4, 9) }
+                ],
+                x_gap: vec![2, 1, 0, 1, 1, 0, 1, 2, 0, 1],
+                y_gap: vec![1, 1, 1, 0, 1, 1, 1, 0, 1, 2]
+            }
+        );
+
     }
 }
