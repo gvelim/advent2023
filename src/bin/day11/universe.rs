@@ -7,50 +7,39 @@ pub(crate) struct Universe {
     pub(crate) length: usize,
     pub(crate) clusters: Vec<Galaxy>,
     pub(crate) x_gap: Vec<usize>,
-    pub(crate) y_gap: Vec<usize>,
+    pub(crate) y_gap: Vec<usize>
 }
 
 impl Universe {
-    pub(crate) fn expand_x(&mut self) {
-        let mut gap = vec![];
+    pub(crate) fn expand(&self, multiplier: usize) -> Vec<Galaxy> {
+        let mut clusters = self.clusters.clone();
+        let expand = if multiplier > 1 { multiplier - 1 } else { 1 };
 
         self.x_gap.iter()
             .enumerate()
-            .filter(|&(_,count)| 0.eq(count) )
-            .map(|(x,_)| x)
+            .filter(|&(_, count)| 0.eq(count))
+            .map(|(x, _)| x)
             .enumerate()
-            .for_each(|(i,x)|{
-
-                self.clusters.iter_mut()
-                    .filter(|g| g.pos.0.gt(&(x + i)) )
-                    .for_each(|g| g.shift_by((1,0)) );
-
-                gap.push(x + i);
+            .for_each(|(i, x)| {
+                clusters.iter_mut()
+                    .filter(|g| g.pos.0.gt(&(x + i * expand)))
+                    .for_each(|g| {
+                        g.shift_by((expand, 0));
+                    });
             });
-
-        self.width += gap.len();
-        gap.into_iter().for_each(|idx| self.x_gap.insert(idx,0))
-    }
-
-    pub(crate) fn expand_y(&mut self) {
-        let mut gap = vec![];
 
         self.y_gap.iter()
             .enumerate()
-            .filter(|&(_,count)| 0.eq(count) )
-            .map(|(y,_)| y)
+            .filter(|&(_, count)| 0.eq(count))
+            .map(|(y, _)| y)
             .enumerate()
-            .for_each(|(i,y)|{
-
-                self.clusters.iter_mut()
-                    .filter(|g| g.pos.1.gt(&(y + i)) )
-                    .for_each(|g| g.shift_by((0,1))) ;
-
-                gap.push(y + i);
+            .for_each(|(i, y)| {
+                clusters.iter_mut()
+                    .filter(|g| g.pos.1.gt(&(y + i * expand)))
+                    .for_each(|g| g.shift_by((0, expand)));
             });
 
-        self.length += gap.len();
-        gap.into_iter().for_each(|idx| self.y_gap.insert(idx,0))
+        clusters
     }
 }
 
