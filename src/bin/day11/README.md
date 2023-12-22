@@ -81,4 +81,4 @@ With
 
 Expanding by Y dimension follows the same logic
 ### Distance
-The Manhattan Distance formula `|x2-x1| + |y2-y1` calculates the steps required to connect two points by walking in a matrix
+The Manhattan Distance formula `|x2-x1| + |y2-y1` calculates the steps required to connect two points in a matrix
