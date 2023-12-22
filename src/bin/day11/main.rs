@@ -41,7 +41,7 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
         let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
-        let clusters = universe.expand(10);
+        let clusters = universe.expand(100);
 
         let galaxies = clusters.clone();
 
@@ -61,7 +61,7 @@ mod test {
             .inspect(|m| println!(" = Sum: {m},"))
             .sum::<usize>();
 
-        assert_eq!(minsum,1030);
+        assert_eq!(minsum,8410);
     }
     #[test]
     fn test_galaxy_distance() {
