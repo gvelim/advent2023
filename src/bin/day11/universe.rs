@@ -13,7 +13,7 @@ pub(crate) struct Universe {
 impl Universe {
     pub(crate) fn expand(&self, multiplier: usize) -> Vec<Galaxy> {
         let mut clusters = self.clusters.clone();
-        let speed = if multiplier > 1 { multiplier - 1 } else { 1 };
+        let expand = if multiplier > 1 { multiplier - 1 } else { 1 };
 
         self.x_gap.iter()
             .enumerate()
@@ -22,9 +22,9 @@ impl Universe {
             .enumerate()
             .for_each(|(i, x)| {
                 clusters.iter_mut()
-                    .filter(|g| g.pos.0.gt(&(x + i * speed)))
+                    .filter(|g| g.pos.0.gt(&(x + i * expand)))
                     .for_each(|g| {
-                        g.shift_by((speed, 0));
+                        g.shift_by((expand, 0));
                     });
             });
 
@@ -35,8 +35,8 @@ impl Universe {
             .enumerate()
             .for_each(|(i, y)| {
                 clusters.iter_mut()
-                    .filter(|g| g.pos.1.gt(&(y + i * speed)))
-                    .for_each(|g| g.shift_by((0, speed)));
+                    .filter(|g| g.pos.1.gt(&(y + i * expand)))
+                    .for_each(|g| g.shift_by((0, expand)));
             });
 
         clusters

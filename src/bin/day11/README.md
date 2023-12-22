@@ -56,15 +56,29 @@ Sum of sortest paths = 82000210
 ## Approach
 Overall we avoid taking a matrix approach emulating the input as this will result in very large arrays with mostly zeros. Instead, we use a simple vector of galaxies to perform the (a) expansion and (b) distance calculations
 ### Gap Identification
-* We keep two arrays `x_gap[]` and `y_gap[]` with index positions counting number of galaxies. Their initial conditions are:
-  * Length equal to (a) number of lines and (b) a line's length for Y and X gaps respectively
+* We keep two arrays `x_gap[]` and `y_gap[]` with their index positions holding the counts of galaxy occurrences. Their initial conditions are:
+  * Length equal to (a) number of lines and (b) a line's length for Y and X gap array's respectively
   * initialised with zero as if both arrays contain only gaps
-* For every galaxy's (x,y) coordinates we parse, we increment `y_gap[y]`, `x_gap[x]` by one 
-### Universe Expansion
-1. 
-```text
-```
-### Distance
-```text
-```
+* For every galaxy's (x,y) we parse, we increment `y_gap[y]`, `x_gap[x]` by one
 
+After parsing is completed e.g the Y gaps are found for `y` values where `y_gap[y] == 0`
+
+### Universe Expansion
+The important consideration here is that with each expanding gap, all subsequent gaps and galaxies are moved out by **expansion multiples**. As a result
+1. 1st gap pushes all subsequent galaxies and gaps by `expand`
+2. 2nd gap pushes all subsequent galaxies and gaps by `expand`*`2`
+3. 3rd gap pushes all subsequent galaxies and gaps by `expand`*`3`
+4. etc
+
+With the above in mind, calculating the new position per galaxy we run the following logic
+1. For each gap identified on X dimension and with `gap order`
+   1. For each galaxy with X > `expand` * (`gap order` - 1)
+      1. Increment Galaxy's X by (`expand` * `gap order`)
+
+With
+* `expand`, the amount we expand the gap i.e. double is gap+1, tenfold is gap+9
+* `gap order`, the gap's sequence order i.e. `1` if first, `2` if second, etc
+
+Expanding by Y dimension follows the same logic
+### Distance
+The Manhattan Distance formula `|x2-x1| + |y2-y1` calculates the steps required to connect two points by walking in a matrix
