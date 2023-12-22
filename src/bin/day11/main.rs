@@ -1,5 +1,5 @@
 #![feature(iter_collect_into)]
-#![feature(isqrt)]
+#![feature(slice_group_by)]
 
 mod universe;
 mod galaxy;
@@ -94,6 +94,27 @@ mod test {
         );
     }
     #[test]
+    fn test_parse_gaps<'a>() {
+        let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
+        let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
+        let mut y_gaps = Vec::new();
+        let mut x_gaps = Vec::new();
+
+        universe
+            // .expand(2)
+            .clusters
+            .iter()
+            .for_each(|g| {
+                y_gaps.push(g.pos.1);
+                x_gaps.push(g.pos.0);
+            });
+        x_gaps.sort();
+
+        println!("{:?} -> {:?}", &x_gaps, Universe::derive_gaps(&x_gaps).collect::<Vec<_>>());
+        println!("{:?} -> {:?}", &y_gaps, Universe::derive_gaps(&y_gaps).collect::<Vec<_>>());
+
+    }
+    #[test]
     fn test_parse_universe() {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
 
@@ -107,8 +128,8 @@ mod test {
                     Galaxy { pos: (6, 4) }, Galaxy { pos: (1, 5) }, Galaxy { pos: (9, 6) },
                     Galaxy { pos: (7, 8) }, Galaxy { pos: (0, 9) }, Galaxy { pos: (4, 9) }
                 ],
-                x_gap: vec![2, 1, 0, 1, 1, 0, 1, 2, 0, 1],
-                y_gap: vec![1, 1, 1, 0, 1, 1, 1, 0, 1, 2]
+                x_gap: vec![2..=2, 5..=5, 8..=8],
+                y_gap: vec![3..=3, 7..=7]
             }
         );
 

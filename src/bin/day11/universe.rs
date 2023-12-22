@@ -1,3 +1,4 @@
+use std::ops::RangeInclusive;
 use std::str::FromStr;
 use crate::galaxy::Galaxy;
 
@@ -6,8 +7,8 @@ pub(crate) struct Universe {
     pub(crate) width: usize,
     pub(crate) length: usize,
     pub(crate) clusters: Vec<Galaxy>,
-    pub(crate) x_gap: Vec<usize>,
-    pub(crate) y_gap: Vec<usize>
+    pub(crate) x_gap: Vec<RangeInclusive<usize>>,
+    pub(crate) y_gap: Vec<RangeInclusive<usize>>
 }
 
 impl Universe {
@@ -17,12 +18,9 @@ impl Universe {
 
         self.x_gap.iter()
             .enumerate()
-            .filter(|&(_, count)| 0.eq(count))
-            .map(|(x, _)| x)
-            .enumerate()
             .for_each(|(i, x)| {
                 clusters.iter_mut()
-                    .filter(|g| g.pos.0.gt(&(x + i * expand)))
+                    .filter(|g| g.pos.0.gt(&(x.end() + i * expand)))
                     .for_each(|g| {
                         g.shift_by((expand, 0));
                     });
@@ -30,16 +28,27 @@ impl Universe {
 
         self.y_gap.iter()
             .enumerate()
-            .filter(|&(_, count)| 0.eq(count))
-            .map(|(y, _)| y)
-            .enumerate()
             .for_each(|(i, y)| {
                 clusters.iter_mut()
-                    .filter(|g| g.pos.1.gt(&(y + i * expand)))
-                    .for_each(|g| g.shift_by((0, expand)));
+                    .filter(|g| g.pos.1.gt(&(y.end() + i * expand)))
+                    .for_each(|g|
+                        g.shift_by((0, expand))
+                    );
             });
 
         clusters
+    }
+    pub(crate) fn derive_gaps(seq: &Vec<usize>) -> impl Iterator<Item=RangeInclusive<usize>> + '_ {
+        seq.windows(2)
+            .filter_map(|pair| {
+                let [a,b] = pair else { unreachable!() };
+                let gap = b - a;
+                if gap > 1 {
+                    Some(b - gap + 1 ..= *b - 1)
+                } else {
+                    None
+                }
+            })
     }
 }
 
@@ -51,8 +60,8 @@ impl FromStr for Universe {
 
         let width = lines.peek().unwrap().len();
         let length = input.len()/width;
-        let mut x_gap = vec![0; width];
-        let mut y_gap = vec![0; length];
+        let mut x_gap = vec![];
+        let mut y_gap = vec![];
         let mut clusters = vec![];
 
         lines
@@ -60,16 +69,23 @@ impl FromStr for Universe {
             .for_each(|(y, line)| {
                 line.chars()
                     .enumerate()
-                    .inspect(|&(x, c)| x_gap[x] += '#'.eq(&c) as usize)
+                    // .inspect(|&(x, c)| x_gap[x] += '#'.eq(&c) as usize)
                     .filter(|(_, c)| '#'.eq(c))
-                    .inspect(|_| y_gap[y] += 1)
-                    .map(|(x, _)| Galaxy { pos: (x, y) })
+                    // .inspect(|_| y_gap[y] += 1)
+                    .map(|(x, _)| {
+                        x_gap.push(x);
+                        y_gap.push(y);
+                        Galaxy { pos: (x, y) }
+                    })
                     .collect_into(&mut clusters);
             });
+        x_gap.sort();
 
         Ok( Universe {
             width, length,
-            clusters, x_gap, y_gap
+            clusters,
+            x_gap: Universe::derive_gaps(&x_gap).collect::<Vec<RangeInclusive<usize>>>(),
+            y_gap: Universe::derive_gaps(&y_gap).collect::<Vec<RangeInclusive<usize>>>()
         })
     }
 }
