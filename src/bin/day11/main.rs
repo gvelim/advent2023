@@ -42,14 +42,12 @@ mod test {
 
         let clusters = universe.expand(100);
 
-        let galaxies = clusters.clone();
-
         let minsum = clusters
             .iter()
             .enumerate()
             .map(|(i,from)|{
                 print!("{:?} -> ",from);
-                galaxies
+                clusters
                     .iter()
                     .skip(i+1)
                     .inspect(|m| print!("{:?}:",m.pos))
