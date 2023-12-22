@@ -41,7 +41,7 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
         let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
-        let clusters = universe.expand(2);
+        let clusters = universe.expand(10);
 
         let galaxies = clusters.clone();
 
@@ -61,7 +61,7 @@ mod test {
             .inspect(|m| println!(" = Sum: {m},"))
             .sum::<usize>();
 
-        assert_eq!(minsum,374);
+        assert_eq!(minsum,1030);
     }
     #[test]
     fn test_galaxy_distance() {
@@ -97,11 +97,11 @@ mod test {
     fn test_parse_gaps<'a>() {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
         let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
+
         let mut y_gaps = Vec::new();
         let mut x_gaps = Vec::new();
 
         universe
-            // .expand(2)
             .clusters
             .iter()
             .for_each(|g| {
@@ -110,9 +110,14 @@ mod test {
             });
         x_gaps.sort();
 
-        println!("{:?} -> {:?}", &x_gaps, Universe::derive_gaps(&x_gaps).collect::<Vec<_>>());
-        println!("{:?} -> {:?}", &y_gaps, Universe::derive_gaps(&y_gaps).collect::<Vec<_>>());
-
+        assert_eq!(
+            Universe::extract_gaps(&x_gaps).collect::<Vec<_>>(),
+            vec![2..=2, 5..=5, 8..=8]
+        );
+        assert_eq!(
+            Universe::extract_gaps(&y_gaps).collect::<Vec<_>>(),
+            vec![3..=3, 7..=7]
+        );
     }
     #[test]
     fn test_parse_universe() {
@@ -121,15 +126,11 @@ mod test {
         assert_eq!(
             input.parse::<Universe>().expect("Failed to parse Universe!"),
             Universe {
-                width: 10,
-                length: 10,
                 clusters: vec![
                     Galaxy { pos: (3, 0) }, Galaxy { pos: (7, 1) }, Galaxy { pos: (0, 2) },
                     Galaxy { pos: (6, 4) }, Galaxy { pos: (1, 5) }, Galaxy { pos: (9, 6) },
                     Galaxy { pos: (7, 8) }, Galaxy { pos: (0, 9) }, Galaxy { pos: (4, 9) }
-                ],
-                x_gap: vec![2..=2, 5..=5, 8..=8],
-                y_gap: vec![3..=3, 7..=7]
+                ]
             }
         );
 
