@@ -91,7 +91,7 @@ mod test {
         );
     }
     #[test]
-    fn test_parse_gaps<'a>() {
+    fn test_parse_gaps() {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
         let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
@@ -108,12 +108,12 @@ mod test {
         x_gaps.sort();
 
         assert_eq!(
-            Universe::extract_gaps(&x_gaps).collect::<Vec<_>>(),
-            vec![2..=2, 5..=5, 8..=8]
-        );
-        assert_eq!(
             Universe::extract_gaps(&y_gaps).collect::<Vec<_>>(),
             vec![3..=3, 7..=7]
+        );
+        assert_eq!(
+            Universe::extract_gaps(&x_gaps).collect::<Vec<_>>(),
+            vec![2..=2, 5..=5, 8..=8]
         );
     }
     #[test]
