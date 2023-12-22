@@ -24,15 +24,47 @@ Due to something involving gravitational effects, **only some space expands**. I
 
 Expand the universe, then find the length of the shortest path between every pair of galaxies. What is the sum of these lengths?
 ```
+Galaxy { pos: (4, 0) } -> (9, 1):6,(0, 2):6,(8, 5):9,(1, 6):9,(12, 7):15,(9, 10):15,(0, 11):15,(5, 11):12, = Sum: 87,
+Galaxy { pos: (9, 1) } -> (0, 2):10,(8, 5):5,(1, 6):13,(12, 7):9,(9, 10):9,(0, 11):19,(5, 11):14, = Sum: 79,
+Galaxy { pos: (0, 2) } -> (8, 5):11,(1, 6):5,(12, 7):17,(9, 10):17,(0, 11):9,(5, 11):14, = Sum: 73,
+Galaxy { pos: (8, 5) } -> (1, 6):8,(12, 7):6,(9, 10):6,(0, 11):14,(5, 11):9, = Sum: 43,
+Galaxy { pos: (1, 6) } -> (12, 7):12,(9, 10):12,(0, 11):6,(5, 11):9, = Sum: 39,
+Galaxy { pos: (12, 7) } -> (9, 10):6,(0, 11):16,(5, 11):11, = Sum: 33,
+Galaxy { pos: (9, 10) } -> (0, 11):10,(5, 11):5, = Sum: 15,
+Galaxy { pos: (0, 11) } -> (5, 11):5, = Sum: 5,
+Galaxy { pos: (5, 11) } ->  = Sum: 0,
+
+Sum of sortest paths = 374
 ```
 ## Part 2
+Now, instead of the expansion you did before, make each empty row or column one million times larger. That is, each empty row should be replaced with 1000000 empty rows, and each empty column should be replaced with 1000000 empty columns.
+
+Starting with the same initial image, expand the universe according to these new rules, then find the length of the shortest path between every pair of galaxies. What is the sum of these lengths?
 ```
+Galaxy { pos: (1000002, 0) } -> (2000005, 1):1000004,(0, 2):1000004,(2000004, 1000003):2000005,(1, 1000004):2000005,(3000006, 1000005):3000009,(2000005, 2000006):3000009,(0, 2000007):3000009,(1000003, 2000007):2000008, = Sum: 17000053,
+Galaxy { pos: (2000005, 1) } -> (0, 2):2000006,(2000004, 1000003):1000003,(1, 1000004):3000007,(3000006, 1000005):2000005,(2000005, 2000006):2000005,(0, 2000007):4000011,(1000003, 2000007):3000008, = Sum: 17000045,
+Galaxy { pos: (0, 2) } -> (2000004, 1000003):3000005,(1, 1000004):1000003,(3000006, 1000005):4000009,(2000005, 2000006):4000009,(0, 2000007):2000005,(1000003, 2000007):3000008, = Sum: 17000039,
+Galaxy { pos: (2000004, 1000003) } -> (1, 1000004):2000004,(3000006, 1000005):1000004,(2000005, 2000006):1000004,(0, 2000007):3000008,(1000003, 2000007):2000005, = Sum: 9000025,
+Galaxy { pos: (1, 1000004) } -> (3000006, 1000005):3000006,(2000005, 2000006):3000006,(0, 2000007):1000004,(1000003, 2000007):2000005, = Sum: 9000021,
+Galaxy { pos: (3000006, 1000005) } -> (2000005, 2000006):2000002,(0, 2000007):4000008,(1000003, 2000007):3000005, = Sum: 9000015,
+Galaxy { pos: (2000005, 2000006) } -> (0, 2000007):2000006,(1000003, 2000007):1000003, = Sum: 3000009,
+Galaxy { pos: (0, 2000007) } -> (1000003, 2000007):1000003, = Sum: 1000003,
+Galaxy { pos: (1000003, 2000007) } ->  = Sum: 0,
+
+Sum of sortest paths = 82000210
 ```
 ## Approach
-### Part 1
-```rust
+Overall we avoid taking a matrix approach emulating the input as this will result in very large arrays with mostly zeros. Instead, we use a simple vector of galaxies to perform the (a) expansion and (b) distance calculations
+### Gap Identification
+* We keep two arrays `x_gap[]` and `y_gap[]` with index positions counting number of galaxies. Their initial conditions are:
+  * Length equal to (a) number of lines and (b) a line's length for Y and X gaps respectively
+  * initialised with zero as if both arrays contain only gaps
+* For every galaxy's (x,y) coordinates we parse, we increment `y_gap[y]`, `x_gap[x]` by one 
+### Universe Expansion
+1. 
+```text
 ```
-### Part 2
-```
+### Distance
+```text
 ```
 
