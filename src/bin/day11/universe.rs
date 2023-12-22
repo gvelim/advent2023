@@ -7,12 +7,13 @@ pub(crate) struct Universe {
     pub(crate) length: usize,
     pub(crate) clusters: Vec<Galaxy>,
     pub(crate) x_gap: Vec<usize>,
-    pub(crate) y_gap: Vec<usize>,
+    pub(crate) y_gap: Vec<usize>
 }
 
 impl Universe {
-    pub(crate) fn expand_x(&mut self) {
+    pub(crate) fn expand_x(&mut self, multiplier:usize) {
         let mut gap = vec![];
+        let speed = if multiplier > 1 { multiplier - 1  } else { 1 };
 
         self.x_gap.iter()
             .enumerate()
@@ -22,8 +23,8 @@ impl Universe {
             .for_each(|(i,x)|{
 
                 self.clusters.iter_mut()
-                    .filter(|g| g.pos.0.gt(&(x + i)) )
-                    .for_each(|g| g.shift_by((1,0)) );
+                    .filter(|g| g.pos.0.gt(&(x + i*speed)) )
+                    .for_each(|g| g.shift_by((speed,0)) );
 
                 gap.push(x + i);
             });
@@ -32,8 +33,9 @@ impl Universe {
         gap.into_iter().for_each(|idx| self.x_gap.insert(idx,0))
     }
 
-    pub(crate) fn expand_y(&mut self) {
+    pub(crate) fn expand_y(&mut self, multiplier:usize) {
         let mut gap = vec![];
+        let speed = if multiplier > 1 { multiplier - 1  } else { 1 };
 
         self.y_gap.iter()
             .enumerate()
@@ -43,8 +45,8 @@ impl Universe {
             .for_each(|(i,y)|{
 
                 self.clusters.iter_mut()
-                    .filter(|g| g.pos.1.gt(&(y + i)) )
-                    .for_each(|g| g.shift_by((0,1))) ;
+                    .filter(|g| g.pos.1.gt(&(y + i*speed)) )
+                    .for_each(|g| g.shift_by((0,speed))) ;
 
                 gap.push(y + i);
             });

@@ -4,32 +4,36 @@
 mod universe;
 mod galaxy;
 
+use rayon::prelude::*;
 use crate::universe::Universe;
 use crate::galaxy::Galaxy;
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day11/input.txt").expect("Ops!");
-    let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
-    universe.expand_x();
-    universe.expand_y();
+    let run_part = |multiplier:usize| -> usize {
+        let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
-    let galaxies = universe.clusters.clone();
+        universe.expand_x(multiplier);
+        universe.expand_y(multiplier);
 
-    let minsum = universe.clusters
-        .iter()
-        .enumerate()
-        .map(|(i,from)|{
-            galaxies
-                .iter()
-                .skip(i+1)
-                .map(|to| from.distance_to(to))
-                .sum::<usize>()
-        })
-        .sum::<usize>();
+        let galaxies = universe.clusters.clone();
 
-    println!("Part 1 - Sum of shortest paths: {}",minsum);
+        universe.clusters
+            .par_iter()
+            .enumerate()
+            .map(|(i, from)| {
+                galaxies
+                    .iter()
+                    .skip(i + 1)
+                    .map(|to| from.distance_to(to))
+                    .sum::<usize>()
+            })
+            .sum::<usize>()
+    };
 
+    println!("Part 1 - Sum of shortest paths: {}", run_part(2));
+    println!("Part 2 - Sum of shortest paths: {}", run_part(1_000_000));
 }
 
 #[cfg(test)]
@@ -41,8 +45,8 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
         let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
-        universe.expand_x();
-        universe.expand_y();
+        universe.expand_x(2);
+        universe.expand_y(2);
 
         let galaxies = universe.clusters.clone();
 
@@ -69,8 +73,8 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
         let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
-        universe.expand_x();
-        universe.expand_y();
+        universe.expand_x(2);
+        universe.expand_y(2);
         let cluster = universe.clusters;
 
         assert_eq!(9, cluster[4].distance_to(&cluster[8]));
@@ -83,8 +87,9 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
         let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
-        universe.expand_x();
-        universe.expand_y();
+        println!("{:?}",universe);
+        universe.expand_x(2);
+        universe.expand_y(2);
         assert_eq!(
             universe,
             Universe {
