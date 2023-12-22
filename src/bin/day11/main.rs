@@ -12,13 +12,12 @@ fn main() {
 
     let run_part = |universe: &Universe, multiplier:usize| -> usize {
         let cluster = universe.expand(multiplier);
-        let galaxies = cluster.clone();
 
         cluster
             .iter()
             .enumerate()
             .map(|(i, from)| {
-                galaxies
+                cluster
                     .iter()
                     .skip(i + 1)
                     .map(|to| from.distance_to(to))
