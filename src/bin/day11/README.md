@@ -78,23 +78,37 @@ pub(crate) fn extract_gaps(seq: &Vec<usize>) -> impl Iterator<Item=RangeInclusiv
 ```
 ### Universe Expansion
 The important consideration here is that with each expanding gap, all subsequent gaps and galaxies are moved out by **expansion multiples**. As a result
-1. 1st gap pushes all subsequent galaxies and gaps by `expand`
+1. 1st gap pushes all subsequent galaxies and gaps by `expand`*`1`
 2. 2nd gap pushes all subsequent galaxies and gaps by `expand`*`2`
 3. 3rd gap pushes all subsequent galaxies and gaps by `expand`*`3`
 4. etc
 
 With the above in mind, calculating the new position per galaxy we run the following logic
-1. For each `gap range` identified on `X` dimension and with `gap order`
-    1. get range's `gap length`
-    2. For each galaxy with `X` > `gap range end` + `expand` * (`gap order` - 1)
-         1. Increment Galaxy's X by (`expand` * `gap length`)
-    3. increase `gap order` by `gap length`
+1. For each `gap` identified on X dimension and with `gap order`
+   1. For every value in the `range`
+      1. For each galaxy with `X` > `expand` * (`gap order` - 1)
+         1. Increment Galaxy's X by (`expand` * `gap order`)
 
 With
 * `gap range`, a region of X or Y values with no galaxies 
 * `expand`, the amount we expand the gap i.e. double is `+1`, tenfold is `+9`
 * `gap order`, the gap's sequence order i.e. `1` if first, `2` if second, etc
 
+The above logic is implemented by the below code
+```rust
+let i = 0;
+Universe::extract_gaps(&y_gaps)
+    .for_each(|y_gap| {
+        let len = y_gap.end() - y_gap.start() + 1;
+        self.clusters
+            .iter_mut()
+            .filter(|g| g.pos.1 > y_gap.end() + i * expand)
+            .for_each(|g|
+                g.shift_by((0, expand * len))
+            );
+        i += len;
+    });
+```
 Expanding by Y dimension follows the same logic
-### Distance
-The Manhattan Distance formula `|x2-x1| + |y2-y1` calculates the steps required to connect two points in a matrix
+### Distance between galaxies
+The Manhattan Distance formula `|x2-x1| + |y2-y1|` calculates the steps required to connect two points in a matrix

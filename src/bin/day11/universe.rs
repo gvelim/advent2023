@@ -43,15 +43,15 @@ impl Universe {
                     );
                 i += len;
             });
+        
         self
     }
+
     pub(crate) fn extract_gaps(seq: &Vec<usize>) -> impl Iterator<Item=RangeInclusive<usize>> + '_ {
         seq.windows(2)
             .filter_map(|pair| {
-                let [a,b] = pair else { unreachable!() };
-                let gap = b - a;
-                if gap > 1 {
-                    Some(b - gap + 1 ..= *b - 1)
+                if pair[1] - pair[0] > 1 {
+                    Some(pair[0] + 1 ..= pair[1] - 1)
                 } else {
                     None
                 }
