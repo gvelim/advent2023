@@ -6,17 +6,13 @@ mod galaxy;
 use crate::universe::Universe;
 
 fn main() {
-    let input = std::fs::read_to_string("src/bin/day11/input.txt").expect("Ops!");
-    let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
-
-    let run_part = |universe: &Universe, multiplier:usize| -> usize {
-        let cluster = universe.expand(multiplier).clusters;
-
-        cluster
+    let run_part = |universe: &mut Universe, multiplier:usize| -> usize {
+        universe.expand(multiplier);
+        universe.clusters
             .iter()
             .enumerate()
             .map(|(i, from)| {
-                cluster
+                universe.clusters
                     .iter()
                     .skip(i + 1)
                     .map(|to| from.distance_to(to))
@@ -24,9 +20,15 @@ fn main() {
             })
             .sum::<usize>()
     };
+    let input = std::fs::read_to_string("src/bin/day11/input.txt").expect("Ops!");
 
-    println!("Part 1 - Sum of shortest paths: {}", run_part(&universe,2));
-    println!("Part 2 - Sum of shortest paths: {}", run_part(&universe, 1_000_000));
+    let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
+    let t = std::time::Instant::now();
+    println!("Part 1 - Sum of shortest paths: {} - {:?}", run_part(&mut universe,2), t.elapsed());
+
+    let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
+    let t = std::time::Instant::now();
+    println!("Part 2 - Sum of shortest paths: {} - {:?}", run_part(&mut universe, 1_000_000), t.elapsed());
 }
 
 #[cfg(test)]
@@ -37,16 +39,16 @@ mod test {
     #[test]
     fn test_sortest_path() {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
-        let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
+        let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
-        let clusters = universe.expand(100).clusters;
+        universe.expand(100);
 
-        let minsum = clusters
+        let minsum = universe.clusters
             .iter()
             .enumerate()
             .map(|(i,from)|{
                 print!("{:?} -> ",from);
-                clusters
+                universe.clusters
                     .iter()
                     .skip(i+1)
                     .inspect(|m| print!("{:?}:",m.pos))
@@ -62,9 +64,9 @@ mod test {
     #[test]
     fn test_galaxy_distance() {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
-        let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
+        let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
-        let cluster = universe.expand(2).clusters;
+        let cluster = &universe.expand(2).clusters;
 
         assert_eq!(9, cluster[4].distance_to(&cluster[8]));
         assert_eq!(15, cluster[0].distance_to(&cluster[6]));
@@ -74,19 +76,20 @@ mod test {
     #[test]
     fn test_expand_universe() {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
-        let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
+        let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
-        println!("{:?}",universe.clusters);
-
+        println!("{:?}",universe);
         assert_eq!(
-            universe.expand(2).clusters,
-            vec![
-                Galaxy { pos: (4, 0) }, Galaxy { pos: (9, 1) },
-                Galaxy { pos: (0, 2) }, Galaxy { pos: (8, 5) },
-                Galaxy { pos: (1, 6) }, Galaxy { pos: (12, 7) },
-                Galaxy { pos: (9, 10) }, Galaxy { pos: (0, 11) },
-                Galaxy { pos: (5, 11) }
-            ]
+            universe.expand(2),
+            &Universe {
+                clusters: vec![
+                    Galaxy { pos: (4, 0) }, Galaxy { pos: (9, 1) },
+                    Galaxy { pos: (0, 2) }, Galaxy { pos: (8, 5) },
+                    Galaxy { pos: (1, 6) }, Galaxy { pos: (12, 7) },
+                    Galaxy { pos: (9, 10) }, Galaxy { pos: (0, 11) },
+                    Galaxy { pos: (5, 11) }
+                ]
+            }
         );
     }
     #[test]
