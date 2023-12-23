@@ -10,7 +10,7 @@ fn main() {
     let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
     let run_part = |universe: &Universe, multiplier:usize| -> usize {
-        let cluster = universe.expand(multiplier);
+        let cluster = universe.expand(multiplier).clusters;
 
         cluster
             .iter()
@@ -39,7 +39,7 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
         let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
-        let clusters = universe.expand(100);
+        let clusters = universe.expand(100).clusters;
 
         let minsum = clusters
             .iter()
@@ -64,7 +64,7 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
         let universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 
-        let cluster = universe.expand(2);
+        let cluster = universe.expand(2).clusters;
 
         assert_eq!(9, cluster[4].distance_to(&cluster[8]));
         assert_eq!(15, cluster[0].distance_to(&cluster[6]));
@@ -79,7 +79,7 @@ mod test {
         println!("{:?}",universe.clusters);
 
         assert_eq!(
-            universe.expand(2),
+            universe.expand(2).clusters,
             vec![
                 Galaxy { pos: (4, 0) }, Galaxy { pos: (9, 1) },
                 Galaxy { pos: (0, 2) }, Galaxy { pos: (8, 5) },

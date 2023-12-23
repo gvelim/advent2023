@@ -8,7 +8,7 @@ pub(crate) struct Universe {
 }
 
 impl Universe {
-    pub(crate) fn expand(&self, multiplier: usize) -> Vec<Galaxy> {
+    pub(crate) fn expand(&self, multiplier: usize) -> Universe {
         let mut clusters = self.clusters.clone();
         let expand = if multiplier > 1 { multiplier - 1 } else { 1 };
 
@@ -43,7 +43,7 @@ impl Universe {
                     );
             });
 
-        clusters
+        Universe{ clusters }
     }
     pub(crate) fn extract_gaps(seq: &Vec<usize>) -> impl Iterator<Item=RangeInclusive<usize>> + '_ {
         seq.windows(2)
