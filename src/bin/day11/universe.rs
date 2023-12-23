@@ -21,30 +21,26 @@ impl Universe {
 
         x_gap.sort();
 
-        let mut i = 0;
         Universe::extract_gaps(&x_gap)
-            .for_each(|xr| {
-                xr.for_each(|x| {
-                    clusters.iter_mut()
-                        .filter(|g| g.pos.0.gt(&(x + i * expand)))
-                        .for_each(|g| {
-                            g.shift_by((expand, 0));
-                        });
-                    i += 1;
-                })
+            .flatten()
+            .enumerate()
+            .for_each(|(i, x)| {
+                clusters.iter_mut()
+                    .filter(|g| g.pos.0.gt(&(x + i * expand)))
+                    .for_each(|g| {
+                        g.shift_by((expand, 0));
+                    });
             });
 
-        i = 0;
         Universe::extract_gaps(&y_gap)
-            .for_each(|yr| {
-                yr.for_each(|y| {
-                    clusters.iter_mut()
-                        .filter(|g| g.pos.1.gt(&(y + i * expand)))
-                        .for_each(|g|
-                            g.shift_by((0, expand))
-                        );
-                    i += 1;
-                })
+            .flatten()
+            .enumerate()
+            .for_each(|(i,y)| {
+                clusters.iter_mut()
+                    .filter(|g| g.pos.1.gt(&(y + i * expand)))
+                    .for_each(|g|
+                        g.shift_by((0, expand))
+                    );
             });
 
         clusters
