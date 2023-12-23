@@ -84,14 +84,15 @@ The important consideration here is that with each expanding gap, all subsequent
 4. etc
 
 With the above in mind, calculating the new position per galaxy we run the following logic
-1. For each `gap` identified on X dimension and with `gap order`
-   1. For every value in the `range`
-      1. For each galaxy with X > `expand` * (`gap order` - 1)
-         1. Increment Galaxy's X by (`expand` * `gap order`)
+1. For each `gap range` identified on `X` dimension and with `gap order`
+    1. get range's `gap length`
+    2. For each galaxy with `X` > `expand` * (`gap order` - 1)
+         1. Increment Galaxy's X by (`expand` * `gap length`)
+    3. increase `gap order` by `gap length`
 
 With
-* `range`, X or Y values representing a region with no galaxies 
-* `expand`, the amount we expand the gap i.e. double is gap+1, tenfold is gap+9
+* `gap range`, a region of X or Y values with no galaxies 
+* `expand`, the amount we expand the gap i.e. double is `+1`, tenfold is `+9`
 * `gap order`, the gap's sequence order i.e. `1` if first, `2` if second, etc
 
 Expanding by Y dimension follows the same logic
