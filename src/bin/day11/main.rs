@@ -1,5 +1,4 @@
 #![feature(iter_collect_into)]
-#![feature(slice_group_by)]
 
 mod universe;
 mod galaxy;

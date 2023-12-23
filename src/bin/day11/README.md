@@ -56,13 +56,26 @@ Sum of sortest paths = 82000210
 ## Approach
 Overall we avoid taking a matrix approach emulating the input as this will result in very large arrays with mostly zeros. Instead, we use a simple vector of galaxies to perform the (a) expansion and (b) distance calculations
 ### Gap Identification
-* We keep two arrays `x_gap[]` and `y_gap[]` with their index positions holding the counts of galaxy occurrences. Their initial conditions are:
-  * Length equal to (a) number of lines and (b) a line's length for Y and X gap array's respectively
-  * initialised with zero as if both arrays contain only gaps
-* For every galaxy's (x,y) we parse, we increment `y_gap[y]`, `x_gap[x]` by one
+We know gaps can grow very large hence use of `Range`, like `(2..=3)`, is an economical way to represent & process gaps.
+Therefore, gaps can be extracted by 
+1. Collecting all `X` values into a sorted array. Similarly, for `Y` coordinates
+2. Check the **distance delta** of each `X` **pair** in the array and if greater than `1` then save it as range
 
-After parsing is completed e.g the Y gaps are found for `y` values where `y_gap[y] == 0`
-
+The below function performs step 2 by providing an Iterator over the array of X or Y values.
+```rust
+pub(crate) fn extract_gaps(seq: &Vec<usize>) -> impl Iterator<Item=RangeInclusive<usize>> + '_ {
+    seq.windows(2)
+        .filter_map(|pair| {
+            let [a,b] = pair else { unreachable!() };
+            let gap = b - a;
+            if gap > 1 {
+                Some(b - gap + 1 ..= *b - 1)
+            } else {
+                None
+            }
+        })
+}
+```
 ### Universe Expansion
 The important consideration here is that with each expanding gap, all subsequent gaps and galaxies are moved out by **expansion multiples**. As a result
 1. 1st gap pushes all subsequent galaxies and gaps by `expand`
@@ -71,11 +84,13 @@ The important consideration here is that with each expanding gap, all subsequent
 4. etc
 
 With the above in mind, calculating the new position per galaxy we run the following logic
-1. For each gap identified on X dimension and with `gap order`
-   1. For each galaxy with X > `expand` * (`gap order` - 1)
-      1. Increment Galaxy's X by (`expand` * `gap order`)
+1. For each `gap` identified on X dimension and with `gap order`
+   1. For every value in the `range`
+      1. For each galaxy with X > `expand` * (`gap order` - 1)
+         1. Increment Galaxy's X by (`expand` * `gap order`)
 
 With
+* `range`, X or Y values representing a region with no galaxies 
 * `expand`, the amount we expand the gap i.e. double is gap+1, tenfold is gap+9
 * `gap order`, the gap's sequence order i.e. `1` if first, `2` if second, etc
 
