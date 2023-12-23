@@ -1,13 +1,10 @@
+use std::ops::RangeInclusive;
 use std::str::FromStr;
 use crate::galaxy::Galaxy;
 
 #[derive(Debug,PartialEq)]
 pub(crate) struct Universe {
-    pub(crate) width: usize,
-    pub(crate) length: usize,
-    pub(crate) clusters: Vec<Galaxy>,
-    pub(crate) x_gap: Vec<usize>,
-    pub(crate) y_gap: Vec<usize>
+    pub(crate) clusters: Vec<Galaxy>
 }
 
 impl Universe {
@@ -15,31 +12,54 @@ impl Universe {
         let mut clusters = self.clusters.clone();
         let expand = if multiplier > 1 { multiplier - 1 } else { 1 };
 
-        self.x_gap.iter()
-            .enumerate()
-            .filter(|&(_, count)| 0.eq(count))
-            .map(|(x, _)| x)
-            .enumerate()
-            .for_each(|(i, x)| {
-                clusters.iter_mut()
-                    .filter(|g| g.pos.0.gt(&(x + i * expand)))
-                    .for_each(|g| {
-                        g.shift_by((expand, 0));
-                    });
+        let (mut x_gap, mut y_gap) = (vec![], vec![]);
+
+        clusters.iter().for_each(|g| {
+            x_gap.push(g.pos.0);
+            y_gap.push(g.pos.1);
+        });
+
+        x_gap.sort();
+
+        let mut i = 0;
+        Universe::extract_gaps(&x_gap)
+            .for_each(|xr| {
+                xr.for_each(|x| {
+                    clusters.iter_mut()
+                        .filter(|g| g.pos.0.gt(&(x + i * expand)))
+                        .for_each(|g| {
+                            g.shift_by((expand, 0));
+                        });
+                    i += 1;
+                })
             });
 
-        self.y_gap.iter()
-            .enumerate()
-            .filter(|&(_, count)| 0.eq(count))
-            .map(|(y, _)| y)
-            .enumerate()
-            .for_each(|(i, y)| {
-                clusters.iter_mut()
-                    .filter(|g| g.pos.1.gt(&(y + i * expand)))
-                    .for_each(|g| g.shift_by((0, expand)));
+        i = 0;
+        Universe::extract_gaps(&y_gap)
+            .for_each(|yr| {
+                yr.for_each(|y| {
+                    clusters.iter_mut()
+                        .filter(|g| g.pos.1.gt(&(y + i * expand)))
+                        .for_each(|g|
+                            g.shift_by((0, expand))
+                        );
+                    i += 1;
+                })
             });
 
         clusters
+    }
+    pub(crate) fn extract_gaps(seq: &Vec<usize>) -> impl Iterator<Item=RangeInclusive<usize>> + '_ {
+        seq.windows(2)
+            .filter_map(|pair| {
+                let [a,b] = pair else { unreachable!() };
+                let gap = b - a;
+                if gap > 1 {
+                    Some(b - gap + 1 ..= *b - 1)
+                } else {
+                    None
+                }
+            })
     }
 }
 
@@ -47,29 +67,21 @@ impl FromStr for Universe {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let mut lines = input.lines().peekable();
-
-        let width = lines.peek().unwrap().len();
-        let length = input.len()/width;
-        let mut x_gap = vec![0; width];
-        let mut y_gap = vec![0; length];
         let mut clusters = vec![];
 
-        lines
+        input
+            .lines()
             .enumerate()
             .for_each(|(y, line)| {
                 line.chars()
                     .enumerate()
-                    .inspect(|&(x, c)| x_gap[x] += '#'.eq(&c) as usize)
                     .filter(|(_, c)| '#'.eq(c))
-                    .inspect(|_| y_gap[y] += 1)
-                    .map(|(x, _)| Galaxy { pos: (x, y) })
+                    .map(|(x, _)| {
+                        Galaxy { pos: (x, y) }
+                    })
                     .collect_into(&mut clusters);
             });
 
-        Ok( Universe {
-            width, length,
-            clusters, x_gap, y_gap
-        })
+        Ok( Universe { clusters })
     }
 }
