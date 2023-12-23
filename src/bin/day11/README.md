@@ -86,7 +86,7 @@ The important consideration here is that with each expanding gap, all subsequent
 With the above in mind, calculating the new position per galaxy we run the following logic
 1. For each `gap range` identified on `X` dimension and with `gap order`
     1. get range's `gap length`
-    2. For each galaxy with `X` > `expand` * (`gap order` - 1)
+    2. For each galaxy with `X` > `gap range end` + `expand` * (`gap order` - 1)
          1. Increment Galaxy's X by (`expand` * `gap length`)
     3. increase `gap order` by `gap length`
 
