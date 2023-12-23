@@ -67,9 +67,8 @@ pub(crate) fn extract_gaps(seq: &Vec<usize>) -> impl Iterator<Item=RangeInclusiv
     seq.windows(2)
         .filter_map(|pair| {
             let [a,b] = pair else { unreachable!() };
-            let gap = b - a;
-            if gap > 1 {
-                Some(b - gap + 1 ..= *b - 1)
+            if b - a > 1 {
+                Some(a + 1 ..= *b - 1)
             } else {
                 None
             }
@@ -84,29 +83,30 @@ The important consideration here is that with each expanding gap, all subsequent
 4. etc
 
 With the above in mind, calculating the new position per galaxy we run the following logic
-1. For each `gap` identified on X dimension and with `gap order`
-   1. For every value in the `range`
-      1. For each galaxy with `X` > `expand` * (`gap order` - 1)
-         1. Increment Galaxy's X by (`expand` * `gap order`)
+1. For each `gap range` identified on `X` dimension and with `gap order`
+   1. get range's `gap length`
+   2. For each galaxy with `X` > `expand` * (`gap order` - 1)
+      1. Increment Galaxy's X by (`expand` * `gap length`)
+   3. increase `gap order` by `gap length`
 
 With
 * `gap range`, a region of X or Y values with no galaxies 
 * `expand`, the amount we expand the gap i.e. double is `+1`, tenfold is `+9`
 * `gap order`, the gap's sequence order i.e. `1` if first, `2` if second, etc
 
-The above logic is implemented by the below code
+The below code reflects the above algorithm
 ```rust
-let i = 0;
-Universe::extract_gaps(&y_gaps)
-    .for_each(|y_gap| {
-        let len = y_gap.end() - y_gap.start() + 1;
+let gap_order = 0;
+Universe::extract_gaps(&x_gaps)
+    .for_each(|gap_range| {
+        let len = gap_range.end() - gap_range.start() + 1;
         self.clusters
             .iter_mut()
-            .filter(|g| g.pos.1 > y_gap.end() + i * expand)
+            .filter(|g| g.pos.0 > gap_range.end() + gap_order * expand)
             .for_each(|g|
-                g.shift_by((0, expand * len))
+                g.shift_by((expand * len, 0))
             );
-        i += len;
+        gap_order += len;
     });
 ```
 Expanding by Y dimension follows the same logic
