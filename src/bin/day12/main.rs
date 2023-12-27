@@ -17,9 +17,13 @@ mod test {
             let mut iter = inp.chars();
             let mut out = vec![];
 
-            println!("{:?}",(&inp,&count, inp.len(), (&count.iter().sum::<usize>() + &count.iter().count())));
+            println!("{:?}",(&inp,&count, inp.len(), &count.iter().sum::<usize>()));
+            if inp.len() < count.iter().sum::<usize>() {
+                println!("Abort - Less than total count");
+                return None;
+            }
             if !inp.is_empty() && count.is_empty() {
-                println!("Abort");
+                println!("Abort - no more counts");
                 return None;
             }
             if inp.is_empty() && count.is_empty() {
@@ -95,7 +99,7 @@ mod test {
             out: vec![],
         };
 
-        let c = comb.parse(&"????????##", &[1,2]);
+        let c = comb.parse(&"???????#", &[1,2]);
         println!("{:?}",(c,comb.out));
     }
 }
