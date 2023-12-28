@@ -2,16 +2,16 @@
 
 use std::cell::RefCell;
 use std::collections::HashMap;
-use rayon::prelude::IntoParallelIterator;
+use rayon::prelude::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day12/input.txt").expect("Ops");
 
-    let arr = parse(input.as_str(),3);
+    let arr = parse(input.as_str(),5);
 
     let t = std::time::Instant::now();
-    let sum = arr.into_par_iter()
+    let sum = arr.par_iter()
         // .inspect(|(a,b)| println!("\"{a}\" <=> {:?}",b))
         .map(|(broken, record)| {
             ((broken.clone(),record.clone()), Combinator::default().get_combinations(&broken, &record))
@@ -67,10 +67,7 @@ impl Combinator {
         }
 
         let key = (iter.as_str().to_string(), count[0]);
-        if let Some(val) = self.mem.borrow().get(&key) {
-            // println!("Cached: {:?}", (&key, val));
-            return val.clone()
-        }
+        let mut hashes = 0;
         loop {
             match iter.next() {
                 Some('?') => {
@@ -89,11 +86,15 @@ impl Combinator {
 
                     return if out.is_empty() { None } else { Some(out) }
                 },
-                Some('.') | None if buf.contains('#') => {
+                Some('.') | None if hashes > 0 => {
                     if buf.len() < inp.len() { buf.push('.') };
 
-                    if buf.trim_matches('.').len() == count[0]
+                    if hashes == count[0]
                     {
+                        if let Some(val) = self.mem.borrow().get(&key) {
+                            // println!("Cached: {:?}", (&key, val));
+                            return val.clone()
+                        }
                         // println!("\t->{}", buf);
                         return self.get_combinations(iter.as_str(), &count[1..])
                             // .inspect(|v| println!("\tRet:{:?}", v))
@@ -106,7 +107,9 @@ impl Combinator {
                                 out
                             })
                             .map(|vec| {
-                                self.mem.borrow_mut().entry(key.clone()).or_insert(Some(vec.clone()));
+                                if count.len() > 8 {
+                                    self.mem.borrow_mut().entry(key.clone()).or_insert(Some(vec.clone()));
+                                }
                                 // println!("Hash Key{:?} -> {:?}",&key,&self.mem.borrow().get(&key));
                                 vec
                             })
@@ -117,7 +120,7 @@ impl Combinator {
                 },
                 Some(c) => {
                     buf.push(c);
-                    let hashes = buf.chars().filter(|c| '#'.eq(c)).count();
+                    hashes += if '#' == c { 1 } else { 0 };
                     // println!("{hashes}::{:?}", buf);
                     if hashes > count[0] {
                         // println!("abort");
