@@ -8,7 +8,7 @@ use rayon::iter::ParallelIterator;
 fn main() {
     let input = std::fs::read_to_string("src/bin/day12/input.txt").expect("Ops");
 
-    let arr = parse(input.as_str(),5);
+    let arr = parse(input.as_str(),3);
 
     let t = std::time::Instant::now();
     let sum = arr.par_iter()
@@ -30,12 +30,12 @@ fn main() {
 }
 
 #[derive(Default)]
-struct Combinator {
-    mem: RefCell<HashMap<(String, usize),Option<Vec<String>>>>
+struct Combinator<'a> {
+    mem: RefCell<HashMap<(String, &'a [usize]),Option<Vec<String>>>>
 }
 
-impl Combinator {
-    fn get_combinations(&self, inp: &str, count: &[usize]) -> Option<Vec<String>> {
+impl<'a> Combinator<'a> {
+    fn get_combinations(&self, inp: &'_ str, count: &'a [usize]) -> Option<Vec<String>> {
         let mut buf = String::new();
         let mut iter = inp.chars();
         let mut out = vec![];
@@ -66,7 +66,7 @@ impl Combinator {
             }
         }
 
-        let key = (iter.as_str().to_string(), count[0]);
+        let key = (iter.as_str().to_string(), count);
         let mut hashes = 0;
         loop {
             match iter.next() {
@@ -107,7 +107,7 @@ impl Combinator {
                                 out
                             })
                             .map(|vec| {
-                                if count.len() > 8 {
+                                if count.len() > 2 {
                                     self.mem.borrow_mut().entry(key.clone()).or_insert(Some(vec.clone()));
                                 }
                                 // println!("Hash Key{:?} -> {:?}",&key,&self.mem.borrow().get(&key));
@@ -163,7 +163,7 @@ mod test {
     fn test_parse_combinations() {
         let input = std::fs::read_to_string("src/bin/day12/sample.txt").expect("Ops");
 
-        let arr = parse(input.as_str(), 5);
+        let arr = parse(input.as_str(), 3);
 
         let sum = arr.iter()
             // .inspect(|(a,b)| print!("\"{a}\" <=> {:?}",b))
