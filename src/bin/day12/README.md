@@ -19,8 +19,42 @@ However, the condition records are partially damaged; some of the springs' condi
 ## Part 1
 Equipped with this information, it is your job to figure out how many different arrangements of operational and broken springs fit the given criteria in each row
 
-For each row, count all of the different arrangements of operational and broken springs that meet the given criteria. What is the sum of those counts?
+For each row, count all the different arrangements of operational and broken springs that meet the given criteria. What is the sum of those counts?
 ```
+"???.###" <=> [1, 1, 3] => 1 combination
+"#.#.###"
+
+".??..??...?##." <=> [1, 1, 3] => 4 combinations
+".#...#....###."
+".#....#...###."
+"..#..#....###."
+"..#...#...###."
+
+"?#?#?#?#?#?#?#?" <=> [1, 3, 1, 6] => 1 combination
+".#.###.#.######"
+
+"????.#...#..." <=> [4, 1, 1] => 1 combination
+"####.#...#..."
+
+"????.######..#####." <=> [1, 6, 5] => 4 combinations
+"#....######..#####."
+".#...######..#####."
+"..#..######..#####."
+"...#.######..#####."
+
+"?###????????" <=> [3, 2, 1] => 10 combinations 
+".###.##.#..."
+".###.##..#.."
+".###.##...#."
+".###.##....#"
+".###..##.#.."
+".###..##..#."
+".###..##...#"
+".###...##.#."
+".###...##..#"
+".###....##.#"
+
+Total combinations = 21
 ```
 ## Part 2
 ```

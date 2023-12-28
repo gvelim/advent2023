@@ -1,9 +1,33 @@
 #![feature(iter_collect_into)]
 
-use std::io::{Read, repeat};
-
 fn main() {
+    let input = std::fs::read_to_string("src/bin/day12/input.txt").expect("Ops");
 
+    let arr = input.lines()
+        .map(|line| {
+            let mut split = line.split_ascii_whitespace();
+            (
+                split.next().unwrap_or(""),
+                split.next().map(|s|{
+                    s.split(',').map(|n| n.parse::<usize>().expect("Ops!")).collect::<Vec<_>>()
+                }).unwrap_or(vec![])
+            )
+        })
+        .collect::<Vec<_>>();
+
+    let sum = arr.into_iter()
+        .inspect(|(a,b)| println!("\"{a}\" <=> {:?}",b))
+        .map(|(broken, record)| get_combinations(broken, &record) )
+        // .inspect(|d| println!("{:?}",d))
+        .map(|comb| {
+            comb.unwrap()
+                .into_iter()
+                .inspect(|combo| println!("{:?}",combo))
+                .count()
+        } )
+        .sum::<usize>();
+
+    println!("Sum {:?}",sum);
 }
 
 fn get_combinations(inp: &str, count: &[usize]) -> Option<Vec<String>> {
@@ -20,9 +44,13 @@ fn get_combinations(inp: &str, count: &[usize]) -> Option<Vec<String>> {
         (false, true) if !inp.contains('#') => {
             // println!("Matching combination!! trailing '....' ");
             return Some(vec![
-                std::iter::repeat('.').take(inp.len()).collect()]
-            );
+                (0..inp.len()).map(|_| '.').collect()
+            ]);
         },
+        (false, true) => {
+            // println!("Abort - ran out of counts");
+            return None;
+        }
         (true, false) => {
             // println!("Abort - ran out of string");
             return None;
@@ -54,7 +82,7 @@ fn get_combinations(inp: &str, count: &[usize]) -> Option<Vec<String>> {
             Some('.') | None if buf.contains('#') => {
                 if buf.len() < inp.len() { buf.push('.') };
 
-                if buf.chars().filter(|c| '#'.eq(c)).count() == count[0]
+                if buf.trim_matches('.').len() == count[0]
                 {
                     // println!("\t->{}", buf);
                     return get_combinations(iter.as_str(), &count[1..])
@@ -122,7 +150,7 @@ mod test {
     }
     #[test]
     fn test_combinations() {
-        let (inp, counts) = ("????.#...#...", [4, 1, 1]);
+        let (inp, counts) = ("#??.#??.??#?#????#?#", [2, 1, 6, 3]);
 
         println!("{:?}", get_combinations(inp,&counts))
     }
