@@ -1,17 +1,21 @@
 #![feature(iter_collect_into)]
 
+use std::cell::RefCell;
+use std::collections::HashMap;
 use rayon::prelude::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day12/input.txt").expect("Ops");
 
-    let arr = parse(input.as_str(),5);
+    let arr = parse(input.as_str(),3);
 
     let t = std::time::Instant::now();
     let sum = arr.into_par_iter()
         // .inspect(|(a,b)| println!("\"{a}\" <=> {:?}",b))
-        .map(|(broken, record)| ((broken.clone(),record.clone()), get_combinations(&broken, &record)) )
+        .map(|(broken, record)| {
+            ((broken.clone(),record.clone()), Combinator::default().get_combinations(&broken, &record))
+        } )
         // .inspect(|d| println!("{:?}",d))
         .map(|(b,comb)| {
             (b, comb.unwrap()
@@ -25,86 +29,103 @@ fn main() {
     println!("Sum {:?} - {:?}",sum, t.elapsed());
 }
 
-fn get_combinations(inp: &str, count: &[usize]) -> Option<Vec<String>> {
-    let mut buf = String::new();
-    let mut iter = inp.chars();
-    let mut out = vec![];
+#[derive(Default)]
+struct Combinator {
+    mem: RefCell<HashMap<(String, usize),Option<Vec<String>>>>
+}
 
-    // println!("{:?}", (&inp, &count, inp.len(), &count.iter().sum::<usize>()));
-    match (inp.is_empty(), count.is_empty()) {
-        (true, true) => {
-            // println!("Matching combination!! no trailing `...`");
-            return Some(vec![]);
-        },
-        (false, true) if !inp.contains('#') => {
-            // println!("Matching combination!! trailing '.??.' ");
-            return Some(vec![
-                (0..inp.len()).map(|_| '.').collect()
-            ]);
-        },
-        (false, true) => {
-            // println!("Abort - ran out of counts with # still remain");
-            return None;
+impl Combinator {
+    fn get_combinations(&self, inp: &str, count: &[usize]) -> Option<Vec<String>> {
+        let mut buf = String::new();
+        let mut iter = inp.chars();
+        let mut out = vec![];
+
+        // println!("{:?}", (&inp, &count, inp.len(), &count.iter().sum::<usize>()));
+        match (inp.is_empty(), count.is_empty()) {
+            (true, true) => {
+                // println!("Matching combination!! no trailing `...`");
+                return Some(vec![]);
+            },
+            (false, true) if !inp.contains('#') => {
+                // println!("Matching combination!! trailing '.??.' ");
+                return Some(vec![
+                    (0..inp.len()).map(|_| '.').collect()
+                ]);
+            },
+            (false, true) => {
+                // println!("Abort - ran out of counts with # still remain");
+                return None;
+            }
+            (true, false) => {
+                // println!("Abort - ran out of string");
+                return None;
+            },
+            (_, _) => if inp.len() < count.iter().sum::<usize>() {
+                // println!("Abort - Less than total count");
+                return None;
+            }
         }
-        (true, false) => {
-            // println!("Abort - ran out of string");
-            return None;
-        },
-        (_, _) => if inp.len() < count.iter().sum::<usize>() {
-            // println!("Abort - Less than total count");
-            return None;
+
+        let key = (iter.as_str().to_string(), count[0]);
+        if let Some(val) = self.mem.borrow().get(&key) {
+            // println!("Cached: {:?}", (&key, val));
+            return val.clone()
         }
-    }
+        loop {
+            match iter.next() {
+                Some('?') => {
+                    // print!("\tFork in # -> {:?}", format!("{}#{}", buf, iter.as_str()));
+                    self.get_combinations(&format!("{}#{}", buf, iter.as_str()), count)
+                        // .inspect(|v| println!("\tFork out # {:?}", v))
+                        .map(|v|
+                            v.into_iter().collect_into(&mut out)
+                        );
+                    // print!("\tFork in .. ->");
+                    self.get_combinations(&format!("{}.{}", buf, iter.as_str()), count)
+                        // .inspect(|v| println!("\tFork out .. {:?}", v))
+                        .map(|v|
+                            v.into_iter().collect_into(&mut out)
+                        );
 
-    loop {
-        match iter.next() {
-            Some('?') => {
-                // print!("\tFork in # -> {:?}", format!("{}#{}", buf, iter.as_str()));
-                get_combinations(&format!("{}#{}", buf, iter.as_str()), count)
-                    // .inspect(|v| println!("\tFork out # {:?}", v))
-                    .map(|v|
-                        v.into_iter().collect_into(&mut out)
-                    );
-                // print!("\tFork in .. ->");
-                get_combinations(&format!("{}.{}", buf, iter.as_str()), count)
-                    // .inspect(|v| println!("\tFork out .. {:?}", v))
-                    .map(|v|
-                        v.into_iter().collect_into(&mut out)
-                    );
+                    return if out.is_empty() { None } else { Some(out) }
+                },
+                Some('.') | None if buf.contains('#') => {
+                    if buf.len() < inp.len() { buf.push('.') };
 
-                return if out.is_empty() { None } else { Some(out) }
-            },
-            Some('.') | None if buf.contains('#') => {
-                if buf.len() < inp.len() { buf.push('.') };
-
-                if buf.trim_matches('.').len() == count[0]
-                {
-                    // println!("\t->{}", buf);
-                    return get_combinations(iter.as_str(), &count[1..])
-                        // .inspect(|v| println!("\tRet:{:?}", v))
-                        .map(|v| {
-                            if !v.is_empty() {
-                                v.into_iter().map(|s| buf.clone() + &s ).collect_into(&mut out);
-                            } else {
-                                out.push(buf)
-                            }
-                            out
-                        })
-                } else {
-                    // println!("\t Missed!");
-                    return None
-                }
-            },
-            Some(c) => {
-                buf.push(c);
-                let hashes = buf.chars().filter(|c| '#'.eq(c)).count();
-                // println!("{hashes}::{:?}", buf);
-                if hashes > count[0] {
-                    // println!("abort");
-                    return None
-                }
-            },
-            None => return None
+                    if buf.trim_matches('.').len() == count[0]
+                    {
+                        // println!("\t->{}", buf);
+                        return self.get_combinations(iter.as_str(), &count[1..])
+                            // .inspect(|v| println!("\tRet:{:?}", v))
+                            .map(|v| {
+                                if !v.is_empty() {
+                                    v.into_iter().map(|s| buf.clone() + &s).collect_into(&mut out);
+                                } else {
+                                    out.push(buf)
+                                }
+                                out
+                            })
+                            .map(|vec| {
+                                self.mem.borrow_mut().entry(key.clone()).or_insert(Some(vec.clone()));
+                                // println!("Hash Key{:?} -> {:?}",&key,&self.mem.borrow().get(&key));
+                                vec
+                            })
+                    } else {
+                        // println!("\t Missed!");
+                        return None
+                    }
+                },
+                Some(c) => {
+                    buf.push(c);
+                    let hashes = buf.chars().filter(|c| '#'.eq(c)).count();
+                    // println!("{hashes}::{:?}", buf);
+                    if hashes > count[0] {
+                        // println!("abort");
+                        return None
+                    }
+                },
+                None => return None
+            }
         }
     }
 }
@@ -133,7 +154,7 @@ fn parse(input:&str, repetitions: usize) -> Vec<(String, Vec<usize>)> {
 
 #[cfg(test)]
 mod test {
-    use crate::{get_combinations, parse};
+    use super::*;
 
     #[test]
     fn test_parse_combinations() {
@@ -142,22 +163,25 @@ mod test {
         let arr = parse(input.as_str(), 5);
 
         let sum = arr.iter()
-            .inspect(|(a,b)| print!("\"{a}\" <=> {:?}",b))
-            .map(|(broken, record)| get_combinations(&broken, &record) )
+            // .inspect(|(a,b)| print!("\"{a}\" <=> {:?}",b))
+            .map(|(broken, record)| {
+                Combinator::default().get_combinations(&broken, &record)
+            } )
             .map(|comb| {
                 comb.unwrap()
                     .into_iter()
                     .count()
             } )
-            .inspect(|combo| println!(" = {:?}",combo))
+            // .inspect(|combo| println!(" = {:?}",combo))
             .sum::<usize>();
 
         println!("Sum {:?}",sum);
     }
     #[test]
     fn test_combinations() {
-        let (inp, counts) = ("?###??????????###??????????###??????????###??????????###????????", [3, 2, 1, 3, 2, 1, 3, 2, 1, 3, 2, 1, 3, 2, 1]);
+        let (inp, counts) =  ("?###??????????###??????????###????????",[3, 2, 1, 3, 2, 1, 3, 2, 1, ]);
+        let c = Combinator::default();
 
-        println!("{:?}", get_combinations(inp,&counts))
+        println!("{:?}", c.get_combinations(inp,&counts))
     }
 }
