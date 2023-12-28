@@ -110,7 +110,7 @@ impl<'a> Combinator<'a> {
                                 if count.len() > 2 {
                                     self.mem.borrow_mut().entry(key.clone()).or_insert(Some(vec.clone()));
                                 }
-                                // println!("Hash Key{:?} -> {:?}",&key,&self.mem.borrow().get(&key));
+                                println!("Hash Key{:?} -> {:?}",&key,&self.mem.borrow().get(&key));
                                 vec
                             })
                     } else {
