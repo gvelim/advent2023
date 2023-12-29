@@ -8,7 +8,7 @@ use rayon::iter::ParallelIterator;
 fn main() {
     let input = std::fs::read_to_string("src/bin/day12/input.txt").expect("Ops");
 
-    let arr = parse(input.as_str(),3);
+    let arr = parse(input.as_str(),5);
 
     let t = std::time::Instant::now();
     let sum = arr.par_iter()
@@ -18,12 +18,12 @@ fn main() {
         } )
         // .inspect(|d| println!("{:?}",d))
         .map(|(b,comb)| {
-            (b, comb.unwrap()
-                .into_iter()
-                // .inspect(|combo| println!("{:?}",combo))
-                .count())
+            (b, comb.unwrap_or(0))
         } )
-        .map(|(b,d)|{ println!("{:?} = {:?} - {:?}",b,d, t.elapsed()); d })
+        .map(|(b,comb)|{
+            println!("{:?} = {:?} - {:.2?}",b, comb, t.elapsed());
+            comb
+        })
         .sum::<usize>();
 
     println!("Sum {:?} - {:?}",sum, t.elapsed());
@@ -31,26 +31,22 @@ fn main() {
 
 #[derive(Default)]
 struct Combinator<'a> {
-    mem: RefCell<HashMap<(String, &'a [usize]),Option<Vec<String>>>>
+    mem: RefCell<HashMap<(String, &'a [usize]),Option<usize>>>
 }
 
 impl<'a> Combinator<'a> {
-    fn get_combinations(&self, inp: &'_ str, count: &'a [usize]) -> Option<Vec<String>> {
-        let mut buf = String::new();
+    fn get_combinations(&self, inp: &str, count: &'a [usize]) -> Option<usize> {
         let mut iter = inp.chars();
-        let mut out = vec![];
 
         // println!("{:?}", (&inp, &count, inp.len(), &count.iter().sum::<usize>()));
         match (inp.is_empty(), count.is_empty()) {
             (true, true) => {
                 // println!("Matching combination!! no trailing `...`");
-                return Some(vec![]);
+                return Some(1);
             },
             (false, true) if !inp.contains('#') => {
                 // println!("Matching combination!! trailing '.??.' ");
-                return Some(vec![
-                    (0..inp.len()).map(|_| '.').collect()
-                ]);
+                return Some(1);
             },
             (false, true) => {
                 // println!("Abort - ran out of counts with # still remain");
@@ -67,55 +63,39 @@ impl<'a> Combinator<'a> {
         }
 
         let key = (iter.as_str().to_string(), count);
+        if let Some(&val) = self.mem.borrow().get(&key) {
+            // println!("Cached: {:?}", (&key, val));
+            return val
+        }
+
         let mut hashes = 0;
+        let mut buf = String::new();
+
         loop {
             match iter.next() {
                 Some('?') => {
                     // print!("\tFork in # -> {:?}", format!("{}#{}", buf, iter.as_str()));
-                    self.get_combinations(&format!("{}#{}", buf, iter.as_str()), count)
-                        // .inspect(|v| println!("\tFork out # {:?}", v))
-                        .map(|v|
-                            v.into_iter().collect_into(&mut out)
-                        );
-                    // print!("\tFork in .. ->");
-                    self.get_combinations(&format!("{}.{}", buf, iter.as_str()), count)
-                        // .inspect(|v| println!("\tFork out .. {:?}", v))
-                        .map(|v|
-                            v.into_iter().collect_into(&mut out)
-                        );
-
-                    return if out.is_empty() { None } else { Some(out) }
+                    let ret =
+                        self.get_combinations(&format!("{}#{}", buf, iter.as_str()), count).unwrap_or(0) +
+                            self.get_combinations(&format!("{}.{}", buf, iter.as_str()), count).unwrap_or(0);
+                    return if ret == 0 { None } else { Some(ret) }
                 },
                 Some('.') | None if hashes > 0 => {
                     if buf.len() < inp.len() { buf.push('.') };
 
-                    if hashes == count[0]
+                    return if hashes == count[0]
                     {
-                        if let Some(val) = self.mem.borrow().get(&key) {
-                            // println!("Cached: {:?}", (&key, val));
-                            return val.clone()
-                        }
                         // println!("\t->{}", buf);
-                        return self.get_combinations(iter.as_str(), &count[1..])
+                         self.get_combinations(iter.as_str(), &count[1..])
                             // .inspect(|v| println!("\tRet:{:?}", v))
-                            .map(|v| {
-                                if !v.is_empty() {
-                                    v.into_iter().map(|s| buf.clone() + &s).collect_into(&mut out);
-                                } else {
-                                    out.push(buf)
-                                }
-                                out
-                            })
-                            .map(|vec| {
-                                if count.len() > 2 {
-                                    self.mem.borrow_mut().entry(key.clone()).or_insert(Some(vec.clone()));
-                                }
-                                println!("Hash Key{:?} -> {:?}",&key,&self.mem.borrow().get(&key));
-                                vec
+                            .map(|comb| {
+                                self.mem.borrow_mut().entry(key).or_insert(Some(comb));
+                                // println!("Hash Key{:?} -> {:?}",&key,&self.mem.borrow().get(&key));
+                                comb
                             })
                     } else {
                         // println!("\t Missed!");
-                        return None
+                        None
                     }
                 },
                 Some(c) => {
@@ -163,7 +143,7 @@ mod test {
     fn test_parse_combinations() {
         let input = std::fs::read_to_string("src/bin/day12/sample.txt").expect("Ops");
 
-        let arr = parse(input.as_str(), 3);
+        let arr = parse(input.as_str(), 5);
 
         let sum = arr.iter()
             // .inspect(|(a,b)| print!("\"{a}\" <=> {:?}",b))
@@ -171,9 +151,7 @@ mod test {
                 Combinator::default().get_combinations(&broken, &record)
             } )
             .map(|comb| {
-                comb.unwrap()
-                    .into_iter()
-                    .count()
+                comb.unwrap_or(0)
             } )
             // .inspect(|combo| println!(" = {:?}",combo))
             .sum::<usize>();
