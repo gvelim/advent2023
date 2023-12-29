@@ -37,6 +37,12 @@ struct Combinator<'a> {
 impl<'a> Combinator<'a> {
     fn get_combinations(&self, inp: &str, count: &'a [usize]) -> Option<usize> {
         let mut iter = inp.chars();
+        let key = (iter.as_str().to_string(), count);
+
+        if let Some(&val) = self.mem.borrow().get(&key) {
+            // println!("Cached: {:?}", (&key, val));
+            return val
+        }
 
         // println!("{:?}", (&inp, &count, inp.len(), &count.iter().sum::<usize>()));
         match (inp.is_empty(), count.is_empty()) {
@@ -54,18 +60,9 @@ impl<'a> Combinator<'a> {
             }
             (true, false) => {
                 // println!("Abort - ran out of string");
-                return None;
+                return None
             },
-            (_, _) => if inp.len() < count.iter().sum::<usize>() {
-                // println!("Abort - Less than total count");
-                return None;
-            }
-        }
-
-        let key = (iter.as_str().to_string(), count);
-        if let Some(&val) = self.mem.borrow().get(&key) {
-            // println!("Cached: {:?}", (&key, val));
-            return val
+            (_, _) => if inp.len() < count.iter().sum::<usize>() { return None }
         }
 
         let mut hashes = 0;
@@ -74,7 +71,6 @@ impl<'a> Combinator<'a> {
         loop {
             match iter.next() {
                 Some('?') => {
-                    // print!("\tFork in # -> {:?}", format!("{}#{}", buf, iter.as_str()));
                     let ret =
                         self.get_combinations(&format!("{}#{}", buf, iter.as_str()), count).unwrap_or(0) +
                             self.get_combinations(&format!("{}.{}", buf, iter.as_str()), count).unwrap_or(0);
@@ -82,28 +78,18 @@ impl<'a> Combinator<'a> {
                 },
                 Some('.') | None if hashes > 0 => {
                     if buf.len() < inp.len() { buf.push('.') };
-
-                    return if hashes == count[0]
-                    {
-                        // println!("\t->{}", buf);
-                         self.get_combinations(iter.as_str(), &count[1..])
-                            // .inspect(|v| println!("\tRet:{:?}", v))
-                            .map(|comb| {
-                                self.mem.borrow_mut().entry(key).or_insert(Some(comb));
-                                // println!("Hash Key{:?} -> {:?}",&key,&self.mem.borrow().get(&key));
-                                comb
-                            })
+                    return if hashes == count[0] {
+                        let ret= self.get_combinations(iter.as_str(), &count[1..]);
+                        self.mem.borrow_mut().entry(key).or_insert(ret);
+                        ret
                     } else {
-                        // println!("\t Missed!");
                         None
                     }
                 },
                 Some(c) => {
                     buf.push(c);
                     hashes += if '#' == c { 1 } else { 0 };
-                    // println!("{hashes}::{:?}", buf);
                     if hashes > count[0] {
-                        // println!("abort");
                         return None
                     }
                 },
@@ -146,14 +132,14 @@ mod test {
         let arr = parse(input.as_str(), 5);
 
         let sum = arr.iter()
-            // .inspect(|(a,b)| print!("\"{a}\" <=> {:?}",b))
+            .inspect(|(a,b)| print!("\"{a}\" <=> {:?}",b))
             .map(|(broken, record)| {
                 Combinator::default().get_combinations(&broken, &record)
             } )
             .map(|comb| {
                 comb.unwrap_or(0)
             } )
-            // .inspect(|combo| println!(" = {:?}",combo))
+            .inspect(|combo| println!(" = {:?}",combo))
             .sum::<usize>();
 
         println!("Sum {:?}",sum);
