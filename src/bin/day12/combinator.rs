@@ -4,9 +4,11 @@ use std::ops::Add;
 
 use num::Zero;
 
+type Cache<'a> = RefCell<HashMap<(String, &'a [usize]),Option<usize>>>;
+
 #[derive(Default)]
 pub(crate) struct Combinator<'a> {
-    mem: RefCell<HashMap<(String, &'a [usize]),Option<usize>>>
+    mem: Cache<'a>
 }
 
 impl<'a> Combinator<'a> {
