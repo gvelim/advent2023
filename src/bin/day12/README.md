@@ -119,26 +119,26 @@ The function will
 The above recursive logic is also depicted in the below graph
 ```mermaid
 graph TD
-    A[["Solve ( [??.##], [1,2] )"]] --> B(["[❓] == 1"])
+    A[["Solve ( [??.##], [1,2] )"]] --> B{"[❓] == 1"}
     B --> C[["Solve( [#?.##], [1,2]"]] 
-        C --> E(["[#❓] == 1"]) 
+        C --> E{"[#❓] == 1"} 
             C -- "1: #..##" --> A
             E --> G[["Solve( [##.##], [1,2]"]] -- 0 --> C
-                G --> H(["[##.] == [1] ❌"])
+                G --> H{"[##.] == [1] ❌"}
             E --> F[["Solve( [#..##], [1,2]"]] -- "1: #..##" --> C
                 F --> F1 
-                    F1(["[#.] == [1] ✅"]) --> I
+                    F1{"[#.] == [1] ✅"} --> I
                         I[["Solve( [.##], [2] )"]] -- "1: .##" --> F
-                        I --> IA(["[.##] == [2] ✅"])
+                        I --> IA{"[.##] == [2] ✅"}
     B --> D[["Solve( [.?.##], [1,2] )"]] -- "1: .#.##" --> A
-        D --> J(["[.❓] == 1"])
+        D --> J{"[.❓] == 1"}
             J --> L -- 0 --> D 
                 L[["Solve( [...##], [1,2] )"]] --> O
-                O(["[...##] == 1 ❌"])
+                O{"[...##] == 1 ❌"}
             J --> K[["Solve( [.#.##], [1,2] )"]] -- "1: .#.##" --> D
-                K --> M([".# == 1 ✅"]) 
+                K --> M{".# == 1 ✅"}
                     M --> P[["Solve( [.##], [2] )"]] -- "1: .##" --> K
-                    P --> Q([".## == 2 ✅"])
+                    P --> Q{".## == 2 ✅"}
 ```
 ### Part 2
 Having to repeat each hash & num record by 5 times, we put ourselves in a situation where we are **solving again and again a very large number of sub-problems**. 
