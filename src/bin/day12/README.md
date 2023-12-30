@@ -160,4 +160,4 @@ Hence, we use a 'HashMap' with `(key,value) == (([has_rec],[num_rec]), combinati
 
 Hence `Solve()` is slightly altered to to 
 1. ask for a known solution before any processing takes place and only process to calculation if such input hasn't been solved before
-2. store the solution returned from the recursion when a current Hash pattern matched the current Num record
+2. store the solution returned from dealing with the `?` derived cases, that is, the `SUM()` of `.` and `#` cases; this is where the greatest gain is achieved

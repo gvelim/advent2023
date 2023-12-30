@@ -8,7 +8,7 @@ fn main() {
     let run_part = |arr: &Vec<(String,Vec<usize>)>| -> usize {
         arr.par_iter()
             .map(|(broken, record)| {
-                Combinator::default().get_combinations(&broken, &record).unwrap_or(0)
+                Combinator::default().get_combinations(broken, record).unwrap_or(0)
             })
             .sum::<usize>()
     };
@@ -37,7 +37,7 @@ fn parse(input:&str, repetitions: usize) -> Vec<(String, Vec<usize>)> {
                     s.split(',')
                         .map(|n| n.parse::<usize>().expect("Ops!")).collect::<Vec<_>>()
                 })
-                .unwrap_or(vec![])
+                .unwrap_or_default()
                 .repeat(repetitions);
 
             ( broken_rec, rec )

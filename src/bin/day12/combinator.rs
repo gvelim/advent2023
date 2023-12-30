@@ -1,9 +1,14 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::ops::Add;
+
+use num::Zero;
+
+type Cache<'a> = RefCell<HashMap<(String, &'a [usize]),Option<usize>>>;
 
 #[derive(Default)]
 pub(crate) struct Combinator<'a> {
-    mem: RefCell<HashMap<(String, &'a [usize]),Option<usize>>>
+    mem: Cache<'a>
 }
 
 impl<'a> Combinator<'a> {
@@ -44,16 +49,16 @@ impl<'a> Combinator<'a> {
             match iter.next() {
                 Some('?') => {
                     let ret =
-                        self.get_combinations(&format!("{}#{}", buf, iter.as_str()), count).unwrap_or(0) +
-                            self.get_combinations(&format!("{}.{}", buf, iter.as_str()), count).unwrap_or(0);
-                    return if ret == 0 { None } else { Some(ret) }
+                        self.get_combinations(&format!("{}#{}", buf, iter.as_str()), count).unwrap_or(0)
+                        .add(self.get_combinations(&format!("{}.{}", buf, iter.as_str()), count).unwrap_or(0));
+                    
+                    let ret = if ret.is_zero() { None } else { Some(ret) };
+                    return *self.mem.borrow_mut().entry(key).or_insert(ret)
                 },
                 Some('.') | None if hashes > 0 => {
                     if buf.len() < inp.len() { buf.push('.') };
                     return if hashes == count[0] {
-                        let ret= self.get_combinations(iter.as_str(), &count[1..]);
-                        self.mem.borrow_mut().entry(key).or_insert(ret);
-                        ret
+                        return self.get_combinations(iter.as_str(), &count[1..])                    
                     } else {
                         None
                     }
