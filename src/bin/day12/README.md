@@ -139,6 +139,11 @@ graph TD
                 K --> M{".# == 1 ✅"}
                     M --> P[["Solve( [.##], [2] )"]] -- "1: .##" --> K
                     P --> Q{".## == 2 ✅"}
+
+    classDef function fill:#095,stroke:#333,stroke-width:3px,font-size:32px,font-weight:bolder;
+    classDef decision fill:#553,stroke:#333,stroke-width:4px,font-size:23px;;
+    class A,C,D,G,F,L,K,P,I function
+    class B,E,H,J,O,F1,IA,M,Q decision
 ```
 ### Part 2
 Having to repeat each hash & num record by 5 times, we put ourselves in a situation where we are **solving again and again a very large number of sub-problems**. 
