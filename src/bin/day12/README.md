@@ -96,7 +96,7 @@ SUM( [Hash rec] == [Num rec] ) == TRUE
 from 1..n 
 where `n` == total `Num` records
 ```
-In a case where a damaged record `?` is present, we need to evaluate the both cases for `.` and `#` for **valid combinations**. For example,
+In a case where a damaged record `?` is present, we need to evaluate the both  `.` and `#` cases for **valid combinations**. For example,
 ```text
 [??] == 1 ❓
 [..] == 1 ❌
@@ -109,9 +109,9 @@ The function will
 1. aim to match the first `Hash_rec` pattern occurrence against the first `Num rec` value, e.g. `[#.] == [1]`
    1. If we find a match then we process to find the next record in sequence,hence we call `Solve()` (recurse) again by passing the * **remaining** * of `Hash_rec[]` and `Num_rec[]`. If we cannot get a match then we just return `0` 
 2. if we have stepped onto a `?` during parsing of the string then we 
-   1. replace `?` -> `#` and call `Solve()` (recurse) with same parameters
-   2. replace `?` -> `.` and call `Solve()` (recurse) with same parameters
-   3. Then we return the `SUM` of the two calls
+   1. replace `?` -> `#` and call `Solve()` (recurse) with (a) same `Num_rec` and (b) Hash_rec[] as parsed + remaining
+   2. replace `?` -> `.` and call `Solve()` (recurse) with (a) same `Num_rec` and (b) Hash_rec[] as parsed + remaining
+   3. Then we return the `SUM` of the values returned by the above calls
 3. if the function is called with 
    1. empty `Num_rec[]` array and with a `Hash_rec[]` that is either (a) empty or (b) contains no trailing `#`, then we have found a **valid combination**
    2. empty `Hash_rec[]` array but not the `Num_rec[]`, then we have ended up with an **invalid combination** 
@@ -130,6 +130,7 @@ graph TD
                     F1{"[#.] == [1] ✅"} --> I
                         I[["Solve( [.##], [2] )"]] -- "1: .##" --> F
                         I --> IA{"[.##] == [2] ✅"}
+                            IA --> IB[["Solve( [], [] ) ✅"]] -- "1:" --> I
     B --> D[["Solve( [.?.##], [1,2] )"]] -- "1: .#.##" --> A
         D --> J{"[.❓] == 1"}
             J --> L -- 0 --> D 
@@ -138,7 +139,13 @@ graph TD
             J --> K[["Solve( [.#.##], [1,2] )"]] -- "1: .#.##" --> D
                 K --> M{".# == 1 ✅"}
                     M --> P[["Solve( [.##], [2] )"]] -- "1: .##" --> K
-                    P --> Q{".## == 2 ✅"}
+                    P --> Q{"[.##] == [2] ✅"}
+                        Q --> QA[["Solve( [], [] ) ✅"]] -- "1:" --> P
+
+    classDef function fill:#095,stroke:#333,stroke-width:3px;
+    classDef decision fill:#553,stroke:#333,stroke-width:3px;
+    class A,C,D,G,F,L,K,P,I,Q,IB,QA function
+    class B,E,H,J,O,F1,IA,M,Q decision
 ```
 ### Part 2
 Having to repeat each hash & num record by 5 times, we put ourselves in a situation where we are **solving again and again a very large number of sub-problems**. 
@@ -153,4 +160,6 @@ Hence, we use a 'HashMap' with `(key,value) == (([has_rec],[num_rec]), combinati
 
 Hence `Solve()` is slightly altered to to 
 1. ask for a known solution before any processing takes place and only process to calculation if such input hasn't been solved before
-2. store the solution returned from the recursion when a current Hash pattern matched the current Num record
+2. store the solution returned from dealing with the `?` derived cases, that is, the `SUM()` of `.` and `#` cases; this is where the greatest gain is achieved
+
+
