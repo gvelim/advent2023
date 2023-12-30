@@ -144,7 +144,7 @@ graph TD
 
     classDef function fill:#095,stroke:#333,stroke-width:3px;
     classDef decision fill:#553,stroke:#333,stroke-width:3px;
-    class A,C,D,G,F,L,K,P,I function
+    class A,C,D,G,F,L,K,P,I,Q,IB,QA function
     class B,E,H,J,O,F1,IA,M,Q decision
 ```
 ### Part 2
