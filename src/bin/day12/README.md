@@ -96,7 +96,7 @@ SUM( [Hash rec] == [Num rec] ) == TRUE
 from 1..n 
 where `n` == total `Num` records
 ```
-In a case where a damaged record `?` is present, we need to evaluate the both cases for `.` and `#` for **valid combinations**. For example,
+In a case where a damaged record `?` is present, we need to evaluate the both  `.` and `#` cases for **valid combinations**. For example,
 ```text
 [??] == 1 ❓
 [..] == 1 ❌
@@ -109,9 +109,9 @@ The function will
 1. aim to match the first `Hash_rec` pattern occurrence against the first `Num rec` value, e.g. `[#.] == [1]`
    1. If we find a match then we process to find the next record in sequence,hence we call `Solve()` (recurse) again by passing the * **remaining** * of `Hash_rec[]` and `Num_rec[]`. If we cannot get a match then we just return `0` 
 2. if we have stepped onto a `?` during parsing of the string then we 
-   1. replace `?` -> `#` and call `Solve()` (recurse) with same parameters
-   2. replace `?` -> `.` and call `Solve()` (recurse) with same parameters
-   3. Then we return the `SUM` of the two calls
+   1. replace `?` -> `#` and call `Solve()` (recurse) with (a) same `Num_rec` and (b) Hash_rec[] as parsed + remaining
+   2. replace `?` -> `.` and call `Solve()` (recurse) with (a) same `Num_rec` and (b) Hash_rec[] as parsed + remaining
+   3. Then we return the `SUM` of the values returned by the above calls
 3. if the function is called with 
    1. empty `Num_rec[]` array and with a `Hash_rec[]` that is either (a) empty or (b) contains no trailing `#`, then we have found a **valid combination**
    2. empty `Hash_rec[]` array but not the `Num_rec[]`, then we have ended up with an **invalid combination** 
