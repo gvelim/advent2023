@@ -2,8 +2,7 @@
 
 use std::cell::RefCell;
 use std::collections::HashMap;
-use rayon::prelude::IntoParallelRefIterator;
-use rayon::iter::ParallelIterator;
+use rayon::prelude::*;
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day12/input.txt").expect("Ops");

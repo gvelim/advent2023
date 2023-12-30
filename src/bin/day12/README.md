@@ -80,5 +80,25 @@ Unfold your condition records; what is the new sum of possible arrangement count
 525152
 ```
 ## Approach
-```rust
+We are looking at the problem in the following way
 ```
+`Hash` rec     `Num` rec     `Hash` rec        `Num` rec
+ ===========    ==========    ===========       =============
+ "###.#.#" <=> [3, 1, 1]  as  [###], [#], [#] <=> [3], [1], [1]
+```
+Therefore, a solution to the problem looks like `[###] == [3] AND [#] == [1] AND [#] == [1]`, and therefore, a **"valid combination"**.
+In a case of a damaged record `?` we have the possible cases of `.` or `#` hence at that point we have to explore both paths for valid combinations.
+```mermaid
+graph TD
+    A[??.## <=> 1,2] -- 2 --> B(? + ?.## == 1)
+    B -- 1 --> C(# + ?.## == 1) -- 1 --> E(#? + .## == 1)
+    B -- 1 --> D(. + ?.## == 1)
+    E -- X --> G(## + .## == 1) -- X --> H(##. + ## == 1 : FALSE)
+    E -- 1 --> F(#. + .## == 1 : FOUND)
+    F -- 1 --> I(.## == 2 : FOUND)
+    D -- 1 --> J(.? + .## == 1)
+    J -- X --> L(...## == 1 : WRONG)
+    J -- 1 --> K(.# + .## == 1 : FOUND) -- 1 --> M(.## == 2 : FOUND)
+```
+ 
+
