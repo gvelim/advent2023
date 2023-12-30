@@ -91,9 +91,12 @@ Therefore, a solution to the problem looks like a **sequence**:
 ```
 [###] == [3] -> [#] == [1] -> [#] == [1]
 
-Valid combination = SUM( [Hash rec] == [Num rec] ) from 1..n where `n` = total `Num` records
+With a Valid combination expressed as the
+SUM( [Hash rec] == [Num rec] ) == TRUE 
+from 1..n 
+where `n` == total `Num` records
 ```
-In a case of the presence of a damaged record `?`, this represents permutation of the cases with `.` or `#` and with each requiring the evaluation for **valid combinations**. For example,
+In a case where a damaged record `?` is present, we need to evaluate the both cases for `.` and `#` for **valid combinations**. For example,
 ```text
 [??] == 1 ❓
 [..] == 1 ❌
@@ -101,7 +104,7 @@ In a case of the presence of a damaged record `?`, this represents permutation o
 [.#] == 1 ✅
 [##] == 1 ❌
 ```
-In line to the above, we create a function `Solve()` with parameters `Hash_rec[]` and `Num_rec[]` that returns either `1` or `0` for valid or invalid combination respectively.
+In line to the above, we implement a function `Solve()` with parameters `Hash_rec[]` and `Num_rec[]` that returns either `1` or `0` for valid or invalid combination respectively.
 The function will
 1. aim to match the first `Hash_rec` pattern occurrence against the first `Num rec` value, e.g. `[#.] == [1]`
    1. If we find a match then we process to find the next record in sequence,hence we call `Solve()` (recurse) again by passing the * **remaining** * of `Hash_rec[]` and `Num_rec[]`. If we cannot get a match then we just return `0` 
@@ -109,6 +112,9 @@ The function will
    1. replace `?` -> `#` and call `Solve()` (recurse) with same parameters
    2. replace `?` -> `.` and call `Solve()` (recurse) with same parameters
    3. Then we return the `SUM` of the two calls
+3. if the function is called with 
+   1. empty `Num_rec[]` array and with a `Hash_rec[]` that is either (a) empty or (b) contains no trailing `#`, then we have found a **valid combination**
+   2. empty `Hash_rec[]` array but not the `Num_rec[]`, then we have ended up with an **invalid combination** 
 
 The above recursive logic is also depicted in the below graph
 ```mermaid
@@ -135,10 +141,16 @@ graph TD
                     P --> Q([".## == 2 ✅"])
 ```
 ### Part 2
-By repeating each hash & num record 5 times we end up in a situation where we are **solving again and again a very large number of sub-problems**. As a result we apply **memoization technique** where we store each solution to a sub-problem and reuse the solution when the same sub-problem re-appears the next time; rather re-calculating it.
+Having to repeat each hash & num record by 5 times, we put ourselves in a situation where we are **solving again and again a very large number of sub-problems**. 
 
 By looking at the above grah diagram we see that
 1. `([##.##],[1,2])` sub-problem has a solution `0` and is solved once
 2. `([.##],[2])` sub-problem has a solution `1` and has been solved **twice**
 
-Therefore, using a 'HashMap' with `(key,value) == (([has_rec],[num_rec]), combinations)` we should avoid recomputing sub-problems already solved hence speeding up dramatically the overall calculations
+Therefore, we use the **memoization technique**, hence storing each solution to a sub-problem and reuse the solution when the same sub-problem re-appears, hence saving us the re-calculation.
+
+Hence, we use a 'HashMap' with `(key,value) == (([has_rec],[num_rec]), combinations)` we should avoid recomputing sub-problems already solved hence speeding up dramatically the overall calculations.
+
+Hence `Solve()` is slightly altered to to 
+1. ask for a known solution before any processing takes place and only process to calculation if such input hasn't been solved before
+2. store the solution returned from the recursion when a current Hash pattern matched the current Num record
