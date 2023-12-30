@@ -130,6 +130,7 @@ graph TD
                     F1{"[#.] == [1] ✅"} --> I
                         I[["Solve( [.##], [2] )"]] -- "1: .##" --> F
                         I --> IA{"[.##] == [2] ✅"}
+                            IA --> IB[["Solve( [], [] ) ✅"]] -- "1:" --> I
     B --> D[["Solve( [.?.##], [1,2] )"]] -- "1: .#.##" --> A
         D --> J{"[.❓] == 1"}
             J --> L -- 0 --> D 
@@ -138,7 +139,8 @@ graph TD
             J --> K[["Solve( [.#.##], [1,2] )"]] -- "1: .#.##" --> D
                 K --> M{".# == 1 ✅"}
                     M --> P[["Solve( [.##], [2] )"]] -- "1: .##" --> K
-                    P --> Q{".## == 2 ✅"}
+                    P --> Q{"[.##] == [2] ✅"}
+                        Q --> QA[["Solve( [], [] ) ✅"]] -- "1:" --> P
 
     classDef function fill:#095,stroke:#333,stroke-width:3px;
     classDef decision fill:#553,stroke:#333,stroke-width:3px;
