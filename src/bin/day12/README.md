@@ -140,8 +140,8 @@ graph TD
                     M --> P[["Solve( [.##], [2] )"]] -- "1: .##" --> K
                     P --> Q{".## == 2 ✅"}
 
-    classDef function fill:#095,stroke:#333,stroke-width:3px,font-size:32px,font-weight:bolder;
-    classDef decision fill:#553,stroke:#333,stroke-width:4px,font-size:23px;;
+    classDef function fill:#095,stroke:#333,stroke-width:3px;
+    classDef decision fill:#553,stroke:#333,stroke-width:3px;
     class A,C,D,G,F,L,K,P,I function
     class B,E,H,J,O,F1,IA,M,Q decision
 ```
