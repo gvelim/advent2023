@@ -80,25 +80,65 @@ Unfold your condition records; what is the new sum of possible arrangement count
 525152
 ```
 ## Approach
+### Part 1
 We are looking at the problem in the following way
 ```
 `Hash` rec     `Num` rec     `Hash` rec        `Num` rec
  ===========    ==========    ===========       =============
  "###.#.#" <=> [3, 1, 1]  as  [###], [#], [#] <=> [3], [1], [1]
 ```
-Therefore, a solution to the problem looks like `[###] == [3] AND [#] == [1] AND [#] == [1]`, and therefore, a **"valid combination"**.
-In a case of a damaged record `?` we have the possible cases of `.` or `#` hence at that point we have to explore both paths for valid combinations.
+Therefore, a solution to the problem looks like a **sequence**:
+```
+[###] == [3] -> [#] == [1] -> [#] == [1]
+
+Valid combination = SUM( [Hash rec] == [Num rec] ) from 1..n where `n` = total `Num` records
+```
+In a case of the presence of a damaged record `?`, this represents permutation of the cases with `.` or `#` and with each requiring the evaluation for **valid combinations**. For example,
+```text
+[??] == 1 ❓
+[..] == 1 ❌
+[#.] == 1 ✅
+[.#] == 1 ✅
+[##] == 1 ❌
+```
+In line to the above, we create a function `Solve()` with parameters `Hash_rec[]` and `Num_rec[]` that returns either `1` or `0` for valid or invalid combination respectively.
+The function will
+1. aim to match the first `Hash_rec` pattern occurrence against the first `Num rec` value, e.g. `[#.] == [1]`
+   1. If we find a match then we process to find the next record in sequence,hence we call `Solve()` (recurse) again by passing the * **remaining** * of `Hash_rec[]` and `Num_rec[]`. If we cannot get a match then we just return `0` 
+2. if we have stepped onto a `?` during parsing of the string then we 
+   1. replace `?` -> `#` and call `Solve()` (recurse) with same parameters
+   2. replace `?` -> `.` and call `Solve()` (recurse) with same parameters
+   3. Then we return the `SUM` of the two calls
+
+The above recursive logic is also depicted in the below graph
 ```mermaid
 graph TD
-    A[??.## <=> 1,2] -- 2 --> B(? + ?.## == 1)
-    B -- 1 --> C(# + ?.## == 1) -- 1 --> E(#? + .## == 1)
-    B -- 1 --> D(. + ?.## == 1)
-    E -- X --> G(## + .## == 1) -- X --> H(##. + ## == 1 : FALSE)
-    E -- 1 --> F(#. + .## == 1 : FOUND)
-    F -- 1 --> I(.## == 2 : FOUND)
-    D -- 1 --> J(.? + .## == 1)
-    J -- X --> L(...## == 1 : WRONG)
-    J -- 1 --> K(.# + .## == 1 : FOUND) -- 1 --> M(.## == 2 : FOUND)
+    A[["Solve ( [??.##], [1,2] )"]] --> B(["[❓] == 1"])
+    B --> C[["Solve( [#?.##], [1,2]"]] 
+        C --> E(["[#❓] == 1"]) 
+            C -- "1: #..##" --> A
+            E --> G[["Solve( [##.##], [1,2]"]] -- 0 --> C
+                G --> H(["[##.] == [1] ❌"])
+            E --> F[["Solve( [#..##], [1,2]"]] -- "1: #..##" --> C
+                F --> F1 
+                    F1(["[#.] == [1] ✅"]) --> I
+                        I[["Solve( [.##], [2] )"]] -- "1: .##" --> F
+                        I --> IA(["[.##] == [2] ✅"])
+    B --> D[["Solve( [.?.##], [1,2] )"]] -- "1: .#.##" --> A
+        D --> J(["[.❓] == 1"])
+            J --> L -- 0 --> D 
+                L[["Solve( [...##], [1,2] )"]] --> O
+                O(["[...##] == 1 ❌"])
+            J --> K[["Solve( [.#.##], [1,2] )"]] -- "1: .#.##" --> D
+                K --> M([".# == 1 ✅"]) 
+                    M --> P[["Solve( [.##], [2] )"]] -- "1: .##" --> K
+                    P --> Q([".## == 2 ✅"])
 ```
- 
+### Part 2
+By repeating each hash & num record 5 times we end up in a situation where we are **solving again and again a very large number of sub-problems**. As a result we apply **memoization technique** where we store each solution to a sub-problem and reuse the solution when the same sub-problem re-appears the next time; rather re-calculating it.
 
+By looking at the above grah diagram we see that
+1. `([##.##],[1,2])` sub-problem has a solution `0` and is solved once
+2. `([.##],[2])` sub-problem has a solution `1` and has been solved **twice**
+
+Therefore, using a 'HashMap' with `(key,value) == (([has_rec],[num_rec]), combinations)` we should avoid recomputing sub-problems already solved hence speeding up dramatically the overall calculations
