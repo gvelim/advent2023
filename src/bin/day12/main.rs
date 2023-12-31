@@ -8,7 +8,7 @@ fn main() {
     let run_part = |arr: &Vec<(String,Vec<usize>)>| -> usize {
         arr.par_iter()
             .map(|(broken, record)| {
-                Combinator::default().get_combinations(broken, record).unwrap_or(0)
+                Combinator::default().get_combinations(broken, record)
             })
             .sum::<usize>()
     };
