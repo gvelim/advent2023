@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::ops::Add;
 use num::Zero;
 
-type Cache<'a> = RefCell<HashMap<(String, &'a [usize]),Option<usize>>>;
+type Cache<'a> = RefCell<HashMap<(String, &'a [usize]),usize>>;
 
 #[derive(Default)]
 pub(crate) struct Combinator<'a> {
@@ -11,28 +11,28 @@ pub(crate) struct Combinator<'a> {
 }
 
 impl<'a> Combinator<'a> {
-    pub(crate) fn get_combinations(&self, inp: &str, count: &'a [usize]) -> Option<usize> {
+    pub(crate) fn get_combinations(&self, inp: &str, count: &'a [usize]) -> usize {
         let mut iter = inp.chars();
 
         // println!("{:?}", (&inp, &count, inp.len(), &count.iter().sum::<usize>()));
         match (inp.is_empty(), count.is_empty()) {
             (true, true) => {
                 // println!("Matching combination!! no trailing `...`");
-                return Some(1);
+                return 1;
             },
             (false, true) if !inp.contains('#') => {
                 // println!("Matching combination!! trailing '.??.' ");
-                return Some(1);
+                return 1;
             },
             (false, true) => {
                 // println!("Abort - ran out of counts with # still remain");
-                return None;
+                return 0;
             }
             (true, false) => {
                 // println!("Abort - ran out of string");
-                return None
+                return 0
             },
-            (_, _) => if inp.len() < count.iter().sum::<usize>() { return None }
+            (_, _) => if inp.len() < count.iter().sum::<usize>() { return 0 }
         }
 
         let key = (iter.as_str().to_string(), count);
@@ -48,28 +48,26 @@ impl<'a> Combinator<'a> {
                     }
 
                     let ret =
-                        self.get_combinations(&format!("{}#{}", buf, iter.as_str()), count).unwrap_or(0)
-                        .add(self.get_combinations(&format!("{}.{}", buf, iter.as_str()), count).unwrap_or(0));
-                    
-                    let ret = if ret.is_zero() { None } else { Some(ret) };
-                    return *self.mem.borrow_mut().entry(key).or_insert(ret)                    
+                        self.get_combinations(&format!("{}#{}", buf, iter.as_str()), count)
+                        .add(self.get_combinations(&format!("{}.{}", buf, iter.as_str()), count));
+
+                    return *self.mem.borrow_mut().entry(key).or_insert(
+                        if ret.is_zero() { 0 } else { ret }
+                    )
                 },
                 Some('.') | None if hashes > 0 => {
-                    if buf.len() < inp.len() { buf.push('.') };
-                    return if hashes == count[0] {
-                        return self.get_combinations(iter.as_str(), &count[1..])                    
-                    } else {
-                        None
+                    return if hashes != count[0] { 0 } else {
+                        self.get_combinations(iter.as_str(), &count[1..])
                     }
                 },
                 Some(c) => {
                     buf.push(c);
                     hashes += if '#' == c { 1 } else { 0 };
                     if hashes > count[0] {
-                        return None
+                        return 0
                     }
                 },
-                None => return None
+                None => return 0
             }
         }
     }
@@ -90,9 +88,6 @@ mod test {
             .inspect(|(a,b)| print!("\"{a}\" <=> {:?}",b))
             .map(|(broken, record)| {
                 Combinator::default().get_combinations(&broken, &record)
-            } )
-            .map(|comb| {
-                comb.unwrap_or(0)
             } )
             .inspect(|combo| println!(" = {:?}",combo))
             .sum::<usize>();
