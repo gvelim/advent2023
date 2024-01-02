@@ -41,7 +41,7 @@ impl<'a> Combinator<'a> {
             match iter.next() {
                 Some('?') => {
                     if let Some(&val) = self.mem.borrow().get(&key) {
-                        println!("Cached: {:?}", (&key, val));
+                        // println!("Cached: {:?}", (&key, val));
                         return val
                     }
 
