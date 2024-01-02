@@ -1,7 +1,5 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::ops::Add;
-use num::Zero;
 
 type Cache<'a> = RefCell<HashMap<(String, &'a [usize]),usize>>;
 
@@ -43,17 +41,15 @@ impl<'a> Combinator<'a> {
             match iter.next() {
                 Some('?') => {
                     if let Some(&val) = self.mem.borrow().get(&key) {
-                        // println!("Cached: {:?}", (&key, val));
+                        println!("Cached: {:?}", (&key, val));
                         return val
                     }
 
                     let ret =
                         self.get_combinations(&format!("{}#{}", buf, iter.as_str()), count)
-                        .add(self.get_combinations(&format!("{}.{}", buf, iter.as_str()), count));
+                            + self.get_combinations(&format!("{}.{}", buf, iter.as_str()), count);
 
-                    return *self.mem.borrow_mut().entry(key).or_insert(
-                        if ret.is_zero() { 0 } else { ret }
-                    )
+                    return *self.mem.borrow_mut().entry(key).or_insert(ret)
                 },
                 Some('.') | None if hashes > 0 => {
                     return if hashes != count[0] { 0 } else {
