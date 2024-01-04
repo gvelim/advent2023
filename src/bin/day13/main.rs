@@ -2,9 +2,25 @@ use std::cmp::Ordering;
 use std::fmt::Debug;
 
 fn main() {
+    let input = std::fs::read_to_string("src/bin/day13/input.txt").expect("Ops!");
+    let valley = Valley::parse(&input);
+
+    let out = valley.patterns.iter()
+        .map(|pat| {
+            (pat.find_vertical_mirror(), pat.find_horizontal_mirror())
+        })
+        .inspect(|p| println!("{:?}",p))
+        .map(|(v,h)| {
+            v.unwrap_or((0,0)).0 * 100
+                + h.unwrap_or((0,0)).0
+        })
+        .sum::<usize>();
+
+    println!("Part 1 : {:?}",out);
 
 }
 
+#[derive(Debug)]
 struct Valley<'a> {
     patterns: Vec<Pattern<'a>>
 }
@@ -87,6 +103,23 @@ impl<'a> Debug for Pattern<'a> {
 mod test {
     use super::*;
 
+    #[test]
+    fn test_calculate_sample_input() {
+        let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
+        let valley = Valley::parse(&input);
+
+        let out = valley.patterns.iter()
+            .map(|pat| {
+                (pat.find_vertical_mirror(), pat.find_horizontal_mirror())
+            })
+            .map(|(v,h)| {
+                v.unwrap_or((0,0)).0 * 100
+                    + h.unwrap_or((0,0)).0
+            })
+            .sum::<usize>();
+
+        assert_eq!(out,405);
+    }
     #[test]
     fn test_find_vertical_mirror() {
         let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
