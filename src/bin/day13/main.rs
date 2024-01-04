@@ -1,3 +1,6 @@
+#![feature(iter_collect_into)]
+extern crate core;
+
 use std::cmp::Ordering;
 use std::fmt::Debug;
 
@@ -7,18 +10,19 @@ fn main() {
 
     let out = valley.patterns.iter()
         .map(|pat| {
-            // (pat.find_vertical_mirror(), pat.find_horizontal_mirror())
-            pat.find_vertical_mirror()
+            (pat.find_vertical_mirror(), pat.find_horizontal_mirror())
         })
-        .inspect(|p| println!("{:?}",p))
-        // .map(|(v,h)| {
-        //     v.unwrap_or((0,0)).0 * 100
-        //         + h.unwrap_or((0,0)).0
-        // })
-        .map(|v| {
-            v.unwrap_or((0,0)).0 * 100
-                // + h.unwrap_or((0,0)).0
+        .inspect(|p| print!("{:?} -> ",&p))
+        .map(|(v,h)| {
+            match (v,h) {
+                (Some(v), Some(h)) => if v.1 >= h.1 { v.0 * 100 } else { h.0 },
+                (Some(v), None) => v.0 * 100,
+                (None, Some(h)) => h.0,
+                (None,None) => 0
+            }
+            // v.unwrap_or((0, 0)).0 * 100 + h.unwrap_or((0, 0)).0
         })
+        .inspect(|p| println!("{:?}",&p))
         .sum::<usize>();
 
     println!("Part 1 : {:?}",out);
@@ -45,41 +49,38 @@ struct Pattern<'a> {
 }
 
 impl<'a> Pattern<'a> {
+    #[inline]
     fn mirror_count_at_index(s: &str, idx:usize) -> usize {
         let (l, r) = s.split_at(idx);
         let li = l.chars().rev();
         let mut ri = r.chars();
         li.take_while(|lc| ri.next().map(|rc| rc.cmp(lc)) == Some(Ordering::Equal) ).count()
     }
-    fn find_horizontal_mirror(&self) -> Option<(usize,usize)> {
-        (1..self.p[0].len())
+    fn find_mirror(pat: &[&str]) -> Option<(usize, usize)> {
+        (1..pat[0].len())
             .filter_map(|idx| {
-                println!("idx: {idx}");
+                // println!("idx: {idx}");
                 let mut range = usize::MAX;
-                let count = self.p
-                    .iter()
-                    .inspect(|p| print!("{:?} -> ",&p))
+                let count = pat.iter()
+                    // .inspect(|p| print!("{:?} -> ",&p))
                     .map(|line| Pattern::mirror_count_at_index(line, idx))
                     .take_while(|&c| {
                         range = std::cmp::min(range,c);
-                        c != 0
+                        c > 0
                     })
-                    .inspect(|p| println!("{:?}",&p)  )
+                    // .inspect(|p| println!("{:?} : ",&p)  )
                     .count();
-                if count != self.p.len() { None } else {
-                    Some((idx, range))
+                if count != pat.len() { None } else {
+                    if idx+range == pat[0].len() || idx-range < 1 {
+                        Some((idx, range))
+                    } else { None }
                 }
             })
-            .inspect(|p| println!("Sum{:?} -> ",&p))
+            // .inspect(|p| println!("Sum{:?} -> ",&p))
             .max_by_key(|p| p.1)
     }
-    fn find_line_mirror(s: &str) -> Option<(usize, usize)> {
-        (1..s.len())
-            .map(|idx| {
-                (idx,Self::mirror_count_at_index(s, idx))
-            })
-            // .inspect(|p| println!("{:?}",p))
-            .max_by_key(|key| key.1)
+    fn find_horizontal_mirror(&self) -> Option<(usize, usize)> {
+        Pattern::find_mirror(&self.p)
     }
     fn find_vertical_mirror(&self) -> Option<(usize,usize)> {
         let transpose = (0 ..self.p[0].len())
@@ -88,21 +89,27 @@ impl<'a> Pattern<'a> {
             })
             .collect::<Vec<_>>();
 
-        let mut last = None;
-        transpose.iter()
-            .inspect(|p| print!("{:?} -> ",&p))
-            .map(|line| {
-                Pattern::find_line_mirror(&line)
+        (1..transpose[0].len())
+            .filter_map(|idx| {
+                // println!("idx: {idx}");
+                let mut range = usize::MAX;
+                let count = transpose.iter()
+                    // .inspect(|p| print!("{:?} -> ",&p))
+                    .map(|line| Pattern::mirror_count_at_index(line, idx))
+                    .take_while(|&c| {
+                        range = std::cmp::min(range,c);
+                        c > 0
+                    })
+                    // .inspect(|p| println!("{:?}",&p)  )
+                    .count();
+                if count != transpose.len() { None } else {
+                    if idx+range == transpose[0].len() || idx-range < 1 {
+                        Some((idx, range))
+                    } else { None }
+                }
             })
-            .inspect(|p| println!("{:?}",&p)  )
-            .all(|a| {
-                // if last.is_none() { last = a; true } else {
-                //     let ret = last.cmp(&a) == Ordering::Equal;
-                    last = a;
-                //     ret
-                true
-            })
-            .then(|| last.unwrap())
+            // .inspect(|p| println!("Sum{:?} -> ",&p))
+            .max_by_key(|p| p.1)
     }
 
     fn from_str(s: &'a str) -> Self {
@@ -135,10 +142,16 @@ mod test {
             .map(|pat| {
                 (pat.find_vertical_mirror(), pat.find_horizontal_mirror())
             })
+            .inspect(|p| print!("{:?} -> ",&p))
             .map(|(v,h)| {
-                v.unwrap_or((0,0)).0 * 100
-                    + h.unwrap_or((0,0)).0
+                match (v,h) {
+                    (Some(v), Some(h)) => if v.1 > h.1 { v.0 * 100 } else { h.0 },
+                    (Some(v), None) => v.0 * 100,
+                    (None, Some(h)) => h.0,
+                    (None,None) => 0
+                }
             })
+            .inspect(|p| println!("{:?}",&p))
             .sum::<usize>();
 
         assert_eq!(out,405);
@@ -148,25 +161,21 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
         let valley = Valley::parse(&input);
 
-        assert_eq!(valley.patterns[0].find_vertical_mirror(), Some((4,3)));
+        valley.patterns.iter()
+            .inspect(|p| print!("{:?} -> ",&p))
+            .map(|p| p.find_vertical_mirror())
+            .inspect(|p| println!("{:?} -> ",&p))
+            .all(|_| true);
     }
     #[test]
     fn test_find_horizontal_mirror() {
         let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
         let valley = Valley::parse(&input);
 
-        assert_eq!(valley.patterns[0].find_horizontal_mirror(), Some((4,12)));
-    }
-
-    #[test]
-    fn test_find_line_mirror() {
-        let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
-        let valley = Valley::parse(&input);
-
-        valley.patterns[0].p.iter()
+        valley.patterns.iter()
             .inspect(|p| print!("{:?} -> ",&p))
-            .map(|line| Pattern::find_line_mirror(line))
-            .inspect(|p| println!("{:?}",&p)  )
+            .map(|p| p.find_horizontal_mirror())
+            .inspect(|p| println!("{:?} -> ",&p))
             .all(|_| true);
     }
 
