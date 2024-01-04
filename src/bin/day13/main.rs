@@ -29,7 +29,7 @@ impl<'a> Pattern<'a> {
         self.p
             .windows(2)
             // .inspect(|p| print!("{:?} -> ",&p))
-            .map(|line| (Pattern::line_middle(line[0]), Pattern::line_middle(line[1])))
+            .map(|line| (Pattern::horizontal_mirror(line[0]), Pattern::horizontal_mirror(line[1])))
             // .inspect(|p| println!("{:?}",&p)  )
             .all(|(a,b)| {
                 last = a;
@@ -37,7 +37,7 @@ impl<'a> Pattern<'a> {
             })
             .then(|| last.unwrap())
     }
-    fn line_middle(s: &str) -> Option<(usize, usize)> {
+    fn horizontal_mirror(s: &str) -> Option<(usize, usize)> {
         (1..s.len())
             .map(|idx| {
                 let (l, r) = s.split_at(idx);
@@ -46,6 +46,24 @@ impl<'a> Pattern<'a> {
                 (idx, li.take_while(|lc| ri.next().map(|rc| rc.cmp(lc)) == Some(Ordering::Equal) ).count())
             })
             .max_by_key(|key| key.1)
+    }
+    fn find_vertical_mirror(&self) -> Option<(usize,usize)> {
+        let transpose = (0 ..self.p[0].len())
+            .map(|col| {
+                self.p.iter().map(|line| line.chars().skip(col).next().unwrap()).collect::<String>()
+            })
+            .collect::<Vec<_>>();
+
+        let mut last = None;
+        transpose.windows(2)
+            .map(|line| {
+                (Pattern::horizontal_mirror(&line[0]),Pattern::horizontal_mirror(&line[1]))
+            })
+            .all(|(a,b)| {
+                last = a;
+                a.cmp(&b) == Ordering::Equal
+            })
+            .then(|| last.unwrap())
     }
 
     fn from_str(s: &'a str) -> Self {
@@ -70,13 +88,24 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_find_horizontal_mirror() {
-
+    fn test_find_vertical_mirror() {
         let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
         let valley = Valley::parse(&input);
 
-        println!("{:?}, {:?}",&valley.patterns[0], valley.patterns[0].find_horizontal_mirror());
-        println!("{:?}, {:?}",&valley.patterns[1], valley.patterns[1].find_horizontal_mirror());
+        println!("V-Mirror: {:?}\n{:?}",valley.patterns[0].find_vertical_mirror(), valley.patterns[0]);
+        println!("V-Mirror: {:?}\n{:?}",valley.patterns[1].find_vertical_mirror(), valley.patterns[1]);
+        assert_eq!(valley.patterns[0].find_vertical_mirror(), None);
+        assert_eq!(valley.patterns[1].find_vertical_mirror(), Some((4,3)));
+    }
+    #[test]
+    fn test_find_horizontal_mirror() {
+        let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
+        let valley = Valley::parse(&input);
+
+        println!("H-Mirror: {:?}\n{:?}",valley.patterns[0].find_horizontal_mirror(), valley.patterns[0]);
+        println!("H-Mirror: {:?}\n{:?}",valley.patterns[1].find_horizontal_mirror(), valley.patterns[1]);
+        assert_eq!(valley.patterns[0].find_horizontal_mirror(), Some((5,4)));
+        assert_eq!(valley.patterns[1].find_horizontal_mirror(), None);
     }
 
     #[test]
