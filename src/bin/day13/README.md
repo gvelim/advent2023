@@ -63,7 +63,7 @@ Find the line of reflection in each of the patterns in your notes. **What number
 "..#.#|#.#."
 "..##.|.##."
 "#.#.#|#.#."
-Horizontal: None, Vertical: (position:5, radius:4) -> Result: 5
+MAX( Horizontal:[None], Vertical:[position:5, radius:4] ) -> Result: 5
    
 "#...##..#"
 "#....#..#" <
@@ -73,17 +73,38 @@ Horizontal: None, Vertical: (position:5, radius:4) -> Result: 5
 "#####.##." |
 "..##..###" |
 "#....#..#" <
-Horizontal: (position:4, radius:3, Vertical: None -> Result 4 * 100
+MAX( Horizontal[position:4, radius:3], Vertical[None] ) -> Result 4 * 100
 
 Sum: 405
 ```
 ## Part 2
-Upon closer inspection, you discover that every mirror has exactly one smudge: exactly one . or # should be the opposite type.
+You resume walking through the valley of mirrors and - SMACK! - run directly into one. Hopefully nobody was watching, because that must have been pretty embarrassing. Upon closer inspection, you discover that every mirror has exactly one smudge: **exactly one** `.` or `#` should be the opposite type
 
 In each pattern, you'll need to locate and fix the smudge that causes a different reflection line to be valid. (The old reflection line won't necessarily continue being valid after the smudge is fixed.)
 
 In each pattern, fix the smudge and find the different line of reflection. What number do you get after summarizing the new reflection line in each pattern in your notes?
 ```
+"..##..##." <
+"..#.##.#." |
+"##......#" |
+----------- 3
+"##......#" |
+"..#.##.#." |
+"..##..##." <
+"#.#.##.#."
+ MIN( Horizontal[position:3, radius:3], Vertical[position:5, radius:4] ) -> Result 3 * 100 = 300
+ 
+"#....#..#" <
+----------- 1
+"#....#..#" <
+"..##..###"
+"#####.##."
+"#####.##."
+"..##..###"
+"#....#..#"
+ MIN( Horizontal[position:1, radius:1], Vertical[None] ) -> Result 1 * 100 = 100
+ 
+ Total = 400
 ```
 ## Approach
 ```
