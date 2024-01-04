@@ -57,6 +57,11 @@ Find the line of reflection in each of the patterns in your notes. **What number
 ```
 ```
 ## Part 2
+Upon closer inspection, you discover that every mirror has exactly one smudge: exactly one . or # should be the opposite type.
+
+In each pattern, you'll need to locate and fix the smudge that causes a different reflection line to be valid. (The old reflection line won't necessarily continue being valid after the smudge is fixed.)
+
+In each pattern, fix the smudge and find the different line of reflection. What number do you get after summarizing the new reflection line in each pattern in your notes?
 ```
 ```
 ## Approach
