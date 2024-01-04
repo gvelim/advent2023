@@ -18,10 +18,11 @@ mod test {
 
     #[test]
     fn test_calculate_sample_input() {
-        let input = std::fs::read_to_string("src/bin/day13/sample_p2.txt").expect("Ops!");
+        let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
         let mut valley = input.parse::<Valley>().expect("Ops!");
 
         assert_eq!(valley.summarise_notes(),405);
+        println!("{:?}",valley);
     }
     #[test]
     fn test_find_vertical_mirror() {

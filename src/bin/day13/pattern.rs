@@ -73,9 +73,13 @@ impl FromStr for Pattern {
 
 impl Debug for Pattern {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Pattern")
+            .field("max", &self.max)
+            .finish_non_exhaustive()?;
+        f.write_str("\n")?;
         self.p.iter()
             .for_each(|line| {
-                f.write_fmt(format_args!("{:?}\n",line)).expect("ops")
+                f.write_fmt(format_args!("{:2?}\n",line)).expect("ops")
             });
         Ok(())
     }
