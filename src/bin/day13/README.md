@@ -55,6 +55,27 @@ To **summarize** your pattern notes, add up **the number of columns** to the lef
 
 Find the line of reflection in each of the patterns in your notes. **What number do you get after summarizing all of your notes?**
 ```
+  <---4--->
+"#.##.|.##."
+"..#.#|#.#."
+"##...|...#"
+"##...|...#"
+"..#.#|#.#."
+"..##.|.##."
+"#.#.#|#.#."
+Horizontal: None, Vertical: (position:5, radius:4) -> Result: 5
+   
+"#...##..#"
+"#....#..#" <
+"..##..###" |
+"#####.##." |
+----------- 3
+"#####.##." |
+"..##..###" |
+"#....#..#" <
+Horizontal: (position:4, radius:3, Vertical: None -> Result 4 * 100
+
+Sum: 405
 ```
 ## Part 2
 Upon closer inspection, you discover that every mirror has exactly one smudge: exactly one . or # should be the opposite type.
