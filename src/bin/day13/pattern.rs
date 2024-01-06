@@ -1,57 +1,91 @@
 use std::cmp::Ordering;
 use std::fmt::Debug;
 use std::str::FromStr;
+use std::rc::Rc;
 
 pub(crate) struct Pattern {
-    p: Vec<String>,
-    t: Vec<String>,
+    pub(crate) p: Rc<[String]>,
+    pub(crate) t: Rc<[String]>,
     pub(crate) max: Option<(usize, usize)>
 }
 
 impl Pattern {
-    #[inline]
+
     fn mirror_count_at_index(s: &str, idx:usize) -> usize {
         let (l, r) = s.split_at(idx);
         let li = l.chars().rev();
         let mut ri = r.chars();
         li.take_while(|lc| ri.next().map(|rc| rc.cmp(lc)) == Some(Ordering::Equal) ).count()
     }
-    fn find_mirror(pat: &[String]) -> impl Iterator<Item=(usize,usize)> + '_ {
+    pub(crate) fn find_smudge(pat: &[String]) -> impl Iterator<Item=(usize, usize, usize)> + '_ {
+        let (width, height) = (pat[0].len(), pat.len());
+        let mut heap = vec![0;width];
+
         (1..pat[0].len())
-            .filter_map(|idx| {
+            .filter_map(move |idx| {
                 // println!("idx: {idx}");
-                let mut range = usize::MAX;
-                let count = pat.iter()
-                    // .inspect(|p| print!("{:?} -> ",&p))
+                heap.fill(0);
+                let mut radius = 0;
+                let line_count = pat.iter()
+                    // .inspect(|p| print!("{:?} -> ",(&p,idx)))
                     .map(|line| Pattern::mirror_count_at_index(line, idx))
-                    .take_while(|&c| {
-                        range = std::cmp::min(range,c);
-                        c > 0
+                    // .inspect(|p| println!("{:?} : ",p)  )
+                    .take_while(|&r| {
+                        radius = std::cmp::max(r,radius);
+                        heap[r] += 1;
+                        heap[0] < 2 && heap[..radius].iter().sum::<usize>() < 2
                     })
-                    // .inspect(|p| println!("{:?} : ",&p)  )
                     .count();
-                if count != pat.len() { None } else {
-                    if idx+range == pat[0].len() || idx-range < 1 {
-                        Some((idx, range))
-                    } else { None }
-                }
+                // println!("cand: {:?} : ",(idx,radius,line_count, &heap[..radius]));
+
+                if line_count == height && heap[..radius].iter().sum::<usize>() == 1 {
+                    // println!("Got: {:?} : ",(idx,radius,&heap[..radius]));
+                    Some((idx, radius, line_count))
+                } else { None }
             })
-            // .inspect(|p| println!("Sum{:?} -> ",&p))
     }
+    fn find_perfect_mirror(pat: &[String]) -> impl Iterator<Item=(usize, usize)> + '_ {
+        let (width, height) = (pat[0].len(), pat.len());
+
+        (1..pat[0].len())
+            .filter_map(move |idx| {
+                println!("idx: {idx}");
+                let mut radius = usize::MAX;
+
+                let line_count = pat.iter()
+                    .inspect(|p| print!("{:?} -> ",&p))
+                    .map(|line| Pattern::mirror_count_at_index(line, idx))
+                    .take_while(|&r| {
+                        radius = std::cmp::min(r,radius);
+                        idx+radius == width || idx-radius == 0
+                    })
+                    .inspect(|p| println!("{:?} : ",(idx,p))  )
+                    .count();
+
+                if line_count == height {
+                    Some((idx, radius))
+                } else { None }
+            })
+    }
+
     pub(crate) fn find_horizontal_mirror_max(&self) -> Option<(usize, usize)> {
-        Pattern::find_mirror(&self.p)
+        Pattern::find_perfect_mirror(&self.p)
+            // .inspect(|p| println!("Sum{:?} -> ",&p))
             .max_by_key(|p| p.1)
     }
     pub(crate) fn find_vertical_mirror_max(&self) -> Option<(usize, usize)> {
-        Pattern::find_mirror(&self.t)
+        Pattern::find_perfect_mirror(&self.t)
+            // .inspect(|p| println!("Sum{:?} -> ",&p))
             .max_by_key(|p| p.1)
     }
     pub(crate) fn find_horizontal_mirror_min(&self) -> Option<(usize, usize)> {
-        Pattern::find_mirror(&self.p)
+        Pattern::find_perfect_mirror(&self.p)
+            // .inspect(|p| println!("Sum{:?} -> ",&p))
             .min_by_key(|p| p.1)
     }
     pub(crate) fn find_vertical_mirror_min(&self) -> Option<(usize, usize)> {
-        Pattern::find_mirror(&self.t)
+        Pattern::find_perfect_mirror(&self.t)
+            // .inspect(|p| println!("Sum{:?} -> ",&p))
             .min_by_key(|p| p.1)
     }
 }
@@ -59,13 +93,13 @@ impl FromStr for Pattern {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let p = s.lines().map(|s| String::from(s)).collect::<Vec<String>>();
+        let p = s.lines().map(|s| String::from(s)).collect::<Rc<[String]>>();
         let t =
             (0..p[0].len())
                 .map(|col| {
                     p.iter().map(|line| line.chars().skip(col).next().unwrap()).collect::<String>()
                 })
-                .collect::<Vec<_>>();
+                .collect::<Rc<[String]>>();
 
         Ok(Pattern { p, t, max:None })
     }

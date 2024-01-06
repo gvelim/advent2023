@@ -14,7 +14,24 @@ fn main() {
 
 #[cfg(test)]
 mod test {
+    use crate::pattern::Pattern;
     use super::*;
+
+    #[test]
+    fn test_calculate_smudged_input() {
+        let input = std::fs::read_to_string("src/bin/day13/sample_p2.txt").expect("Ops!");
+        let valley = input.parse::<Valley>().expect("Ops!");
+
+        let _out = valley.patterns.iter()
+            .map(|pat| {
+                let h = Pattern::find_smudge(&pat.p).collect::<Vec<_>>();
+                println!("===========");
+                let v = Pattern::find_smudge(&pat.t).collect::<Vec<_>>();
+                (h, v)
+            })
+            .inspect(|p| println!("Hor: {:?}\nVer: {:?}",p.0,p.1))
+            .all(|_| true);
+    }
 
     #[test]
     fn test_calculate_sample_input() {
