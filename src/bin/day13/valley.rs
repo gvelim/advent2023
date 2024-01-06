@@ -11,15 +11,9 @@ impl Valley {
             .map(|pat| {
                 let v = pat.find_vertical_mirror_max();
                 let h = pat.find_horizontal_mirror_max();
-                pat.max = match (v,h) {
-                    (Some(v), Some(h)) => if v.1 > h.1 { Some(v) } else { Some(h) },
-                    (Some(v), None) => Some(v),
-                    (None, Some(h)) => Some(h),
-                    (None,None) => None
-                };
                 (v,h)
             })
-            // .inspect(|p| print!("{:?} -> ",&p))
+            .inspect(|p| print!("{:?} -> ",&p))
             .map(|(v,h)| {
                 match (v,h) {
                     (Some(v), Some(h)) => if v.1 > h.1 { v.0 * 100 } else { h.0 },
@@ -28,8 +22,14 @@ impl Valley {
                     (None,None) => 0
                 }
             })
-            // .inspect(|p| println!("{:?}",&p))
+            .inspect(|p| println!("{:?}",&p))
             .sum::<usize>()
+    }
+    pub(crate) fn fix_smudged_mirrors(&mut self) {
+        self.patterns.iter_mut()
+            .for_each(|pat|{
+                pat.fix_smudge().expect("Ops! No smudge found for pattern");
+            })
     }
 }
 impl FromStr for Valley {
