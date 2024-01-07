@@ -91,6 +91,7 @@ impl Debug for Pattern {
 
 #[cfg(test)]
 mod test {
+    use crate::pattern::Pattern;
     use crate::valley::Valley;
 
     #[test]
@@ -99,11 +100,11 @@ mod test {
         let valley = input.parse::<Valley>().expect("Ops!");
 
         assert_eq!(
-            valley.patterns[0].find_vertical_mirror(),
+            Pattern::find_perfect_reflection(&valley.patterns[0].t).next(),
             None
         );
         assert_eq!(
-            valley.patterns[1].find_vertical_mirror(),
+            Pattern::find_perfect_reflection(&valley.patterns[1].t).next(),
             Some((4, 3))
         );
     }
@@ -113,11 +114,11 @@ mod test {
         let valley = input.parse::<Valley>().expect("Ops!");
 
         assert_eq!(
-            valley.patterns[0].find_horizontal_mirror(),
+            Pattern::find_perfect_reflection(&valley.patterns[0].p).next(),
             Some((5,4))
         );
         assert_eq!(
-            valley.patterns[1].find_horizontal_mirror(),
+            Pattern::find_perfect_reflection(&valley.patterns[1].p).next(),
             None
         );
     }
