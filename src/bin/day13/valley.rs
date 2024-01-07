@@ -15,12 +15,7 @@ impl Valley {
             })
             // .inspect(|p| print!("{:?} -> ",&p))
             .map(|(v,h)| {
-                match (v,h) {
-                    (Some(v), Some(h)) => if v.1 > h.1 { v.0 * 100 } else { h.0 },
-                    (Some(v), None) => v.0 * 100,
-                    (None, Some(h)) => h.0,
-                    (None,None) => 0
-                }
+                v.unwrap_or((0,0)).0 * 100 + h.unwrap_or((0,0)).0
             })
             // .inspect(|p| println!("{:?}",&p))
             .sum::<usize>()

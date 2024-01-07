@@ -20,17 +20,6 @@ mod test {
     use crate::pattern::Pattern;
     use super::*;
 
-    // #[test]
-    // fn test_fix_smudge() {
-    //     let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
-    //     let mut valley = input.parse::<Valley>().expect("Ops!");
-    //
-    //     valley.patterns.iter_mut()
-    //         .inspect(|p| println!("Before: {:?}",p))
-    //         .map(|p| p.fix_smudge())
-    //         .inspect(|p| println!("After: {:?}",p))
-    //         .all(|_| true);
-    // }
     #[test]
     fn test_calculate_smudged_input() {
         let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");

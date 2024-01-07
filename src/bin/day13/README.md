@@ -107,5 +107,69 @@ In each pattern, fix the smudge and find the different line of reflection. What 
  Total = 400
 ```
 ## Approach
+Given the below definition of a **_perfect_** and _**smudged**_ mirror line
 ```
+Perfect line        Smudged line is perfect with
+touches one end      only one faulty reflection i.e. '2'
+  <---4--->                233333333
+"#.##.|.##." 4          > "#.##..##."
+"..#.#|#.#." 4          | "..#.##.#."
+"##...|...#" 4          | "##......#" 
+"##...|...#" 4          4 ----------- 
+"..#.#|#.#." 4          | "##......#"
+"..##.|.##." 4          | "..#.##.#."
+"#.#.#|#.#." 4          > "..##..##."
+                          "#.#.##.#."
 ```
+Identifying a perfect reflection for a **_single entry_** takes the following approach
+```
+[#|.]##..##. => Index 1, Mirrored: 0 => No mirror, next Index
+#[.|#]#..##. => Index 2, Mirrored: 0 => No mirror, next Index
+#.[#|#]..##. => Index 3, Mirrored: 1 => mirror found, expand
+#[.#|#.].##. => Index 3, Mirrored: 2 => No further mirroring, not perfect, next Index
+#.#[#|.].##. => Index 4, Mirrored: 0 => No mirror, next Index
+#.##.[.|#]#. => Index 5, Mirrored: 0 => No mirror, next Index
+#.##.[.#|#.] => Index 6, Mirrored: 2 => Perfect Mirror found
+```
+Hence, by applying the above logic to the whole pattern we get
+```
+Index 1        Index 2        Index 3        Index 4        Index 5        Index 6
+[#|.]##..##.   #[.|#]#..##.   #.[#|#]..##.   #.#[#|.].##.   #[.##.|.##.]   #.##.[.|#]#.
+[. .]#.##.#.   .[. #].##.#.   ..[#|.]##.#.   ..#[. #]#.#.   .[.#.#|#.#.]   ..#.#[# .]#.
+[# #]......#   #[# .].....#   ##[. .]....#   ##.[. .]...#   #[#...|...#]   ##...[. .].#
+[# #]......#   #[# .].....#   ##[. .]....#   ##.[. .]...#   #[#...|...#]   ##...[. .].#
+[. .]#.##.#.   .[. #].##.#.   ..[# .]##.#.   ..#[. #]#.#.   .[.#.#|#.#.]   ..#.#[# .]#.
+[. .]##..##.   .[. #]#..##.   ..[# #]..##.   ..#[# .].##.   .[.##.|.##.]   ..##.[. #]#.
+[# .]#.##.#.   #[. #].##.#.   #.[# .]##.#.   #.#[. #]#.#.   #[.#.#|#.#.]   #.#.#[# .]#.
+Line 1         Line 1         Line 2         Line 1         Line 7         Line 1
+
+Perfect Line Mirror at Index 5 with radius 4
+```
+The above logic has to be adjusted to find smudged mirror lines that have a single radius flaw, hence in the above example would have had `6` perfect reflections and `1` imperfect
+```
+Index 5     
+#[.##.|.##.] = 4 
+.[.#.#|#.#.] = 4
+#[#...|.#.#] = 1 <-- Smudge at radius 1 + 1
+#[#...|...#] = 4
+.[.#.#|#.#.] = 4
+.[.##.|.##.] = 4
+#[.#.#|#.#.] = 4
+Line 7      
+```
+To identify such lines we measure the radius' frequency as we go about scanning for a mirror line per index
+```
+Zero ----- to ---> Pattern Width
+freq[0, 1, 0, 0, 6, 0, 0]
+       pos      pos
+
+6 occurence of radius 4
+1 occurence of radius 1
+```
+Therefore, a smudge line will always have
+1. `freq[radius] == height - 1`
+2. `freq[..radius].iter().sum() == 1`
+
+Hence we can optimise scanning for smudge line if
+1. `freq[0] > 1` - we found more than 1 occurence of `0` radius
+2. `freq[..radius].iter().sum() > 1` - we have more than 1 imperfection

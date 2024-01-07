@@ -10,28 +10,13 @@ pub(crate) struct Pattern {
 
 impl Pattern {
 
-    // pub(crate) fn fix_smudge(&mut self) -> Option<&mut Self> {
-    //     if let Some((idx,_,smudge)) = Pattern::find_smudge(&self.p).max() {
-    //         self.p.iter_mut()
-    //             .for_each(|line| unsafe {
-    //                 let s= line.as_bytes_mut();
-    //                 s[idx+smudge] = s[idx-smudge-1];
-    //             });
-    //         return Some(self)
-    //     } else {
-    //         if let Some((idx,_,smudge)) = Pattern::find_smudge(&self.t).max() {
-    //             self.p[idx+smudge] = self.p[idx-smudge-1].clone();
-    //             return Some(self)
-    //         }
-    //     }
-    //     None
-    // }
     fn mirror_count_at_index(s: &str, idx:usize) -> usize {
         let (l, r) = s.split_at(idx);
         let li = l.chars().rev();
         let mut ri = r.chars();
         li.take_while(|lc| ri.next().map(|rc| rc.cmp(lc)) == Some(Ordering::Equal) ).count()
     }
+
     pub(crate) fn find_smudge(pat: &[String]) -> impl Iterator<Item=(usize, usize, usize)> + '_ {
         let (width, height) = (pat[0].len(), pat.len());
         let mut smudge_counter = vec![0; width];
