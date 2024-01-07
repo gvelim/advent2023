@@ -1,35 +1,36 @@
 use std::cmp::Ordering;
 use std::fmt::Debug;
+use std::rc::Rc;
 use std::str::FromStr;
 
 pub(crate) struct Pattern {
-    pub(crate) p: Vec<String>,
-    pub(crate) t: Vec<String>
+    pub(crate) p: Rc<[String]>,
+    pub(crate) t: Rc<[String]>
 }
 
 impl Pattern {
 
+    // pub(crate) fn fix_smudge(&mut self) -> Option<&mut Self> {
+    //     if let Some((idx,_,smudge)) = Pattern::find_smudge(&self.p).max() {
+    //         self.p.iter_mut()
+    //             .for_each(|line| unsafe {
+    //                 let s= line.as_bytes_mut();
+    //                 s[idx+smudge] = s[idx-smudge-1];
+    //             });
+    //         return Some(self)
+    //     } else {
+    //         if let Some((idx,_,smudge)) = Pattern::find_smudge(&self.t).max() {
+    //             self.p[idx+smudge] = self.p[idx-smudge-1].clone();
+    //             return Some(self)
+    //         }
+    //     }
+    //     None
+    // }
     fn mirror_count_at_index(s: &str, idx:usize) -> usize {
         let (l, r) = s.split_at(idx);
         let li = l.chars().rev();
         let mut ri = r.chars();
         li.take_while(|lc| ri.next().map(|rc| rc.cmp(lc)) == Some(Ordering::Equal) ).count()
-    }
-    pub(crate) fn fix_smudge(&mut self) -> Option<&mut Self> {
-        if let Some((idx,_,smudge)) = Pattern::find_smudge(&self.p).max() {
-            self.p.iter_mut()
-                .for_each(|line| unsafe {
-                    let s= line.as_bytes_mut();
-                    s[idx+smudge] = s[idx-smudge-1];
-                });
-            return Some(self)
-        } else {
-            if let Some((idx,_,smudge)) = Pattern::find_smudge(&self.t).max() {
-                self.p[idx+smudge] = self.p[idx-smudge-1].clone();
-                return Some(self)
-            }
-        }
-        None
     }
     pub(crate) fn find_smudge(pat: &[String]) -> impl Iterator<Item=(usize, usize, usize)> + '_ {
         let (width, height) = (pat[0].len(), pat.len());
@@ -53,7 +54,7 @@ impl Pattern {
                 // println!("cand: {:?} : ",(idx,radius,line_count, &smudge_counter[..=radius]));
 
                 if line_count == height && smudge_counter[radius] == height-1 {
-                    println!("Got: {:?} : ",(idx,radius,&smudge_counter[..radius]));
+                    // println!("Got: {:?} : ",(idx,radius,&smudge_counter[..radius]));
                     Some((idx, radius, smudge_counter[..radius].iter().position(|s| 1.eq(s)).unwrap()))
                 } else { None }
             })
@@ -92,28 +93,18 @@ impl Pattern {
             // .inspect(|p| println!("Sum{:?} -> ",&p))
             .max_by_key(|p| p.1)
     }
-    pub(crate) fn find_horizontal_mirror_min(&self) -> Option<(usize, usize)> {
-        Pattern::find_perfect_mirror(&self.p)
-            // .inspect(|p| println!("Sum{:?} -> ",&p))
-            .min_by_key(|p| p.1)
-    }
-    pub(crate) fn find_vertical_mirror_min(&self) -> Option<(usize, usize)> {
-        Pattern::find_perfect_mirror(&self.t)
-            // .inspect(|p| println!("Sum{:?} -> ",&p))
-            .min_by_key(|p| p.1)
-    }
 }
 impl FromStr for Pattern {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let p = s.lines().map(|s| String::from(s)).collect::<Vec<String>>();
+        let p = s.lines().map(|s| String::from(s)).collect::<Rc<[String]>>();
         let t =
             (0..p[0].len())
                 .map(|col| {
                     p.iter().map(|line| line.chars().skip(col).next().unwrap()).collect::<String>()
                 })
-                .collect::<Vec<String>>();
+                .collect::<Rc<[String]>>();
 
         Ok(Pattern { p, t })
     }

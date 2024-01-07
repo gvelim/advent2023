@@ -11,10 +11,8 @@ fn main() {
     let t = std::time::Instant::now();
     println!("Part 1 : {:?} - {:?}", valley.summarise_notes(), t.elapsed());
 
-    valley.fix_smudged_mirrors();
-
     let t = std::time::Instant::now();
-    println!("Part 2 : {:?} - {:?}", valley.summarise_notes(), t.elapsed());
+    println!("Part 2 : {:?} - {:?}", valley.summarise_smudged(), t.elapsed());
 }
 
 #[cfg(test)]
@@ -22,17 +20,17 @@ mod test {
     use crate::pattern::Pattern;
     use super::*;
 
-    #[test]
-    fn test_fix_smudge() {
-        let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
-        let mut valley = input.parse::<Valley>().expect("Ops!");
-
-        valley.patterns.iter_mut()
-            .inspect(|p| println!("Before: {:?}",p))
-            .map(|p| p.fix_smudge())
-            .inspect(|p| println!("After: {:?}",p))
-            .all(|_| true);
-    }
+    // #[test]
+    // fn test_fix_smudge() {
+    //     let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
+    //     let mut valley = input.parse::<Valley>().expect("Ops!");
+    //
+    //     valley.patterns.iter_mut()
+    //         .inspect(|p| println!("Before: {:?}",p))
+    //         .map(|p| p.fix_smudge())
+    //         .inspect(|p| println!("After: {:?}",p))
+    //         .all(|_| true);
+    // }
     #[test]
     fn test_calculate_smudged_input() {
         let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
@@ -56,10 +54,9 @@ mod test {
 
         assert_eq!(valley.summarise_notes(),405);
 
-        valley.fix_smudged_mirrors();
         println!("{:?}",valley);
 
-        assert_eq!(valley.summarise_notes(),400);
+        assert_eq!(valley.summarise_smudged(),400);
     }
     #[test]
     fn test_find_vertical_mirror() {
