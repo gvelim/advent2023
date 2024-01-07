@@ -109,10 +109,10 @@ Horizontal[position:3, radius:3], Vertical[position:5, radius:4] -> Result 3 * 1
 ### Part 1
 Below is the definition of a **_perfect_** and _**smudged**_ pattern reflection:
 ```
-Perfect reflection        Smudged reflection is similar to 
-relfects either the       a perfect one, but with a
-first, last or both       *ONE* flawed reflection
-columns or rows           i.e. '2'
+A perfect reflection      A smudged reflection is  
+MUST contains either      similar toa perfect one, 
+the first or last         but with a *ONE* flawed 
+column/row or both        reflection
 
   <---4--->                 <---4--->   
 "#.##.|.##." = 4          "#.##.|.##." 4
@@ -125,13 +125,20 @@ columns or rows           i.e. '2'
 ```
 Identifying a perfect reflection for a **_single pattern line_** we take the following approach
 ```
-[#|.]##..##. => Index 1, Mirrored: 0 => Abandon, next Index
-#[.|#]#..##. => Index 2, Mirrored: 0 => Abandon, next Index
+Starting form index position 1; 2nd position for zero based index arrays
+
+[#|.]##..##. => Index 1, Mirrored: 0 => Abandon, scan next Index
+
+#[.|#]#..##. => Index 2, Mirrored: 0 => Abandon, scan next Index
+
 #.[#|#]..##. => Index 3, Mirrored: 1 => found a mirror, not perfect, expand
 #[.#|#.].##. => Index 3, Mirrored: 2 => found a mirror, not perfect, expand
-[#.#|#..]##. => Index 3, Mirrored: 0 => abandon, next Index
-#.#[#|.].##. => Index 4, Mirrored: 0 => Abandon, next Index
-#.##.[.|#]#. => Index 5, Mirrored: 0 => Abandon, next Index
+[#.#|#..]##. => Index 3, Mirrored: 0 => abandon, scan next Index
+
+#.#[#|.].##. => Index 4, Mirrored: 0 => Abandon, scan next Index
+
+#.##.[.|#]#. => Index 5, Mirrored: 0 => Abandon, scan next Index
+
 #.##..[#|#]. => Index 6, Mirrored: 1 => found a mirror, not perfect, expand
 #.##.[.#|#.] => Index 6, Mirrored: 2 => Found a perfect reflecton !!
 ```
@@ -171,9 +178,9 @@ Max Height  7
 ```
 Therefore, our scanning algorithm must continue the scan when a reflection flaw is discovered, and later decide whether to accept or reject the **scan results** based on the **radius variation** observed.
 
-As a result and during scanning, we need to measure the **radius' frequency**. We can use an array for this purpose which would look like this for the above example
+As a result and during scanning, we need to measure the **radius' frequency**. We can use an array for this purpose which would look like this
 ```
-Array Length =  Zero ----- to ---> Pattern Width
+Array Length =  Zero ---- to ----> Pattern Width
             freq[0, 1, 0, 0, 6, 0, 0]
    radius = pos :  '1'      '4'
               
@@ -185,6 +192,6 @@ Therefore, when an index scan is completed, a smudged reflection is found when t
 1. `freq[radius] == height - 1`
 2. `freq[..radius].iter().sum() == 1`
 
-However, computing every index in fully is costly, hence we can abandon a scan when any of the below conditions are true 
+However, computing every index in full is a costly exercise, hence we can optimise the scanning by stopping when any of the below conditions are true 
 1. `freq[0] > 1` - we found more than 1 occurrence of `0` radius
 2. `freq[..radius].iter().sum() > 1` - we have more than 1 flaws
