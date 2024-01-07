@@ -17,13 +17,13 @@ impl Pattern {
         li.take_while(|lc| ri.next().map(|rc| rc.cmp(lc)) == Some(Ordering::Equal) ).count()
     }
 
-    pub(crate) fn find_smudged_reflection(pat: &[String]) -> impl Iterator<Item=(usize, usize, usize)> + '_ {
+    pub(crate) fn find_smudged_reflection<'a>(pat: &'a [String]) -> impl Iterator<Item=(usize, usize)> + 'a {
         let (width, height) = (pat[0].len(), pat.len());
         let mut smudge_counter = vec![0; width];
 
-        (1..pat[0].len())
+        (1..width)
             .filter_map(move |idx| {
-                let mut radius = 0;
+                let mut radius = usize::MIN;
                 smudge_counter.fill(0);
 
                 let line_found = pat.iter()
@@ -35,18 +35,15 @@ impl Pattern {
                     });
 
                 if line_found && smudge_counter[radius] == height-1 {
-                    Some((
-                        idx, radius,
-                        smudge_counter[..radius].iter().position(|s| 1.eq(s)).unwrap()
-                    ))
+                    Some((idx, radius))
                 } else { None }
             })
     }
 
-    fn find_perfect_reflection(pat: &[String]) -> impl Iterator<Item=(usize, usize)> + '_ {
+    pub(crate) fn find_perfect_reflection<'a>(pat: &'a [String]) -> impl Iterator<Item=(usize, usize)> + 'a {
         let width = pat[0].len();
 
-        (1..pat[0].len())
+        (1..width)
             .filter_map(move |idx| {
                 let mut radius = usize::MAX;
 
@@ -63,14 +60,8 @@ impl Pattern {
                 }
             })
     }
-
-    pub(crate) fn find_horizontal_mirror(&self) -> Option<(usize, usize)> {
-        Pattern::find_perfect_reflection(&self.p).next()
-    }
-    pub(crate) fn find_vertical_mirror(&self) -> Option<(usize, usize)> {
-        Pattern::find_perfect_reflection(&self.t).next()
-    }
 }
+
 impl FromStr for Pattern {
     type Err = ();
 

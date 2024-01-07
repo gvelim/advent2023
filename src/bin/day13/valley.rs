@@ -1,31 +1,28 @@
+use std::rc::Rc;
 use std::str::FromStr;
 use crate::pattern::Pattern;
 
 #[derive(Debug)]
 pub(crate) struct Valley {
-    pub(crate) patterns: Vec<Pattern>
+    pub(crate) patterns: Rc<[Pattern]>
 }
 impl Valley {
-    pub(crate) fn summarise_notes(&self) -> usize {
+    pub(crate) fn summarise_notes<'a,I>(
+        &'a self,
+        find: fn(&'a [String]) -> I
+    ) -> usize
+        where I: Iterator<Item = (usize, usize)> + 'a
+    {
         self.patterns.iter()
             .map(|pat| {
-                (pat.find_vertical_mirror(), pat.find_horizontal_mirror())
+                (find(&pat.t).next(), find(&pat.p).next())
             })
             .map(|(v,h)| {
                 v.unwrap_or((0,0)).0 * 100 + h.unwrap_or((0,0)).0
             })
             .sum::<usize>()
     }
-    pub(crate) fn summarise_smudged(&self) -> usize {
-        self.patterns.iter()
-            .map(|pat| {
-                (Pattern::find_smudged_reflection(&pat.t).next(), Pattern::find_smudged_reflection(&pat.p).next())
-            })
-            .map(|(v,h)|
-                    v.unwrap_or((0,0,0)).0 * 100 + h.unwrap_or((0,0,0)).0
-            )
-            .sum::<usize>()
-    }}
+}
 impl FromStr for Valley {
     type Err = ();
 
@@ -33,7 +30,7 @@ impl FromStr for Valley {
         Ok(Valley {
             patterns: s.split("\n\n")
                 .map(|pat| pat.parse::<Pattern>().expect("Ops!"))
-                .collect::<Vec<_>>()
+                .collect::<Rc<[Pattern]>>()
         })
     }
 }
@@ -48,7 +45,7 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
         let valley = input.parse::<Valley>().expect("Ops!");
 
-        assert_eq!(valley.summarise_smudged(), 400);
+        assert_eq!(valley.summarise_notes(Pattern::find_smudged_reflection), 400);
     }
 
     #[test]
@@ -56,7 +53,7 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
         let valley = input.parse::<Valley>().expect("Ops!");
 
-        assert_eq!(valley.summarise_notes(), 405);
+        assert_eq!(valley.summarise_notes(Pattern::find_perfect_reflection), 405);
     }
 
     #[test]
