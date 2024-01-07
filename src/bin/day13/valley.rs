@@ -6,32 +6,24 @@ pub(crate) struct Valley {
     pub(crate) patterns: Vec<Pattern>
 }
 impl Valley {
-    pub(crate) fn summarise_notes(&mut self) -> usize {
-        self.patterns.iter_mut()
+    pub(crate) fn summarise_notes(&self) -> usize {
+        self.patterns.iter()
             .map(|pat| {
-                let v = pat.find_vertical_mirror_max();
-                let h = pat.find_horizontal_mirror_max();
-                (v,h)
+                (pat.find_vertical_mirror(), pat.find_horizontal_mirror())
             })
-            // .inspect(|p| print!("{:?} -> ",&p))
             .map(|(v,h)| {
                 v.unwrap_or((0,0)).0 * 100 + h.unwrap_or((0,0)).0
             })
-            // .inspect(|p| println!("{:?}",&p))
             .sum::<usize>()
     }
-    pub(crate) fn summarise_smudged(&mut self) -> usize {
+    pub(crate) fn summarise_smudged(&self) -> usize {
         self.patterns.iter()
             .map(|pat| {
-                let v = Pattern::find_smudge(&pat.t).max();
-                let h = Pattern::find_smudge(&pat.p).max();
-                (v,h)
+                (Pattern::find_smudged_reflection(&pat.t).next(), Pattern::find_smudged_reflection(&pat.p).next())
             })
-            // .inspect(|p| print!("{:?} -> ",&p))
             .map(|(v,h)|
                     v.unwrap_or((0,0,0)).0 * 100 + h.unwrap_or((0,0,0)).0
             )
-            // .inspect(|p| println!("{:?}",&p))
             .sum::<usize>()
     }}
 impl FromStr for Valley {
@@ -44,4 +36,35 @@ impl FromStr for Valley {
                 .collect::<Vec<_>>()
         })
     }
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_calculate_smudged_input() {
+        let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
+        let valley = input.parse::<Valley>().expect("Ops!");
+
+        assert_eq!(valley.summarise_smudged(), 400);
+    }
+
+    #[test]
+    fn test_calculate_sample_input() {
+        let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
+        let valley = input.parse::<Valley>().expect("Ops!");
+
+        assert_eq!(valley.summarise_notes(), 405);
+    }
+
+    #[test]
+    fn test_parse() {
+        let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
+        let valley = input.parse::<Valley>().expect("Ops!");
+
+        valley.patterns.into_iter().for_each(|pat| println!("{:?}\n",pat))
+    }
+
 }
