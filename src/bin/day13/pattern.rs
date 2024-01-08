@@ -1,7 +1,8 @@
-use std::cmp::Ordering;
 use std::fmt::Debug;
 use std::rc::Rc;
 use std::str::FromStr;
+
+pub(crate) type Reflection = (usize, usize);
 
 pub(crate) struct Pattern {
     pub(crate) p: Rc<[String]>,
@@ -12,12 +13,12 @@ impl Pattern {
 
     fn reflections_at_index(s: &str, idx:usize) -> usize {
         let (l, r) = s.split_at(idx);
-        let li = l.chars().rev();
-        let mut ri = r.chars();
-        li.take_while(|lc| ri.next().map(|rc| rc.cmp(lc)) == Some(Ordering::Equal) ).count()
+        let li = l.bytes().rev();
+        let mut ri = r.bytes();
+        li.take_while(|&lc| ri.next() == Some(lc)).count()
     }
 
-    pub(crate) fn find_smudged_reflection<'a>(pat: &'a [String]) -> impl Iterator<Item=(usize, usize)> + 'a {
+    pub(crate) fn find_smudged_reflection(pat: &[String]) -> impl Iterator<Item=Reflection> + '_ {
         let (width, height) = (pat[0].len(), pat.len());
         let mut smudge_counter = vec![0; width];
 
@@ -40,19 +41,18 @@ impl Pattern {
             })
     }
 
-    pub(crate) fn find_perfect_reflection<'a>(pat: &'a [String]) -> impl Iterator<Item=(usize, usize)> + 'a {
+    pub(crate) fn find_perfect_reflection(pat: &[String]) -> impl Iterator<Item=Reflection> + '_ {
         let width = pat[0].len();
 
         (1..width)
             .filter_map(move |idx| {
                 let mut radius = usize::MAX;
 
-                if pat.iter()
-                    .map(|line| {
+                if pat.iter().map(|line| {
                         radius = std::cmp::min(Pattern::reflections_at_index(line, idx), radius);
                         radius
                     })
-                    .all(|r| idx+r == width || idx-r == 0 )
+                    .all(|r| idx == r || idx+r == width )
                 {
                     Some((idx, radius))
                 } else {
