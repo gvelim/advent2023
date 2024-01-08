@@ -49,15 +49,21 @@ impl Pattern {
                 let mut radius = usize::MAX;
 
                 if pat.iter().map(|line| {
-                        radius = std::cmp::min(Pattern::reflections_at_index(line, idx), radius);
-                        radius
-                    })
-                    .all(|r| idx == r || idx+r == width )
+                    radius = std::cmp::min(Pattern::reflections_at_index(line, idx), radius);
+                    radius
+                })
+                    .all(|r| idx == r || idx + r == width)
                 {
                     Some((idx, radius))
                 } else {
                     None
                 }
+            })
+    }
+    fn transpose(p: &[String]) -> impl Iterator<Item=String> + '_ {
+        (0..p[0].len())
+            .map(move |col| {
+                p.iter().map(|line| line.as_bytes()[col] as char).collect::<String>()
             })
     }
 }
@@ -67,12 +73,7 @@ impl FromStr for Pattern {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let p = s.lines().map(String::from).collect::<Rc<[String]>>();
-        let t =
-            (0..p[0].len())
-                .map(|col| {
-                    p.iter().map(|line| line.chars().nth(col).unwrap()).collect::<String>()
-                })
-                .collect::<Rc<[String]>>();
+        let t = Pattern::transpose(&p).collect::<Rc<[String]>>();
 
         Ok(Pattern { p, t })
     }
