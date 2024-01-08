@@ -114,33 +114,33 @@ MUST contains either      similar toa perfect one,
 the first or last         but with a *ONE* flawed 
 column/row or both        reflection
 
-  <---4--->                 <---4--->   
-"#.##.|.##." = 4          "#.##.|.##." 4
-"..#.#|#.#." = 4          "..#.#|#.#." 4
-"##...|...#" = 4          "##...|...#" 4
-"##...|...#" = 4          "##...|..##" 2 <-- smudged reflection
-"..#.#|#.#." = 4          "..#.#|#.#." 4
-"..##.|.##." = 4          "..##.|.##." 4
-"#.#.#|#.#." = 4          "#.#.#|#.#." 4    
+   <---4--->                   <---4--->   
+"#[.##.|.##.]" = 4          "#[.##.|.##.]" 4
+".[.#.#|#.#.]" = 4          ".[.#.#|#.#.]" 4
+"#[#...|...#]" = 4          "#[#...|...#]" 4
+"#[#...|...#]" = 4          "##.[..|..]##" 2 <-- smudged reflection
+".[.#.#|#.#.]" = 4          ".[.#.#|#.#.]" 4
+".[.##.|.##.]" = 4          ".[.##.|.##.]" 4
+"#[.#.#|#.#.]" = 4          "#[.#.#|#.#.]" 4    
 ```
 Identifying a perfect reflection for a **_single pattern line_** we take the following approach
 ```
 Starting form index position 1; 2nd position for zero based index arrays
 
-[#|.]##..##. => Index 1, Mirrored: 0 => Abandon, scan next Index
+[#|.]##..##. => Index 1, Reflected: 0 => Abandon, scan next Index
 
-#[.|#]#..##. => Index 2, Mirrored: 0 => Abandon, scan next Index
+#[.|#]#..##. => Index 2, Reflected: 0 => Abandon, scan next Index
 
-#.[#|#]..##. => Index 3, Mirrored: 1 => found a mirror, not perfect, expand
-#[.#|#.].##. => Index 3, Mirrored: 2 => found a mirror, not perfect, expand
-[#.#|#..]##. => Index 3, Mirrored: 0 => abandon, scan next Index
+#.[#|#]..##. => Index 3, Reflected: 1 => found a reflection, not perfect, expand
+#[.#|#.].##. => Index 3, Reflected: 2 => found a reflection, not perfect, expand
+[#.#|#..]##. => Index 3, Reflected: 2 => abandon, scan next Index
 
-#.#[#|.].##. => Index 4, Mirrored: 0 => Abandon, scan next Index
+#.#[#|.].##. => Index 4, Reflected: 0 => Abandon, scan next Index
 
-#.##.[.|#]#. => Index 5, Mirrored: 0 => Abandon, scan next Index
+#.##.[.|#]#. => Index 5, Reflected: 0 => Abandon, scan next Index
 
-#.##..[#|#]. => Index 6, Mirrored: 1 => found a mirror, not perfect, expand
-#.##.[.#|#.] => Index 6, Mirrored: 2 => Found a perfect reflecton !!
+#.##..[#|#]. => Index 6, Reflected: 1 => found a reflection, not perfect, expand
+#.##.[.#|#.] => Index 6, Reflected: 2 => Found a perfect reflecton !!
 ```
 Hence, by applying the above logic to the whole pattern we get
 ```
@@ -148,13 +148,13 @@ For
 Index 1            Index 2            Index 3            Index 4             Index 5            Index 6
 
 [#|.]##..##. = 0   #[.|#]#..##. = 0   #.[#|#]..##. = 1   #.#[#|.].##. = 0    #[.##.|.##.] = 4   #.##.[.|#]#. = 0
-[. .]#.##.#.       .[. #].##.#.       ..[#|.]##.#. = 0   ..#[. #]#.#.        .[.#.#|#.#.] = 4   ..#.#[# .]#. 
-[# #]......#       #[# .].....#       ##[. .]....#       ##.[. .]...#        #[#...|...#] = 4   ##...[. .].#
+[. .]#.##.#. Stop  .[. #].##.#. Stop  ..[#|.]##.#. = 0   ..#[. #]#.#. Stop   .[.#.#|#.#.] = 4   ..#.#[# .]#. Stop 
+[# #]......#       #[# .].....#       ##[. .]....# Stop  ##.[. .]...#        #[#...|...#] = 4   ##...[. .].#
 [# #]......#       #[# .].....#       ##[. .]....#       ##.[. .]...#        #[#...|...#] = 4   ##...[. .].#
 [. .]#.##.#.       .[. #].##.#.       ..[# .]##.#.       ..#[. #]#.#.        .[.#.#|#.#.] = 4   ..#.#[# .]#.
 [. .]##..##.       .[. #]#..##.       ..[# #]..##.       ..#[# .].##.        .[.##.|.##.] = 4   ..##.[. #]#.
 [# .]#.##.#.       #[. #].##.#.       #.[# .]##.#.       #.#[. #]#.#.        #[.#.#|#.#.] = 4   #.#.#[# .]#.
-
+                                                                                       Finished
 Max Height 1       Max Height 1       Max Height 2       Max Height 1        Max Height 7       Max Height 1
                                                                               ** MATCH **                                    
 Perfect Line Mirror at Index 5 with radius 4
