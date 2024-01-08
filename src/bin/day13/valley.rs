@@ -13,9 +13,16 @@ impl Valley {
             I: Iterator<Item = Reflection> + 'a
     {
         self.patterns.iter()
-            .map(|pat| (find(&pat.t).next(), find(&pat.p).next()) )
+            .map(|pat|
+                find(&pat.t).next()
+                    .map(|v| (Some(v), None))
+                    .or_else(||{ Some((None, find(&pat.p).next())) })
+                    .unwrap()
+            )
             .map(|(v,h)| {
-                v.unwrap_or((0,0)).0 * 100 + h.unwrap_or((0,0)).0
+                v.map(|v| v.0 * 100)
+                    .or_else(|| Some(h.unwrap_or((0,0)).0))
+                    .unwrap()
             })
             .sum::<usize>()
     }
