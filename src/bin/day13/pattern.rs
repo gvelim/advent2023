@@ -81,11 +81,25 @@ impl FromStr for Pattern {
 
 impl Debug for Pattern {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut piter = self.p.iter();
+        let mut titer = self.t.iter();
+        let lines = if self.p.len() > self.p[0].len() { self.p.len() } else { self.p[0].len() };
+
         f.write_str("Pattern\n")?;
-        self.p.iter()
-            .for_each(|line| {
-                f.write_fmt(format_args!("{:?}\n",line)).expect("ops")
-            });
+
+            for _ in 0..lines {
+                piter.next().map(|line| {
+                    line.chars().for_each(|c| f.write_str(&format!("{:2}",c)).expect("ops"));
+                }).or_else(||{ 
+                    f.write_str(&format!("{:1$}",' ',self.p[0].len()*2)).expect("msg");
+                    None
+                });
+                f.write_str("  -->  ")?;
+                titer.next().map(|line| {
+                    line.chars().for_each(|c| f.write_str(&format!("{:2}",c)).expect("ops"));
+                });
+                f.write_str("\n")?
+            };
         Ok(())
     }
 }
