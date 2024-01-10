@@ -14,3 +14,4 @@ Coding challenges in Rust
 * [Day 11](./src/bin/day11) - Cosmic Expansion
 * [Day 12](./src/bin/day12) - Hot Springs
 * [Day 13](./src/bin/day13) - Point of Incidence
+* [Day 14](./src/bin/day14) - Parabolic Reflector Dish
