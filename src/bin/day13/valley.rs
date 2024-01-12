@@ -20,8 +20,8 @@ impl Valley {
                     .unwrap()
             )
             .map(|(v,h)| {
-                v.map(|v| v.0 * 100)
-                    .or_else(|| Some(h.unwrap_or((0,0)).0))
+                v.map(|v| v * 100)
+                    .or_else(|| Some(h.unwrap_or(0)) )
                     .unwrap()
             })
             .sum::<usize>()

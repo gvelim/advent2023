@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use std::rc::Rc;
 use std::str::FromStr;
 
-pub(crate) type Reflection = (usize, usize);
+pub(crate) type Reflection = usize;
 
 pub(crate) struct Pattern {
     pub(crate) p: Rc<[String]>,
@@ -36,7 +36,7 @@ impl Pattern {
                     });
 
                 if line_found && smudge_counter[radius] == height-1 {
-                    Some((idx, radius))
+                    Some(idx)
                 } else { None }
             })
     }
@@ -46,15 +46,11 @@ impl Pattern {
 
         (1..width)
             .filter_map(move |idx| {
-                let mut radius = usize::MAX;
-
-                if pat.iter().map(|line| {
-                    radius = std::cmp::min(Pattern::reflections_at_index(line, idx), radius);
-                    radius
-                })
+                if pat.iter()
+                    .map(|line| Pattern::reflections_at_index(line, idx))
                     .all(|r| idx == r || idx + r == width)
                 {
-                    Some((idx, radius))
+                    Some(idx)
                 } else {
                     None
                 }
@@ -120,7 +116,7 @@ mod test {
         );
         assert_eq!(
             Pattern::find_perfect_reflection(&valley.patterns[1].t).next(),
-            Some((4, 3))
+            Some(4)
         );
     }
     #[test]
@@ -130,7 +126,7 @@ mod test {
 
         assert_eq!(
             Pattern::find_perfect_reflection(&valley.patterns[0].p).next(),
-            Some((5,4))
+            Some(5)
         );
         assert_eq!(
             Pattern::find_perfect_reflection(&valley.patterns[1].p).next(),
