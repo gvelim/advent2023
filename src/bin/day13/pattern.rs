@@ -32,7 +32,7 @@ impl Pattern {
                     .all(|r| {
                         radius = std::cmp::max(r,radius);
                         smudge_counter[r] += 1;
-                        smudge_counter[0] < 2 && smudge_counter[..radius].iter().sum::<usize>() < 2
+                        smudge_counter[0] < 2 //&& smudge_counter[..radius].iter().sum::<usize>() < 2
                     });
 
                 if line_found && smudge_counter[radius] == height-1 {
@@ -45,16 +45,12 @@ impl Pattern {
         let width = pat[0].len();
 
         (1..width)
-            .filter_map(move |idx| {
-                if pat.iter()
+            .filter_map(move |idx|
+                pat.iter()
                     .map(|line| Pattern::reflections_at_index(line, idx))
                     .all(|r| idx == r || idx + r == width)
-                {
-                    Some(idx)
-                } else {
-                    None
-                }
-            })
+                    .then(|| idx)
+            )
     }
     fn transpose(p: &[String]) -> impl Iterator<Item=String> + '_ {
         (0..p[0].len())
