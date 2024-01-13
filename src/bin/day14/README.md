@@ -48,11 +48,9 @@ O..#.OO...  7
 #....###..  2
 #....#....  1
 ```
-The total load is the sum of the load caused by all of the rounded rocks. In this example, the total load is 136.
+The total load is the sum of the load caused by all the rounded rocks. In this example, the total load is 136.
 
 Tilt the platform so that the rounded rocks all roll north. Afterward, **what is the total load on the north support beams?**
-```
-```
 ## Part 2
 ```
 ```

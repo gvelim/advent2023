@@ -3,7 +3,11 @@ use std::rc::Rc;
 use std::str::FromStr;
 
 fn main() {
+    let inp = std::fs::read_to_string("src/bin/day14/input.txt").expect("Ops!");
+    let dish = &mut inp.parse::<ReflectorDish>().unwrap_or_default();
 
+    let t = std::time::Instant::now();
+    println!("Part 1: Total load = {:?} - {:?}",dish.tilt(Direction::North),t.elapsed());
 }
 
 #[derive(Copy,Clone)]
@@ -46,11 +50,11 @@ impl ReflectorDish {
         let rocks = self.round_rocks().collect::<Rc<[usize]>>();
 
         rocks.into_iter()
-            .inspect(|s| print!("idx: {s} -> "))
+            // .inspect(|s| print!("idx: {s} -> "))
             .map(|&r| {
                 self.move_rock(r,dir).map(|cost| self.lines - cost).unwrap()
             })
-            .inspect(|s| println!("{s}"))
+            // .inspect(|s| println!("{s}"))
             .sum::<usize>()
     }
     fn round_rocks(&self) -> impl Iterator<Item=usize> + '_ {
