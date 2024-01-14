@@ -11,7 +11,7 @@ fn main() {
 }
 
 #[derive(Copy,Clone)]
-enum Direction { East, West, North, South }
+enum Direction { North, West, South, East }
 
 #[derive(Default)]
 struct ReflectorDish {
@@ -53,8 +53,10 @@ impl ReflectorDish {
 
         rocks.into_iter()
             // .inspect(|s| print!("idx: {s} -> "))
-            .map(|&r| {
-                self.move_rock(r,dir).map(|cost| self.lines - cost).unwrap()
+            .map(|&r| { self
+                .move_rock(r,dir)
+                .map(|cost| self.lines - cost)
+                .unwrap()
             })
             // .inspect(|s| println!("{s}"))
             .sum::<usize>()
@@ -112,12 +114,28 @@ mod test {
         let inp = std::fs::read_to_string("src/bin/day14/sample.txt").expect("Ops!");
         let dish = &mut inp.parse::<ReflectorDish>().unwrap_or_default();
 
+        let period = (0..1000)
+            .map(|_|{
+                dish.tilt(Direction::North);
+                dish.tilt(Direction::West);
+                dish.tilt(Direction::South);
+                dish.tilt(Direction::East)
+            })
+            .inspect(|c| println!("Cycle -> {:?}",c))
+            .last();
+        println!("{:?}",period);
+        println!("{:?}", dish);
+    }
+    #[test]
+    fn test_tilt() {
+        let inp = std::fs::read_to_string("src/bin/day14/sample.txt").expect("Ops!");
+        let dish = &mut inp.parse::<ReflectorDish>().unwrap_or_default();
+
         println!("{:?}",dish);
-        assert_eq!(dish.tilt(Direction::North),136);
-        assert_eq!(dish.tilt(Direction::West),136);
-        assert_eq!(dish.tilt(Direction::South),87);
-        assert_eq!(dish.tilt(Direction::East),87);
-        println!("{:?}",dish);
+        assert_eq!(dish.tilt(Direction::North),136); println!("North {:?}",dish);
+        assert_eq!(dish.tilt(Direction::West),136); println!("West {:?}",dish);
+        assert_eq!(dish.tilt(Direction::South),87); println!("South {:?}",dish);
+        assert_eq!(dish.tilt(Direction::East),87); println!("East {:?}",dish);
     }
     #[test]
     fn test_move_rock() {
