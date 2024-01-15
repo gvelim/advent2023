@@ -10,14 +10,14 @@ fn main() {
     println!("Part 1: Total load = {:?} - {:?}",dish.tilt(Direction::North),t.elapsed());
 }
 
-#[derive(Copy,Clone)]
+#[derive(Copy, Clone, Debug)]
 enum Direction { North, West, South, East }
 
 #[derive(Default)]
 struct ReflectorDish {
     width: usize,
     lines: usize,
-    layout: Vec<char>
+    layout: Vec<u8>
 }
 
 impl ReflectorDish {
@@ -34,7 +34,7 @@ impl ReflectorDish {
         if idx >= self.layout.len() { return None }
         self.next(idx,dir)
             .and_then(|next|{
-                if self.layout[next] == '.' {
+                if self.layout[next] == b'.' {
                     self.layout.swap(idx,next);
                     self.move_rock(next,dir)
                 } else {
@@ -64,7 +64,7 @@ impl ReflectorDish {
     fn round_rocks_n2s(&self) -> impl DoubleEndedIterator<Item=usize> + '_ {
         self.layout.iter()
             .enumerate()
-            .filter(|&(_,c)| *c == 'O')
+            .filter(|&(_,c)| *c == b'O')
             .map(|(idx,_)| idx )
     }
     fn round_rocks_w2e(&self) -> impl DoubleEndedIterator<Item=usize> + '_ {
@@ -72,7 +72,7 @@ impl ReflectorDish {
             .flat_map(move |x|{
                 (0..self.lines).map(move |y| y * self.lines + x )
             })
-            .filter(|&idx| self.layout[idx] == 'O')
+            .filter(|&idx| self.layout[idx] == b'O')
     }
 }
 
@@ -84,8 +84,8 @@ impl FromStr for ReflectorDish {
             width: s.lines().next().map(|s| s.len()).unwrap(),
             lines: s.lines().count(),
             layout: s.lines()
-                .flat_map(|line| line.chars())
-                .collect::<Vec<char>>()
+                .flat_map(|line| line.bytes())
+                .collect::<Vec<_>>()
         })
     }
 }
@@ -99,7 +99,7 @@ impl Debug for ReflectorDish {
                 f.write_char('\n')?
             };
             f.write_char(' ')?;
-            f.write_char(*c)?;
+            f.write_char(*c as char)?;
         }
         Ok(())
     }
@@ -107,6 +107,8 @@ impl Debug for ReflectorDish {
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashMap;
+    use crate::Direction::{East, North, South, West};
     use super::*;
 
     #[test]
@@ -114,28 +116,37 @@ mod test {
         let inp = std::fs::read_to_string("src/bin/day14/sample.txt").expect("Ops!");
         let dish = &mut inp.parse::<ReflectorDish>().unwrap_or_default();
 
-        let period = (0..1000)
-            .map(|_|{
+        let mut map = HashMap::<Vec<u8>,usize>::new();
+        let mut vec = vec![];
+        let mut old: Option<usize> = None;
+
+        let cycle = (0..1000000000)
+            .take_while(|&i| {
                 dish.tilt(Direction::North);
                 dish.tilt(Direction::West);
                 dish.tilt(Direction::South);
-                dish.tilt(Direction::East)
+                vec.push( dish.tilt(Direction::East) );
+                old = map.insert(dish.layout.clone(),i);
+                old.is_none()
             })
             .inspect(|c| println!("Cycle -> {:?}",c))
-            .last();
-        println!("{:?}",period);
-        println!("{:?}", dish);
+            .count() + 1;
+
+        let p = old.map(|old| cycle - old).unwrap();
+        println!("period {:?}",(p,&vec));
+        println!("{:?}", vec[(1000000000 - cycle) % p]);
     }
     #[test]
     fn test_tilt() {
         let inp = std::fs::read_to_string("src/bin/day14/sample.txt").expect("Ops!");
         let dish = &mut inp.parse::<ReflectorDish>().unwrap_or_default();
-
+        let data = [(North,136), (West,136), (South,87), (East,87)];
         println!("{:?}",dish);
-        assert_eq!(dish.tilt(Direction::North),136); println!("North {:?}",dish);
-        assert_eq!(dish.tilt(Direction::West),136); println!("West {:?}",dish);
-        assert_eq!(dish.tilt(Direction::South),87); println!("South {:?}",dish);
-        assert_eq!(dish.tilt(Direction::East),87); println!("East {:?}",dish);
+        for (dir,out) in data.into_iter() {
+            let ret = dish.tilt(dir);
+            println!("{:?} -> {ret} = {:?}",dir, dish);
+            assert_eq!(ret,out);
+        }
     }
     #[test]
     fn test_move_rock() {
