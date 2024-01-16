@@ -23,8 +23,8 @@ struct ReflectorDish {
 impl ReflectorDish {
     fn next(&self, idx: usize, dir:Direction) -> Option<usize> {
         match dir {
-            Direction::East if idx < (idx/self.lines)*10+self.width-1 => Some(idx+1),
-            Direction::West if idx > (idx/self.lines)*10 => Some(idx - 1),
+            Direction::East if idx < (idx/self.lines)*self.width+self.width-1 => Some(idx+1),
+            Direction::West if idx > (idx/self.lines)*self.width => Some(idx - 1),
             Direction::North if (self.width..self.layout.len()).contains(&idx) => Some(idx - self.width),
             Direction::South if idx < self.layout.len() - self.width => Some(idx + self.width),
             _ => None
@@ -117,24 +117,30 @@ mod test {
         let dish = &mut inp.parse::<ReflectorDish>().unwrap_or_default();
 
         let mut map = HashMap::<Vec<u8>,usize>::new();
-        let mut vec = vec![];
-        let mut old: Option<usize> = None;
 
-        let cycle = (0..1000000000)
-            .take_while(|&i| {
+        let cost = (1..1000)
+            .map(|idx|{
                 dish.tilt(Direction::North);
                 dish.tilt(Direction::West);
                 dish.tilt(Direction::South);
-                vec.push( dish.tilt(Direction::East) );
-                old = map.insert(dish.layout.clone(),i);
-                old.is_none()
+                (
+                    idx,
+                    dish.tilt(Direction::East),
+                    map.insert(dish.layout.clone(),idx)
+                )
+            })
+            .skip_while(|(idx, cost, seen)| {
+                if let Some(prev) = seen {
+                    print!("{:?} - ",(idx - prev, (1000000000 - idx) % (idx - prev)));
+                    (1000000000 - idx) % (idx - prev) != 0
+                } else {
+                    true
+                }
             })
             .inspect(|c| println!("Cycle -> {:?}",c))
-            .count() + 1;
+            .next();
 
-        let p = old.map(|old| cycle - old).unwrap();
-        println!("period {:?}",(p,&vec));
-        println!("{:?}", vec[(1000000000 - cycle) % p]);
+        println!("Cost {:?}",cost);
     }
     #[test]
     fn test_tilt() {
