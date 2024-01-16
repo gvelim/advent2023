@@ -100,4 +100,68 @@ Run the spin cycle for `1000000000` cycles. Afterward, **what is the total load 
 
 ## Approach
 ### Part 1
+We hold the info in a single dimensional array therefore we can do all work with a single index value
+```
+Input Form         Single Dimension Array Form
+
+O....#....            Line 1     Line 2   Line 3           Line 10
+O.OO#....#          <- W:10 -><- W:10 -><- W:10 ->  ...  <- W:10 ->
+.....##...         [O....#....O.OO#....#.....##...  ...  #OO..#....]
+   ...
+#OO..#....
+```
+Moving vertically in a single dimension:
+- A line step is equal to `+/- Width`
+- Vertical movement logical bounds defined as
+```
+        Line 1     Line 2            Line 10  
+      <- W:10 -> <- W:10 ->  ...   <- W:10 ->
+array[O....#.... O.OO#....#  ...   #OO..#....]
+                |                 | 
+                |        ^        |
+                |        |        |
+              W >      Index      < array.len()-W
+    Lower Bound                     Higher Bound
+```
+Moving horizontally in a single dimension while avoiding crossing lines: 
+- Step is equal to `+/- 1`
+- horizontal movement logical bounds defined as 
+```
+        Line 1     Line 2      Line 3  
+      <- W:10 -> <- W:10 -> <- W:10 ->  etc
+array[O....#.... O.OO#....# .....##...  ...]
+                |          | 
+                |    ^     |
+                |    |     |
+      W*Index/H >  Index   < (Index/H+1)*W-1
+    Lower Bound              Higher Bound
+```
+Therefore, we encapsulate the above logic in a function that given (a) the current index position and (b) direction, will return either the new `index` location or `nothing` if we are about to move **out of the logical bounds**   
+```rust
+    fn next(&self, idx: usize, dir:Direction) -> Option<usize> {
+        match dir {
+            Direction::East if idx < (idx/self.lines)*self.width + self.width - 1 => Some(idx+1),
+            Direction::West if idx > (idx/self.lines)*self.width => Some(idx - 1),
+            Direction::North if idx > self.width => Some(idx - self.width),
+            Direction::South if idx < self.layout.len() - self.width => Some(idx + self.width),
+            _ => None
+        }
+    }
+```
+Therefore, once we know a round rock's position we can easily move it to any direction by recursing into all valid positions. The below function will move the rock on the dish and return its **new logical line position** so we can calculate the cost   
+```rust
+    fn move_rock(&mut self, idx: usize, dir:Direction) -> Option<usize> {
+        if idx >= self.layout.len() { return None }
+        self.next(idx,dir)
+            .and_then(|next|{
+                if self.layout[next] == b'.' {
+                    self.layout.swap(idx,next);
+                    self.move_rock(next,dir)
+                } else {
+                    Some(idx / self.lines)
+                }
+            })
+            .or( Some(idx / self.lines) )
+    }
+```
 ### Part 2
