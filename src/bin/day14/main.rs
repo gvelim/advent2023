@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::{Debug, Formatter, Write};
 use std::rc::Rc;
 use std::str::FromStr;
@@ -8,6 +9,26 @@ fn main() {
 
     let t = std::time::Instant::now();
     println!("Part 1: Total load = {:?} - {:?}",dish.tilt(Direction::North),t.elapsed());
+
+    let mut map = HashMap::<Vec<u8>,usize>::new();
+
+    let t = std::time::Instant::now();
+    let cost = (1..1000)
+        .map(|round| (
+            round,
+            dish.spin_cycle(),
+            map.insert(dish.layout.clone(), round)
+        ))
+        .skip_while(|(round, _, seen)|
+            seen.map(|last|
+                (1000000000 - last) % (round - last) != 0
+            ).unwrap_or(true)
+        )
+        .map(|(_,cost,_)| cost)
+        .next();
+
+    println!("Part 2: Total load = {:?} - {:?}", cost, t.elapsed()
+    );
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -23,7 +44,7 @@ struct ReflectorDish {
 impl ReflectorDish {
     fn next(&self, idx: usize, dir:Direction) -> Option<usize> {
         match dir {
-            Direction::East if idx < (idx/self.lines)*self.width+self.width-1 => Some(idx+1),
+            Direction::East if idx < (idx/self.lines)*self.width + self.width - 1 => Some(idx+1),
             Direction::West if idx > (idx/self.lines)*self.width => Some(idx - 1),
             Direction::North if (self.width..self.layout.len()).contains(&idx) => Some(idx - self.width),
             Direction::South if idx < self.layout.len() - self.width => Some(idx + self.width),
@@ -53,13 +74,19 @@ impl ReflectorDish {
 
         rocks.into_iter()
             // .inspect(|s| print!("idx: {s} -> "))
-            .map(|&r| { self
+            .map(|&r| self
                 .move_rock(r,dir)
                 .map(|cost| self.lines - cost)
                 .unwrap()
-            })
+            )
             // .inspect(|s| println!("{s}"))
             .sum::<usize>()
+    }
+    fn spin_cycle(&mut self) -> usize {
+        self.tilt(Direction::North);
+        self.tilt(Direction::West);
+        self.tilt(Direction::South);
+        self.tilt(Direction::East)
     }
     fn round_rocks_n2s(&self) -> impl DoubleEndedIterator<Item=usize> + '_ {
         self.layout.iter()
@@ -107,8 +134,6 @@ impl Debug for ReflectorDish {
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashMap;
-    use crate::Direction::{East, North, South, West};
     use super::*;
 
     #[test]
@@ -119,34 +144,30 @@ mod test {
         let mut map = HashMap::<Vec<u8>,usize>::new();
 
         let cost = (1..1000)
-            .map(|idx|{
-                dish.tilt(Direction::North);
-                dish.tilt(Direction::West);
-                dish.tilt(Direction::South);
-                (
-                    idx,
-                    dish.tilt(Direction::East),
-                    map.insert(dish.layout.clone(),idx)
-                )
-            })
-            .skip_while(|(idx, cost, seen)| {
-                if let Some(prev) = seen {
-                    print!("{:?} - ",(idx - prev, (1000000000 - idx) % (idx - prev)));
-                    (1000000000 - idx) % (idx - prev) != 0
-                } else {
-                    true
-                }
-            })
-            .inspect(|c| println!("Cycle -> {:?}",c))
+            .map(|idx| (
+                idx,
+                dish.spin_cycle(),
+                map.insert(dish.layout.clone(),idx)
+            ))
+            .inspect(|d| println!("{:?}",d))
+            .skip_while(|(idx, _, seen)|
+                seen.map(|last|
+                    (1000000000 - last) % (idx - last) != 0
+                ).unwrap_or(true)
+            )
             .next();
-
-        println!("Cost {:?}",cost);
+        println!("Cost after 1000000000 cycles: {:?}",cost);
+        assert_eq!(Some(64),cost.map(|(_,cost,_)| cost));
     }
     #[test]
     fn test_tilt() {
+        use crate::Direction::{East, North, South, West};
+
         let inp = std::fs::read_to_string("src/bin/day14/sample.txt").expect("Ops!");
         let dish = &mut inp.parse::<ReflectorDish>().unwrap_or_default();
+
         let data = [(North,136), (West,136), (South,87), (East,87)];
+
         println!("{:?}",dish);
         for (dir,out) in data.into_iter() {
             let ret = dish.tilt(dir);
@@ -203,5 +224,4 @@ mod test {
         let dish = inp.parse::<ReflectorDish>().unwrap_or_default();
         println!("{:?}",dish);
     }
-
 }
