@@ -188,20 +188,23 @@ In the above example, we see **Cycle 3** reoccurs in **Cycle 10**, giving us a `
 ```
 (nth cycle - first seen) % period == 0
 ```
-A `HasMap` is used to store the rock arrangement at the end of each cycle and is queried immediately after for the confirmation of a reoccurrence. The below logic captures the approach discussed and will run for as long as it takes for the key condition to turn `true`
+A `HashMap` is used to store the rock arrangement at the end of each cycle and is queried immediately after for the confirmation of a reoccurrence. The below logic captures the approach discussed and will run for as long as it takes for the key condition to turn `true`
 ```rust
-let mut map = HashMap::<Vec<u8>,usize>::new();
+ fn spin_cycle_nth(&mut self, nth: usize) -> Option<Cost> {
+     let mut map = std::collections::HashMap::<Vec<u8>,usize>::new();
 
-let cost = (1..1000000000)
-    .map(|idx| (
-        idx,
-        dish.spin_cycle(),
-        map.insert(dish.layout.clone(),idx)
-    ))
-    .skip_while(|(idx, _, seen)|
-        seen.map(|last|
-            (1000000000 - last) % (idx - last) != 0
-        ).unwrap_or(true)
-    )
-    .next();
+     (1..nth)
+         .map(|cycle| (
+             cycle,
+             self.spin_cycle(),
+             map.insert(self.layout.clone(),cycle)
+         ))
+         .skip_while(|(cycle, _, seen)|
+             seen.map(|last| {
+                 (nth - last) % (cycle - last) != 0
+             }).unwrap_or(true)
+         )
+         .map(|(_,cost,_)| cost)
+         .next()
+ }
 ```
