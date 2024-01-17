@@ -100,7 +100,7 @@ Run the spin cycle for `1000000000` cycles. Afterward, **what is the total load 
 
 ## Approach
 ### Part 1
-We hold the info in a single dimensional array therefore we can do all work with a single index value
+We hold the input data into a single dimensional array therefore we'll do all the work using solely indexes
 ```
 Input Form         Single Dimension Array Form
 
@@ -110,9 +110,9 @@ O.OO#....#          <- W:10 -><- W:10 -><- W:10 ->  ...  <- W:10 ->
    ...
 #OO..#....
 ```
-Moving vertically in a single dimension:
+Therefore, moving vertically in a single dimension:
 - A line step is equal to `+/- Width`
-- Vertical movement logical bounds defined as
+- Vertical movement logical bounds are defined as
 ```
         Line 1     Line 2            Line 10  
       <- W:10 -> <- W:10 ->  ...   <- W:10 ->
@@ -123,7 +123,7 @@ array[O....#.... O.OO#....#  ...   #OO..#....]
               W >      Index      < array.len()-W
     Lower Bound                     Higher Bound
 ```
-Moving horizontally in a single dimension while avoiding crossing lines: 
+Also, moving horizontally in a single dimension and while movement must be contained in the same logical line: 
 - Step is equal to `+/- 1`
 - horizontal movement logical bounds defined as 
 ```
@@ -136,32 +136,72 @@ array[O....#.... O.OO#....# .....##...  ...]
       W*Index/H >  Index   < (Index/H+1)*W-1
     Lower Bound              Higher Bound
 ```
-Therefore, we encapsulate the above logic in a function that given (a) the current index position and (b) direction, will return either the new `index` location or `nothing` if we are about to move **out of the logical bounds**   
+Therefore, we encapsulate the above logic in a function that takes (a) the current index position and (b) direction, and returns either the new `index` location or `nothing` if moving would push us **out of the logical bounds**   
 ```rust
-    fn next(&self, idx: usize, dir:Direction) -> Option<usize> {
-        match dir {
-            Direction::East if idx < (idx/self.lines)*self.width + self.width - 1 => Some(idx+1),
-            Direction::West if idx > (idx/self.lines)*self.width => Some(idx - 1),
-            Direction::North if idx > self.width => Some(idx - self.width),
-            Direction::South if idx < self.layout.len() - self.width => Some(idx + self.width),
-            _ => None
-        }
+fn next(&self, idx: usize, dir:Direction) -> Option<usize> {
+    match dir {
+        Direction::East if idx < (idx/self.lines)*self.width + self.width - 1 => Some(idx+1),
+        Direction::West if idx > (idx/self.lines)*self.width => Some(idx - 1),
+        Direction::North if idx > self.width => Some(idx - self.width),
+        Direction::South if idx < self.layout.len() - self.width => Some(idx + self.width),
+        _ => None
     }
+}
 ```
-Therefore, once we know a round rock's position we can easily move it to any direction by recursing into all valid positions. The below function will move the rock on the dish and return its **new logical line position** so we can calculate the cost   
+Therefore, given a round rock's position we can easily move it to any direction by recursing into the next feasible location. The below function will move the rock on the dish and return its **new logical line position** which we can use to calculate rock's cost. 
 ```rust
-    fn move_rock(&mut self, idx: usize, dir:Direction) -> Option<usize> {
-        if idx >= self.layout.len() { return None }
-        self.next(idx,dir)
-            .and_then(|next|{
-                if self.layout[next] == b'.' {
-                    self.layout.swap(idx,next);
-                    self.move_rock(next,dir)
-                } else {
-                    Some(idx / self.lines)
-                }
-            })
-            .or( Some(idx / self.lines) )
-    }
+fn move_rock(&mut self, idx: usize, dir:Direction) -> Option<usize> {
+    if idx >= self.layout.len() { return None }
+    self.next(idx,dir)
+        .and_then(|next|{
+            if self.layout[next] == b'.' {
+                self.layout.swap(idx,next);
+                self.move_rock(next,dir)
+            } else {
+                Some(idx / self.lines)
+            }
+        })
+        .or( Some(idx / self.lines) )
+}
 ```
 ### Part 2
+Performing `1,000,000,000` spin cycles will take a very long time, however after a certain spin cycle, we observe that rock arrangements are identical to previously seen ones, therefore rock arrangements have a fixed period of reoccurrence.
+```
+Spin Cycle   Cost    Rock Arrangement 
+                     last seen in cycle
+==========   ====    ==================
+    1,        87,    None
+    2,        69,    None
+    3,        69,    None     <------------------+
+    4,        69,    None                        |
+    5,        65,    None                    Reoccurence
+    6,        64,    None                      Period
+    7,        65,    None                        |
+    8,        63,    None                        |
+    9,        68,    None     <------------------+
+    10,       69,    Some(3) <- Same as cycle 3  
+    11,       69,    Some(4)                     
+    12,       65,    Some(5)
+    13,       64,    Some(6)  
+```
+In the above example, we see **Cycle 3** reoccurs in **Cycle 10**, giving us a `period: 10 - 3 =  7`. Therefore, we extrapolate the cost at nth cycle by finding the **fist cost occurrence** where the below condition holds `true`.
+```
+(nth cycle - first seen) % period == 0
+```
+A `HasMap` is used to store the rock arrangement at the end of each cycle and is queried immediately after for the confirmation of a reoccurrence. The below logic captures the approach discussed and will run for as long as it takes for the key condition to turn `true`
+```rust
+let mut map = HashMap::<Vec<u8>,usize>::new();
+
+let cost = (1..1000000000)
+    .map(|idx| (
+        idx,
+        dish.spin_cycle(),
+        map.insert(dish.layout.clone(),idx)
+    ))
+    .skip_while(|(idx, _, seen)|
+        seen.map(|last|
+            (1000000000 - last) % (idx - last) != 0
+        ).unwrap_or(true)
+    )
+    .next();
+```

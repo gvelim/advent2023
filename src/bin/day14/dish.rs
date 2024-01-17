@@ -1,6 +1,7 @@
 use std::fmt::{Debug, Formatter, Write};
 use std::rc::Rc;
 use std::str::FromStr;
+use Direction::*;
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) enum Direction { North, West, South, East }
@@ -12,59 +13,77 @@ pub(crate) struct ReflectorDish {
     pub(crate) layout: Vec<u8>
 }
 
+type Position = usize;
+type Cost = usize;
+
 impl ReflectorDish {
-    fn next(&self, idx: usize, dir:Direction) -> Option<usize> {
+    fn next(&self, idx: usize, dir:Direction) -> Option<Position> {
         match dir {
-            Direction::East if idx < (idx/self.lines)*self.width + self.width - 1 => Some(idx+1),
-            Direction::West if idx > (idx/self.lines)*self.width => Some(idx - 1),
-            Direction::North if (self.width..self.layout.len()).contains(&idx) => Some(idx - self.width),
-            Direction::South if idx < self.layout.len() - self.width => Some(idx + self.width),
+            East if idx < (idx/self.lines)*self.width + self.width - 1 => Some(idx+1),
+            West if idx > (idx/self.lines)*self.width => Some(idx - 1),
+            North if (self.width..self.layout.len()).contains(&idx) => Some(idx - self.width),
+            South if idx < self.layout.len() - self.width => Some(idx + self.width),
             _ => None
         }
     }
-    fn move_rock(&mut self, idx: usize, dir:Direction) -> Option<usize> {
+    fn move_rock(&mut self, idx: usize, dir:Direction) -> Option<Cost> {
         if idx >= self.layout.len() { return None }
-        self.next(idx,dir)
-            .and_then(|next|{
-                if self.layout[next] == b'.' {
-                    self.layout.swap(idx,next);
-                    self.move_rock(next,dir)
-                } else {
-                    Some(idx / self.lines)
-                }
-            })
-            .or( Some(idx / self.lines) )
+        if let Some(next) = self.next(idx,dir) {
+            if self.layout[next] == b'.' {
+                self.layout.swap(idx, next);
+                return self.move_rock(next, dir)
+            }
+        }
+        Some(idx / self.lines)
     }
-    pub(crate) fn tilt(&mut self, dir: Direction) -> usize {
+    pub(crate) fn tilt(&mut self, dir: Direction) -> Cost {
         match dir {
-            Direction::East => self.round_rocks_w2e().rev().collect::<Rc<[usize]>>(),
-            Direction::West => self.round_rocks_w2e().collect::<Rc<[usize]>>(),
-            Direction::North => self.round_rocks_n2s().collect::<Rc<[usize]>>(),
-            Direction::South => self.round_rocks_n2s().rev().collect::<Rc<[usize]>>(),
+            East => self.round_rocks_w2e().rev().collect::<Rc<[Position]>>(),
+            West => self.round_rocks_w2e().collect::<Rc<[Position]>>(),
+            North => self.round_rocks_n2s().collect::<Rc<[Position]>>(),
+            South => self.round_rocks_n2s().rev().collect::<Rc<[Position]>>(),
         }
             .iter()
             // .inspect(|s| print!("idx: {s} -> "))
-            .map(|&r| self
-                .move_rock(r,dir)
+            .map(|&index| self
+                .move_rock(index, dir)
                 .map(|cost| self.lines - cost)
                 .unwrap()
             )
             // .inspect(|s| println!("{s}"))
-            .sum::<usize>()
+            .sum::<Cost>()
     }
-    pub(crate) fn spin_cycle(&mut self) -> usize {
-        self.tilt(Direction::North);
-        self.tilt(Direction::West);
-        self.tilt(Direction::South);
-        self.tilt(Direction::East)
+    pub(crate) fn spin_cycle(&mut self) -> Cost {
+        [North,West,South,East]
+            .into_iter()
+            .map(|dir| self.tilt(dir))
+            .last()
+            .unwrap()
     }
-    fn round_rocks_n2s(&self) -> impl DoubleEndedIterator<Item=usize> + '_ {
+    pub(crate) fn spin_cycle_nth(&mut self, nth: usize) -> Option<Cost> {
+        let mut map = std::collections::HashMap::<Vec<u8>,usize>::new();
+
+        (1..nth)
+            .map(|cycle| (
+                cycle,
+                self.spin_cycle(),
+                map.insert(self.layout.clone(),cycle)
+            ))
+            .skip_while(|(cycle, _, seen)|
+                seen.map(|last| {
+                    (nth - last) % (cycle - last) != 0
+                }).unwrap_or(true)
+            )
+            .map(|(_,cost,_)| cost)
+            .next()
+    }
+    fn round_rocks_n2s(&self) -> impl DoubleEndedIterator<Item=Position> + '_ {
         self.layout.iter()
             .enumerate()
             .filter(|&(_,c)| *c == b'O')
             .map(|(idx,_)| idx )
     }
-    fn round_rocks_w2e(&self) -> impl DoubleEndedIterator<Item=usize> + '_ {
+    fn round_rocks_w2e(&self) -> impl DoubleEndedIterator<Item=Position> + '_ {
         (0..self.width)
             .flat_map(move |x|{
                 (0..self.lines).map(move |y| y * self.lines + x )
@@ -105,30 +124,15 @@ impl Debug for ReflectorDish {
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::collections::HashMap;
 
     #[test]
     fn test_tilt_cycle() {
         let inp = std::fs::read_to_string("src/bin/day14/sample.txt").expect("Ops!");
         let dish = &mut inp.parse::<ReflectorDish>().unwrap_or_default();
 
-        let mut map = HashMap::<Vec<u8>,usize>::new();
-
-        let cost = (1..1000)
-            .map(|idx| (
-                idx,
-                dish.spin_cycle(),
-                map.insert(dish.layout.clone(),idx)
-            ))
-            .inspect(|d| println!("{:?}",d))
-            .skip_while(|(idx, _, seen)|
-                seen.map(|last|
-                    (1000000000 - last) % (idx - last) != 0
-                ).unwrap_or(true)
-            )
-            .next();
+        let cost = dish.spin_cycle_nth(1000000000);
         println!("Cost after 1000000000 cycles: {:?}",cost);
-        assert_eq!(Some(64),cost.map(|(_,cost,_)| cost));
+        assert_eq!(Some(64),cost);
     }
     #[test]
     fn test_tilt() {
@@ -150,14 +154,14 @@ mod test {
         let dish = &mut inp.parse::<ReflectorDish>().unwrap_or_default();
 
         println!("{:?}",dish);
-        assert_eq!(dish.move_rock(10,Direction::North), Some(1));
-        assert_eq!(dish.move_rock(12,Direction::North), Some(0));
-        assert_eq!(dish.move_rock(13,Direction::North), Some(0));
-        assert_eq!(dish.move_rock(31,Direction::North), Some(0));
-        assert_eq!(dish.move_rock(41,Direction::North), Some(1));
-        assert_eq!(dish.move_rock(91,Direction::North), Some(2));
-        assert_eq!(dish.move_rock(92,Direction::North), Some(7));
-        assert_eq!(dish.move_rock(120,Direction::North), None);
+        assert_eq!(dish.move_rock(10,North), Some(1));
+        assert_eq!(dish.move_rock(12,North), Some(0));
+        assert_eq!(dish.move_rock(13,North), Some(0));
+        assert_eq!(dish.move_rock(31,North), Some(0));
+        assert_eq!(dish.move_rock(41,North), Some(1));
+        assert_eq!(dish.move_rock(91,North), Some(2));
+        assert_eq!(dish.move_rock(92,North), Some(7));
+        assert_eq!(dish.move_rock(120,North), None);
         println!("{:?}",dish);
         println!("{:?}",dish.round_rocks_n2s().collect::<Rc<[_]>>());
         assert_eq!(
