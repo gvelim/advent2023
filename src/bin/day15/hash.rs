@@ -1,12 +1,22 @@
+use std::ops::Deref;
+use std::rc::Rc;
+
 pub(crate) trait HashLen {
     fn hash_algo(&self) -> usize;
 }
 
+pub(crate) type Hash = usize;
 impl HashLen for &str {
-    fn hash_algo(&self) -> usize {
+    fn hash_algo(&self) -> Hash {
         self.bytes().fold(0usize, |acc, b| ((acc + b as usize) * 17) % 256 )
     }
 }
+impl HashLen for Rc<str> {
+    fn hash_algo(&self) -> Hash {
+        self.deref().hash_algo()
+    }
+}
+
 
 mod test {
     use super::*;
@@ -19,9 +29,7 @@ mod test {
 
         let sum = split.into_iter()
             .inspect(|s| print!("{:?} -> ",s))
-            .map(|hash| -> usize {
-                hash.hash_algo()
-            })
+            .map(|hash| hash.hash_algo() )
             .inspect(|h| println!("{:?}",h))
             .sum::<usize>();
 
@@ -29,7 +37,7 @@ mod test {
     }
     #[test]
     fn test_hash_parsing() {
-        let s = "HASH";
+        let s: Rc<str> = "HASH".into();
         println!("{:?} = {:?}",s, s.hash_algo());
         assert_eq!(52usize,s.hash_algo());
     }
