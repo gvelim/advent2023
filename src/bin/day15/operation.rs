@@ -10,21 +10,22 @@ pub(crate) enum Operation {
 }
 
 impl FromStr for Operation {
-    type Err = ();
+    type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut parts = s.split(['=','-']);
 
-        Ok(match (parts.next(),parts.next()) {
-            (Some(label), Some("")) => Operation::Remove(
+        match (parts.next(),parts.next()) {
+            (Some(label), Some("")) => Ok(Operation::Remove(
                 label.into()
-            ),
-            (Some(label), Some(focal_length)) => Operation::Store(
+            )),
+            (Some(label), Some(focal_length)) => Ok(Operation::Store(
                 label.into(),
                 usize::from_str(focal_length).expect("Ops")
-            ),
-            (_, _) => unreachable!()
-        })
+            )),
+            (Some(a), b) => Err(format!("Error: potentially parsed a line break ({:?},{:?})",a,b)),
+            (a, b) => Err(format!("Error: couldn't read label ({:?},{:?})",a,b)),
+        }
     }
 }
 

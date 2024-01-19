@@ -23,7 +23,7 @@ fn main() {
     let mut lb = LensLibrary::default();
     input
         .split([',','\n'])
-        .map(|op| op.parse::<Operation>().expect("ops"))
+        .map(|op| op.parse::<Operation>().expect("Failed to parse operations"))
         .all(|op| { lb.initiation(&op); true });
 
     println!("Part 2 Focusing power: {} - {:?}",lb.focusing_power(), t.elapsed());
