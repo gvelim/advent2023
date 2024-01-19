@@ -15,3 +15,4 @@ Coding challenges in Rust
 * [Day 12](./src/bin/day12) - Hot Springs
 * [Day 13](./src/bin/day13) - Point of Incidence
 * [Day 14](./src/bin/day14) - Parabolic Reflector Dish
+* [Day 15](/src/bin/day15) - Lens Library
