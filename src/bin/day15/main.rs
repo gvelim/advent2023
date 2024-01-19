@@ -2,7 +2,7 @@ mod hash;
 mod operation;
 mod lenslib;
 
-use hash::{HashLen};
+use hash::HashLen;
 use operation::Operation;
 use lenslib::LensLibrary;
 

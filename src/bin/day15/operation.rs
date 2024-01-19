@@ -1,12 +1,13 @@
 use std::rc::Rc;
 use std::str::FromStr;
 
-type FocalLength = usize;
+pub(crate) type FocalLength = usize;
+pub(crate) type Label = Rc<str>;
 
 #[derive(Debug,PartialEq)]
 pub(crate) enum Operation {
-    Remove(Rc<str>),
-    Store(Rc<str>,FocalLength)
+    Remove(Label),
+    Store(Label,FocalLength)
 }
 
 impl FromStr for Operation {

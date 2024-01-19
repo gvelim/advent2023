@@ -20,6 +20,7 @@ impl HashLen for Rc<str> {
 
 mod test {
     use super::*;
+    use crate::operation::Label;
 
     static INPUT: &str = "rn=1,cm-,qp=3,cm=2,qp-,pc=4,ot=9,ab=5,pc-,pc=6,ot=7";
 
@@ -37,7 +38,7 @@ mod test {
     }
     #[test]
     fn test_hash_parsing() {
-        let s: Rc<str> = "HASH".into();
+        let s: Label = "HASH".into();
         println!("{:?} = {:?}",s, s.hash_algo());
         assert_eq!(52usize,s.hash_algo());
     }
