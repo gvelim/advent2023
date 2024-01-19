@@ -1,14 +1,14 @@
-use std::collections::VecDeque;
-use std::rc::Rc;
-use crate::operation::Operation;
+use crate::operation::{Operation, FocalLength, Label};
 use crate::hash::HashLen;
+
+type Len = (Label,FocalLength);
 
 #[derive(Debug)]
 pub(crate) struct LensLibrary {
-    boxes: [VecDeque<(Rc<str>,usize)>;256]
+    boxes: [Vec<Len>;256]
 }
 
-const BOXES: VecDeque<(std::rc::Rc<str>, usize)> = VecDeque::new();
+const BOXES: Vec<Len> = Vec::new();
 
 impl Default for LensLibrary {
     fn default() -> Self {
@@ -37,12 +37,13 @@ impl LensLibrary {
     }
     fn remove_focal_length(&mut self, op: &Operation) -> bool {
         let Operation::Remove(l) = op else { return false };
+
         self.boxes
             .get_mut( l.hash_algo() )
             .map(|boxes|{
-                let pos = boxes.iter().position(|(label,_)| label.eq(&l));
-                if let Some(index) = pos {
-                    boxes.remove(index).is_some()
+                if let Some(index) = boxes.iter().position(|(label,_)| label.eq(&l)) {
+                    boxes.remove(index);
+                    true
                 } else {
                     false
                 }
@@ -63,13 +64,13 @@ impl LensLibrary {
                         true
                     })
                 {
-                    boxes.push_back((l.clone(),*fl));
+                    boxes.push((l.clone(),*fl));
                 }
                 true
             })
             .unwrap_or(false)
     }
-    fn boxes(&self) -> impl Iterator<Item=(usize,&VecDeque<(std::rc::Rc<str>, usize)>)> + '_ {
+    fn boxes(&self) -> impl Iterator<Item=(usize,&Vec<Len>)> + '_ {
         self.boxes
             .iter()
             .enumerate()
@@ -91,8 +92,8 @@ mod test {
             .inspect(|op| print!("{:?} -> ",op))
             .map(|op| lb.initiation(&op))
             .inspect(|op| println!("{:?}",op))
-            .all(|_| true);
-        println!("LensLibrary: {:?}\nFocusing power: {}",lb.boxes().collect::<Rc<[_]>>(),lb.focusing_power());
+            .last();
+        println!("LensLibrary: {:?}\nFocusing power: {}",lb.boxes().collect::<std::rc::Rc<[_]>>(),lb.focusing_power());
         assert_eq!(lb.focusing_power(),145);
     }
 }

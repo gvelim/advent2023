@@ -2,7 +2,7 @@ mod hash;
 mod operation;
 mod lenslib;
 
-use hash::{HashLen};
+use hash::HashLen;
 use operation::Operation;
 use lenslib::LensLibrary;
 
@@ -23,8 +23,9 @@ fn main() {
     let mut lb = LensLibrary::default();
     input
         .split([',','\n'])
-        .map(|op| op.parse::<Operation>().expect("ops"))
-        .all(|op| { lb.initiation(&op); true });
+        .map(|op| op.parse::<Operation>().expect("Failed to parse operations"))
+        .map(|op| lb.initiation(&op))
+        .last();
 
     println!("Part 2 Focusing power: {} - {:?}",lb.focusing_power(), t.elapsed());
     assert_eq!(lb.focusing_power(),271384);
