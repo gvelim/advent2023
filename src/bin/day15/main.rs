@@ -24,7 +24,8 @@ fn main() {
     input
         .split([',','\n'])
         .map(|op| op.parse::<Operation>().expect("Failed to parse operations"))
-        .all(|op| { lb.initiation(&op); true });
+        .map(|op| lb.initiation(&op))
+        .last();
 
     println!("Part 2 Focusing power: {} - {:?}",lb.focusing_power(), t.elapsed());
     assert_eq!(lb.focusing_power(),271384);

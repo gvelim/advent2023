@@ -91,7 +91,7 @@ mod test {
             .inspect(|op| print!("{:?} -> ",op))
             .map(|op| lb.initiation(&op))
             .inspect(|op| println!("{:?}",op))
-            .all(|_| true);
+            .last();
         println!("LensLibrary: {:?}\nFocusing power: {}",lb.boxes().collect::<Rc<[_]>>(),lb.focusing_power());
         assert_eq!(lb.focusing_power(),145);
     }
