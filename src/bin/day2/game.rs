@@ -5,7 +5,7 @@ use crate::run::Run;
 #[derive(Debug)]
 pub(crate) struct Game {
     pub(crate) id: u32,
-    runs: Vec<Run>,
+    runs: std::rc::Rc<[Run]>,
     max: Run
 }
 
@@ -40,7 +40,7 @@ impl FromStr for Game {
                 blue = max(blue, run.blue);
                 green = max(green, run.green);
             })
-            .collect::<Vec<_>>();
+            .collect::<std::rc::Rc<_>>();
 
         Ok(Game {
             id, runs,

@@ -14,15 +14,16 @@ fn main() {
     );
 
     let t = std::time::Instant::now();
-    let a_nodes = net.net.keys().filter(|s| s.ends_with('A')).copied().collect::<Vec<_>>();
+    let a_nodes = net.net.keys().filter(|s| s.ends_with('A')).copied().collect::<std::rc::Rc<[_]>>();
     println!("{:?}",a_nodes);
 
     let steps = a_nodes.iter()
         .map(|node|
             net.iter(node, &mut turns)
-                .take_while(|node| !node.ends_with(&"Z")).count() + 1
+                .take_while(|node| !node.ends_with(&"Z"))
+                .count() + 1
         )
-        .reduce(num::integer::lcm )
+        .reduce( num::integer::lcm )
         .unwrap();
 
     println!("Part 2: Steps {:?} - {:?}", steps, t.elapsed());
@@ -51,14 +52,15 @@ mod test {
     fn test_network_lcm() {
         let (mut turns, net) = Map::parse(INPUT_P2);
 
-        let a_nodes = net.net.keys().filter(|s| s.ends_with('A')).copied().collect::<Vec<_>>();
+        let a_nodes = net.net.keys().filter(|s| s.ends_with('A')).collect::<std::rc::Rc<[_]>>();
         println!("{:?}",a_nodes);
 
         let lcm = a_nodes.iter()
-            .inspect(|n| print!("{:?} -> ",n))
-            .map(|node| {
+            .inspect(|&&&n| print!("{:?} -> ",n))
+            .map(|&&node| {
                 let sum = net.iter(node, &mut turns)
-                    .take_while(|node| !node.ends_with(&"Z")).count() + 1;
+                    .take_while(|node| !node.ends_with(&"Z"))
+                    .count() + 1;
                 println!("Steps {:?}", sum);
                 sum
             })

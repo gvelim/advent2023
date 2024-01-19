@@ -1,11 +1,12 @@
 use std::str::FromStr;
+use std::rc::Rc;
 use super::parts::*;
 
 #[derive(Debug)]
 pub(crate) struct EngineSchematic {
     pub(crate) len: usize,
-    pub(crate) partnums: Vec<PartNumber>,
-    pub(crate) symbols: Vec<Symbol>
+    pub(crate) partnums: Rc<[PartNumber]>,
+    pub(crate) symbols: Rc<[Symbol]>
 }
 
 impl EngineSchematic {
@@ -16,7 +17,7 @@ impl EngineSchematic {
                 self.symbols.iter().any(|s| pn.is_touching(s,len))
             })
     }
-    pub(crate) fn get_gears_part_numbers(&self, gear: char) -> impl Iterator<Item=Vec<&PartNumber>> {
+    pub(crate) fn get_gears_part_numbers(&self, gear: char) -> impl Iterator<Item=Rc<[&PartNumber]>> {
         self.symbols.iter()
             // only proceed with gear symbol provided
             .filter(move |s| s.1.eq(&gear))
@@ -28,7 +29,7 @@ impl EngineSchematic {
                     // ignore part numbers falling outside the gears reach
                     .filter(|pn| s.is_touching(pn,self.len))
                     // .inspect(|d| println!("{:?}",d))
-                    .collect::<Vec<_>>();
+                    .collect::<Rc<_>>();
 
                 // return pairs otherwise skip what was found for this gear
                 if pns.len() > 1 { Some(pns) } else { None }
@@ -79,6 +80,6 @@ impl FromStr for EngineSchematic {
                 }
             });
 
-        Ok(EngineSchematic { len, partnums, symbols } )
+        Ok(EngineSchematic { len, partnums: partnums.into(), symbols: symbols.into() } )
     }
 }

@@ -5,7 +5,7 @@ pub(crate) struct FwdPredictor {
 }
 impl FwdPredictor {
     fn predict_next(history: &[i32]) -> i32 {
-        let reduced = history.windows(2).map(|a| a[1]-a[0]).collect::<Vec<_>>();
+        let reduced = history.windows(2).map(|a| a[1]-a[0]).collect::<std::rc::Rc<[_]>>();
         if reduced.iter().all(|d| d.eq(&0)) {
             return history[0];
         }
@@ -28,7 +28,7 @@ pub(crate) struct BkwdPredictor {
 
 impl BkwdPredictor {
     fn predict_bwd(history: &[i32]) -> i32 {
-        let reduced = history.windows(2).map(|a| a[0]-a[1]).collect::<Vec<_>>();
+        let reduced = history.windows(2).map(|a| a[0]-a[1]).collect::<std::rc::Rc<[_]>>();
         if reduced.iter().all(|d| d.eq(&0)) {
             return history[0];
         }

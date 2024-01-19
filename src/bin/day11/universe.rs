@@ -47,7 +47,7 @@ impl Universe {
         self
     }
 
-    pub(crate) fn extract_gaps(seq: &Vec<usize>) -> impl Iterator<Item=RangeInclusive<usize>> + '_ {
+    pub(crate) fn extract_gaps(seq: &[usize]) -> impl Iterator<Item=RangeInclusive<usize>> + '_ {
         seq.windows(2)
             .filter_map(|pair| {
                 if pair[1] - pair[0] > 1 {
@@ -88,7 +88,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_sortest_path() {
+    fn test_shortest_path() {
         let input = std::fs::read_to_string("src/bin/day11/sample.txt").expect("Ops!");
         let mut universe = input.parse::<Universe>().expect("Failed to parse Universe!");
 

@@ -12,7 +12,7 @@ fn main() {
     let games = input
         .lines()
         .map(|game| game.parse::<Game>().expect("Ops!"))
-        .collect::<Vec<_>>();
+        .collect::<std::rc::Rc<_>>();
 
     let t = Instant::now();
     let sum = games.iter()

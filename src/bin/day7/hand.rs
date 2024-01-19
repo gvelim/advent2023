@@ -17,7 +17,7 @@ pub(crate) struct Hand {
     pub(crate) layout: String,
     pub(crate) hands_type: HandType,
     pub(crate) ord_layout: String,
-    pub(crate) cards: Vec<(char,u8)>,
+    pub(crate) cards: std::rc::Rc<[(char,u8)]>,
     joker_pos: Option<usize>
 }
 impl Hand {
@@ -84,7 +84,7 @@ impl Hand {
             layout: String::from(input),
             ord_layout,
             hands_type: HandType::HighCard,
-            cards,
+            cards: cards.into(),
             joker_pos
         };
         hand.hands_type = hand.get_type();
