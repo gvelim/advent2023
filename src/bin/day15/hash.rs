@@ -1,29 +1,15 @@
-use std::str::FromStr;
-
-#[derive(Debug)]
-pub(crate) struct Hash(u8);
-
-impl From<Hash> for usize {
-    fn from(value: Hash) -> Self {
-        value.0 as usize
-    }
+pub(crate) trait HashLen {
+    fn hash_algo(&self) -> usize;
 }
 
-impl FromStr for Hash {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Hash(
-            s.bytes()
-                .fold(0u16, |acc, b|
-                    ((acc + b as u16) * 17) % 256
-                ) as u8
-        ))
+impl HashLen for &str {
+    fn hash_algo(&self) -> usize {
+        self.bytes().fold(0usize, |acc, b| ((acc + b as usize) * 17) % 256 )
     }
 }
 
 mod test {
-    use crate::Hash;
+    use super::*;
 
     static INPUT: &str = "rn=1,cm-,qp=3,cm=2,qp-,pc=4,ot=9,ab=5,pc-,pc=6,ot=7";
 
@@ -34,7 +20,7 @@ mod test {
         let sum = split.into_iter()
             .inspect(|s| print!("{:?} -> ",s))
             .map(|hash| -> usize {
-                hash.parse::<Hash>().expect("Ops").into()
+                hash.hash_algo()
             })
             .inspect(|h| println!("{:?}",h))
             .sum::<usize>();
@@ -44,8 +30,7 @@ mod test {
     #[test]
     fn test_hash_parsing() {
         let s = "HASH";
-        let hash = s.parse::<Hash>().expect("ss");
-        println!("{:?} = {:?}",s, hash.0);
-        assert_eq!(52,hash.0);
+        println!("{:?} = {:?}",s, s.hash_algo());
+        assert_eq!(52usize,s.hash_algo());
     }
 }
