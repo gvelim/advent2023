@@ -2,11 +2,13 @@ use std::rc::Rc;
 use std::str::FromStr;
 
 type FocalLength = usize;
+
 #[derive(Debug,PartialEq)]
 pub(crate) enum Operation {
     Remove(Rc<str>),
     Store(Rc<str>,FocalLength)
 }
+
 impl FromStr for Operation {
     type Err = ();
 
@@ -30,7 +32,9 @@ impl FromStr for Operation {
 mod test {
     use super::*;
     use Operation::{Store,Remove};
+
     static INPUT: &str = "rn=1,cm-,qp=3,cm=2,qp-";
+
     #[test]
     fn test_parse_operation() {
         let ops = INPUT.split(',');
