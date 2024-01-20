@@ -5,22 +5,22 @@ pub(crate) type FocalLength = usize;
 pub(crate) type Label = Rc<str>;
 
 #[derive(Debug,PartialEq)]
-pub(crate) enum Operation {
+pub(crate) enum Instruction {
     Remove(Label),
     Store(Label,FocalLength)
 }
 
-impl FromStr for Operation {
+impl FromStr for Instruction {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut parts = s.split(['=','-']);
 
         match (parts.next(),parts.next()) {
-            (Some(label), Some("")) => Ok(Operation::Remove(
+            (Some(label), Some("")) => Ok(Instruction::Remove(
                 label.into()
             )),
-            (Some(label), Some(focal_length)) => Ok(Operation::Store(
+            (Some(label), Some(focal_length)) => Ok(Instruction::Store(
                 label.into(),
                 usize::from_str(focal_length).expect("Ops")
             )),
@@ -33,7 +33,7 @@ impl FromStr for Operation {
 #[cfg(test)]
 mod test {
     use super::*;
-    use Operation::{Store,Remove};
+    use Instruction::{Store, Remove};
 
     static INPUT: &str = "rn=1,cm-,qp=3,cm=2,qp-";
 
@@ -41,7 +41,7 @@ mod test {
     fn test_parse_operation() {
         let ops = INPUT.split(',');
         let cmd = ops
-            .map(|op| op.parse::<Operation>().expect("Ops"))
+            .map(|op| op.parse::<Instruction>().expect("Ops"))
             .collect::<Rc<[_]>>();
 
         println!("{:?}",cmd);

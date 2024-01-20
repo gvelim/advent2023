@@ -1,24 +1,24 @@
-use crate::operation::{Operation, FocalLength, Label};
+use crate::operation::{Instruction, FocalLength, Label};
 use crate::hash::HashLen;
 
 type Len = (Label,FocalLength);
 
 #[derive(Debug)]
-pub(crate) struct LensLibrary {
+pub(crate) struct ParabolicReflector {
     boxes: [Vec<Len>;256]
 }
 
 const BOXES: Vec<Len> = Vec::new();
 
-impl Default for LensLibrary {
+impl Default for ParabolicReflector {
     fn default() -> Self {
-        LensLibrary {
+        ParabolicReflector {
             boxes: [BOXES; 256]
         }
     }
 }
 
-impl LensLibrary {
+impl ParabolicReflector {
     pub(crate) fn focusing_power(&self) -> usize {
         self.boxes()
             .map(|(idx,b0x)|{
@@ -29,14 +29,14 @@ impl LensLibrary {
             })
             .sum::<usize>()
     }
-    pub(crate) fn initiation(&mut self, op: &Operation) -> bool {
+    pub(crate) fn initiation(&mut self, op: &Instruction) -> bool {
         match op {
-            Operation::Remove(_) => self.remove_focal_length(&op),
-            Operation::Store(_,_) => self.store_focal_length(&op),
+            Instruction::Remove(_) => self.remove_focal_length(&op),
+            Instruction::Store(_, _) => self.store_focal_length(&op),
         }
     }
-    fn remove_focal_length(&mut self, op: &Operation) -> bool {
-        let Operation::Remove(l) = op else { return false };
+    fn remove_focal_length(&mut self, op: &Instruction) -> bool {
+        let Instruction::Remove(l) = op else { return false };
 
         self.boxes
             .get_mut( l.hash_algo() )
@@ -50,8 +50,8 @@ impl LensLibrary {
             })
             .unwrap_or(false)
     }
-    fn store_focal_length(&mut self, op: &Operation) -> bool {
-        let Operation::Store(l,fl) = op else { return false };
+    fn store_focal_length(&mut self, op: &Instruction) -> bool {
+        let Instruction::Store(l, fl) = op else { return false };
 
         self.boxes
             .get_mut( l.hash_algo() )
@@ -85,10 +85,10 @@ mod test {
 
     #[test]
     fn test_initialization_sequence() {
-        let mut lb = LensLibrary::default();
+        let mut lb = ParabolicReflector::default();
         INPUT
             .split(',')
-            .map(|op| op.parse::<Operation>().expect("ops"))
+            .map(|op| op.parse::<Instruction>().expect("ops"))
             .inspect(|op| print!("{:?} -> ",op))
             .map(|op| lb.initiation(&op))
             .inspect(|op| println!("{:?}",op))
