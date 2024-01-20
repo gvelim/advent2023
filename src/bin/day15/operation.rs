@@ -1,6 +1,8 @@
 use std::rc::Rc;
 use std::str::FromStr;
 
+use crate::hash::{Hash, HashLen};
+
 pub(crate) type FocalLength = usize;
 pub(crate) type Label = Rc<str>;
 
@@ -8,6 +10,19 @@ pub(crate) type Label = Rc<str>;
 pub(crate) enum Instruction {
     Remove(Label),
     Store(Label,FocalLength)
+}
+
+impl Instruction {
+    pub(crate) fn hash(&self) -> Hash {
+        self.label().hash_algo()
+    }
+    pub(crate) fn label(&self) -> &Label {
+        match self {
+            Instruction::Remove(l) => l,
+            Instruction::Store(l, _) => l,
+        }
+    }
+
 }
 
 impl FromStr for Instruction {
