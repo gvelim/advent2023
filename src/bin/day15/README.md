@@ -170,11 +170,19 @@ enum Instruction {
 ```
 Finally, the initiation sequence for the parabolic reflector dish is a function that operates on an instruction at a time 
 ```rust
-fn initiation(pr: &mut ParabolicReflector, op: &Instruction) -> bool {
-   match op {
-      Instruction::Remove(_) => pr.remove_focal_length(&op),
-      Instruction::Store(_,_) => pr.store_focal_length(&op),
-   }
+pub(crate) fn initiation(pr: &mut ParabolicReflector, op: &Instruction) -> bool {
+   rd.boxes
+           .get_mut( op.hash() )
+           .map(|boxes| {
+              let pos = boxes.iter().position(|(label,_)| label.eq(op.label()));
+              match (pos,op) {
+                 (Some(i), Instruction::Remove(_)) => { boxes.remove(i); true }
+                 (Some(i), Instruction::Store(_, fl)) => { boxes[i].1 = *fl; true }
+                 (None, Instruction::Store(l, fl)) => { boxes.push((l.clone(),*fl)); true }
+                 (_, _) => false
+              }
+           })
+           .unwrap_or(false)
 }
 ```
 With the above logic in place, calculating the focusing power of the resulting lens configuration, is expressed by the below function
