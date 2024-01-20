@@ -172,14 +172,14 @@ Finally, the initiation sequence for the parabolic reflector dish is a function 
 ```rust
 pub(crate) fn initiation(pr: &mut ParabolicReflector, op: &Instruction) -> bool {
    rd.boxes
-           .get_mut( op.hash() )
-           .map(|boxes| {
-              let pos = boxes.iter().position(|(label,_)| label.eq(op.label()));
-              match (pos,op) {
+      .get_mut( op.hash() )
+      .map(|boxes| {
+            let pos = boxes.iter().position(|(label,_)| label.eq(op.label()));
+            match (pos,op) {
+                 (None, Instruction::Remove(_)) => false
                  (Some(i), Instruction::Remove(_)) => { boxes.remove(i); true }
                  (Some(i), Instruction::Store(_, fl)) => { boxes[i].1 = *fl; true }
                  (None, Instruction::Store(l, fl)) => { boxes.push((l.clone(),*fl)); true }
-                 (_, _) => false
               }
            })
            .unwrap_or(false)
