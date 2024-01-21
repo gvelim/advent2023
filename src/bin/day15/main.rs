@@ -12,7 +12,7 @@ fn main() {
 
     let t = std::time::Instant::now();
     let sum = input
-        .split([',','\n'])
+        .split([','])
         .map(|label| label.hash_algo() )
         .sum::<usize>();
 
@@ -22,8 +22,8 @@ fn main() {
     let t = std::time::Instant::now();
     let mut lb = ParabolicReflector::default();
     input
-        .split([',','\n'])
-        .map(|op| op.parse::<Instruction>().expect("Failed to parse operations"))
+        .split([','])
+        .map(|op| op.parse::<Instruction>().expect("Cannot parse instruction"))
         .map(|op| lb.initiation(&op))
         .last();
 

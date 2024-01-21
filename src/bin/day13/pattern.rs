@@ -32,7 +32,7 @@ impl Pattern {
                     .all(|r| {
                         radius = std::cmp::max(r,radius);
                         smudge_counter[r] += 1;
-                        smudge_counter[0] < 2 //&& smudge_counter[..radius].iter().sum::<usize>() < 2
+                        smudge_counter[0] < 2 && smudge_counter[..radius].iter().sum::<usize>() < 2
                     });
 
                 if line_found && smudge_counter[radius] == height-1 {
