@@ -1,3 +1,5 @@
+use std::error::Error;
+use std::fmt::{Debug, Display, Formatter};
 use std::rc::Rc;
 use std::str::FromStr;
 
@@ -25,22 +27,50 @@ impl Instruction {
 
 }
 
+#[derive(PartialEq)]
+pub(crate) enum IErr {
+    InvalidFocalLength,
+    InvalidOperand
+}
+impl Debug for IErr {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            IErr::InvalidFocalLength => f.write_str("Operand '=' is not followed by a number"),
+            IErr::InvalidOperand => f.write_str("Instruction contains invalid operand ['=','-']"),
+        }
+    }
+}
+
+impl Display for IErr {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <Self as Debug>::fmt(self, f)
+    }
+}
+
+impl Error for IErr {
+
+}
+
 impl FromStr for Instruction {
-    type Err = String;
+    type Err = IErr;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut parts = s.split(['=','-']);
-
-        match (parts.next(),parts.next()) {
-            (Some(label), Some("")) => Ok(Instruction::Remove(
-                label.into()
-            )),
-            (Some(label), Some(focal_length)) => Ok(Instruction::Store(
-                label.into(),
-                usize::from_str(focal_length).expect("Ops")
-            )),
-            (Some(a), b) => Err(format!("Error: potentially parsed a line break ({:?},{:?})",a,b)),
-            (a, b) => Err(format!("Error: couldn't read label ({:?},{:?})",a,b)),
+        if let Some(index) = s.chars().position(|c| ['=','-'].contains(&c)) {
+            match (s.as_bytes()[index], &s[..index], &s[index+1..]) {
+                (b'-', label, _) => Ok(
+                    Instruction::Remove(label.into())
+                ),
+                (b'=', label, fl) => Ok(
+                    Instruction::Store(
+                        label.into(),
+                        usize::from_str(fl)
+                            .or_else(|_| Err(IErr::InvalidFocalLength))?
+                    )
+                ),
+                _ => Err(IErr::InvalidOperand)
+            }
+        } else {
+            Err(IErr::InvalidOperand)
         }
     }
 }
@@ -50,24 +80,22 @@ mod test {
     use super::*;
     use Instruction::{Store, Remove};
 
-    static INPUT: &str = "rn=1,cm-,qp=3,cm=2,qp-";
-
     #[test]
     fn test_parse_operation() {
-        let ops = INPUT.split(',');
+        let ops = "rn+=1,cm-,rn)1,qm,rn=o".split(',');
         let cmd = ops
-            .map(|op| op.parse::<Instruction>().expect("Ops"))
+            .map(|op| op.parse::<Instruction>())
             .collect::<Rc<[_]>>();
 
         println!("{:?}",cmd);
         assert_eq!(
             cmd,
             [
-                Store("rn".into(), 1),
-                Remove("cm".into()),
-                Store("qp".into(), 3),
-                Store("cm".into(), 2),
-                Remove("qp".into())
+                Ok(Store("rn+".into(),1)),
+                Ok(Remove("cm".into())),
+                Err(IErr::InvalidOperand),
+                Err(IErr::InvalidOperand),
+                Err(IErr::InvalidFocalLength)
             ].into()
         )
     }
