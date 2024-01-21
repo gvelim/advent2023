@@ -32,11 +32,12 @@ pub(crate) enum IErr {
     InvalidFocalLength,
     InvalidOperand
 }
+
 impl Debug for IErr {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            IErr::InvalidFocalLength => f.write_str("Operand '=' is not followed by a number"),
-            IErr::InvalidOperand => f.write_str("Instruction contains invalid operand ['=','-']"),
+            IErr::InvalidFocalLength => write!(f,"Operand '=' is not followed by a number"),
+            IErr::InvalidOperand => write!(f,"Instruction contains invalid operand ['=','-']"),
         }
     }
 }
