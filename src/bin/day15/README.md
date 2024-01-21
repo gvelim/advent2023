@@ -171,7 +171,7 @@ enum Instruction {
 Finally, the initiation sequence for the parabolic reflector dish is a function that operates on an instruction at a time 
 ```rust
 pub(crate) fn initiation(pr: &mut ParabolicReflector, op: &Instruction) -> bool {
-   rd.boxes
+   pr.boxes
       .get_mut( op.hash() )
       .map(|boxes| {
             let pos = boxes.iter().position(|(label,_)| label.eq(op.label()));
