@@ -70,7 +70,7 @@ mod test {
     }
     #[test]
     fn test_parse_joker_classify() {
-        use HandType::*;
+        use HandType as H;
 
         let (input, _) = parse_input(INPUT);
         let hands = input
@@ -79,14 +79,14 @@ mod test {
             .collect::<Vec<_>>();
 
         assert_eq!(
-            vec![OnePair, FourOfAKind, TwoPair, FourOfAKind, FourOfAKind, ThreeOfAKind],
+            vec![H::OnePair, H::FourOfAKind, H::TwoPair, H::FourOfAKind, H::FourOfAKind, H::ThreeOfAKind],
             classify(&hands)
         )
     }
 
     #[test]
     fn test_parse_card_classify() {
-        use HandType::*;
+        use HandType as H;
 
         let (input, _) = parse_input(INPUT);
         let hands = input
@@ -95,7 +95,7 @@ mod test {
             .collect::<Vec<_>>();
 
         assert_eq!(
-            vec![OnePair, ThreeOfAKind, TwoPair, TwoPair, ThreeOfAKind, OnePair],
+            vec![H::OnePair, H::ThreeOfAKind, H::TwoPair, H::TwoPair, H::ThreeOfAKind, H::OnePair],
             classify(&hands)
         )
     }

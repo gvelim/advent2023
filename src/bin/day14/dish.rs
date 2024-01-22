@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Formatter, Write};
 use std::rc::Rc;
 use std::str::FromStr;
-use Direction::*;
+use Direction as D;
 
 #[derive(Copy, Clone, Debug)]
 pub(crate) enum Direction { North, West, South, East }
@@ -19,10 +19,10 @@ type Cost = usize;
 impl ReflectorDish {
     fn next(&self, idx: usize, dir:Direction) -> Option<Position> {
         match dir {
-            East if idx < (idx/self.lines)*self.width + self.width - 1 => Some(idx+1),
-            West if idx > (idx/self.lines)*self.width => Some(idx - 1),
-            North if (self.width..self.layout.len()).contains(&idx) => Some(idx - self.width),
-            South if idx < self.layout.len() - self.width => Some(idx + self.width),
+            D::East if idx < (idx/self.lines)*self.width + self.width - 1 => Some(idx+1),
+            D::West if idx > (idx/self.lines)*self.width => Some(idx - 1),
+            D::North if (self.width..self.layout.len()).contains(&idx) => Some(idx - self.width),
+            D::South if idx < self.layout.len() - self.width => Some(idx + self.width),
             _ => None
         }
     }
@@ -38,10 +38,10 @@ impl ReflectorDish {
     }
     pub(crate) fn tilt(&mut self, dir: Direction) -> Cost {
         match dir {
-            East => self.round_rocks_w2e().rev().collect::<Rc<[Position]>>(),
-            West => self.round_rocks_w2e().collect::<Rc<[Position]>>(),
-            North => self.round_rocks_n2s().collect::<Rc<[Position]>>(),
-            South => self.round_rocks_n2s().rev().collect::<Rc<[Position]>>(),
+            D::East => self.round_rocks_w2e().rev().collect::<Rc<[Position]>>(),
+            D::West => self.round_rocks_w2e().collect::<Rc<[Position]>>(),
+            D::North => self.round_rocks_n2s().collect::<Rc<[Position]>>(),
+            D::South => self.round_rocks_n2s().rev().collect::<Rc<[Position]>>(),
         }
             .iter()
             // .inspect(|s| print!("idx: {s} -> "))
@@ -54,7 +54,7 @@ impl ReflectorDish {
             .sum::<Cost>()
     }
     pub(crate) fn spin_cycle(&mut self) -> Cost {
-        [North,West,South,East]
+        [D::North,D::West,D::South,D::East]
             .into_iter()
             .map(|dir| self.tilt(dir))
             .last()
@@ -154,14 +154,14 @@ mod test {
         let dish = &mut inp.parse::<ReflectorDish>().unwrap_or_default();
 
         println!("{:?}",dish);
-        assert_eq!(dish.move_rock(10,North), Some(1));
-        assert_eq!(dish.move_rock(12,North), Some(0));
-        assert_eq!(dish.move_rock(13,North), Some(0));
-        assert_eq!(dish.move_rock(31,North), Some(0));
-        assert_eq!(dish.move_rock(41,North), Some(1));
-        assert_eq!(dish.move_rock(91,North), Some(2));
-        assert_eq!(dish.move_rock(92,North), Some(7));
-        assert_eq!(dish.move_rock(120,North), None);
+        assert_eq!(dish.move_rock(10,D::North), Some(1));
+        assert_eq!(dish.move_rock(12,D::North), Some(0));
+        assert_eq!(dish.move_rock(13,D::North), Some(0));
+        assert_eq!(dish.move_rock(31,D::North), Some(0));
+        assert_eq!(dish.move_rock(41,D::North), Some(1));
+        assert_eq!(dish.move_rock(91,D::North), Some(2));
+        assert_eq!(dish.move_rock(92,D::North), Some(7));
+        assert_eq!(dish.move_rock(120,D::North), None);
         println!("{:?}",dish);
         println!("{:?}",dish.round_rocks_n2s().collect::<Rc<[_]>>());
         assert_eq!(

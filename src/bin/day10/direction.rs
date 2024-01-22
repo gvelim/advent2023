@@ -17,18 +17,18 @@ impl Direction {
     //
     // Given (a) a pipe to step on and (b) current direction derive the new direction if valid otherwise None
     pub(crate) fn pipe_exit(&self, c: char) -> Option<Self> {
-        use Direction::*;
+        use Direction as D;
         match (self, c) {
-            (Left|Right , '-') => Some(*self),
-            (Up|Down , '|') => Some(*self),
-            (Down, 'L') => Some(Right),
-            (Left, 'L') => Some(Up),
-            (Down, 'J') => Some(Left),
-            (Right, 'J') => Some(Up),
-            (Up, '7') => Some(Left),
-            (Right, '7') => Some(Down),
-            (Up, 'F') => Some(Right),
-            (Left, 'F') => Some(Down),
+            (D::Left|D::Right , '-') => Some(*self),
+            (D::Up|D::Down , '|') => Some(*self),
+            (D::Down, 'L') => Some(D::Right),
+            (D::Left, 'L') => Some(D::Up),
+            (D::Down, 'J') => Some(D::Left),
+            (D::Right, 'J') => Some(D::Up),
+            (D::Up, '7') => Some(D::Left),
+            (D::Right, '7') => Some(D::Down),
+            (D::Up, 'F') => Some(D::Right),
+            (D::Left, 'F') => Some(D::Down),
             (_, 'S') => Some(*self),
             _ => None
         }
