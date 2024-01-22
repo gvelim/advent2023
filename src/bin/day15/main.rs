@@ -7,8 +7,7 @@ use operation::Instruction;
 use lenslib::ParabolicReflector;
 
 fn main() {
-    let mut input = std::fs::read_to_string("./src/bin/day15/input.txt").expect("Ops");
-    input.pop();
+    let input = std::fs::read_to_string("./src/bin/day15/input.txt").expect("Ops");
 
     let t = std::time::Instant::now();
     let sum = input

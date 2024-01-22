@@ -13,6 +13,7 @@ pub(crate) enum Instruction {
     Remove(Label),
     Store(Label,FocalLength)
 }
+use Instruction as I;
 
 impl Instruction {
     pub(crate) fn hash(&self) -> Hash {
@@ -20,58 +21,55 @@ impl Instruction {
     }
     pub(crate) fn label(&self) -> &Label {
         match self {
-            Instruction::Remove(l) => l,
-            Instruction::Store(l, _) => l,
+            I::Remove(l) => l,
+            I::Store(l, _) => l,
         }
     }
 
 }
 
 #[derive(PartialEq)]
-pub(crate) enum IErr {
+pub(crate) enum InstructionError {
     InvalidFocalLength,
     InvalidOperand
 }
+use InstructionError as IE;
 
-impl Debug for IErr {
+impl Debug for InstructionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            IErr::InvalidFocalLength => write!(f,"Operand '=' is not followed by a number"),
-            IErr::InvalidOperand => write!(f,"Instruction contains invalid operand ['=','-']"),
+            IE::InvalidFocalLength => write!(f, "Operand '=' is not followed by a number"),
+            IE::InvalidOperand => write!(f, "Instruction contains invalid operand ['=','-']"),
         }
     }
 }
 
-impl Display for IErr {
+impl Display for InstructionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         <Self as Debug>::fmt(self, f)
     }
 }
 
-impl Error for IErr {
+impl Error for InstructionError {
 
 }
 
 impl FromStr for Instruction {
-    type Err = IErr;
+    type Err = IE;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Some(index) = s.chars().position(|c| ['=','-'].contains(&c)) {
             match (s.as_bytes()[index], &s[..index], &s[index+1..]) {
                 (b'-', label, _) => Ok(
-                    Instruction::Remove(label.into())
+                    I::Remove(label.into())
                 ),
                 (b'=', label, fl) => Ok(
-                    Instruction::Store(
-                        label.into(),
-                        usize::from_str(fl)
-                            .or_else(|_| Err(IErr::InvalidFocalLength))?
-                    )
+                    I::Store( label.into(), usize::from_str(fl).or(Err(IE::InvalidFocalLength))? )
                 ),
-                _ => Err(IErr::InvalidOperand)
+                _ => Err(IE::InvalidOperand)
             }
         } else {
-            Err(IErr::InvalidOperand)
+            Err(IE::InvalidOperand)
         }
     }
 }
@@ -79,7 +77,6 @@ impl FromStr for Instruction {
 #[cfg(test)]
 mod test {
     use super::*;
-    use Instruction::{Store, Remove};
 
     #[test]
     fn test_parse_operation() {
@@ -92,11 +89,11 @@ mod test {
         assert_eq!(
             cmd,
             [
-                Ok(Store("rn+".into(),1)),
-                Ok(Remove("cm".into())),
-                Err(IErr::InvalidOperand),
-                Err(IErr::InvalidOperand),
-                Err(IErr::InvalidFocalLength)
+                Ok(I::Store("rn+".into(),1)),
+                Ok(I::Remove("cm".into())),
+                Err(IE::InvalidOperand),
+                Err(IE::InvalidOperand),
+                Err(IE::InvalidFocalLength)
             ].into()
         )
     }
