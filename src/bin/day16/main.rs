@@ -12,17 +12,18 @@ fn main() {
 
     let t = std::time::Instant::now();
     cavern.move_beam(0, D::Right);
-    println!("Part 1 : Cavern Energy = {:?} - {:?}", cavern.energy(), t.elapsed());
-    assert_eq!(cavern.energy(),6902);
+    println!("Part 1 : Cavern Energy = {:?} - {:?}", cavern.measure_energy(), t.elapsed());
+    assert_eq!(cavern.measure_energy(), 6902);
 
     let t = std::time::Instant::now();
     let m = entry_points(cavern.width,cavern.lines)
             .map(|(idx,dir)| {
                 cavern.energise(idx,dir);
-                cavern.energy()
+                cavern.measure_energy()
             })
             .max();
     println!("Part 2 : Max Energy = {:?} - {:?}", m, t.elapsed());
+    assert_eq!(m,Some(7697));
 }
 
 fn entry_points(w:usize, h:usize) -> impl Iterator<Item=(Position, Direction)> + 'static {
@@ -63,7 +64,7 @@ pub(crate) struct Cavern {
 }
 
 impl Cavern {
-    fn energy(&self) -> Energy {
+    fn measure_energy(&self) -> Energy {
         self.nrg.iter().filter(|c| b'#'.eq(c)).count()
     }
     fn energise(&mut self, idx: Position, dir:Direction) -> Option<Energy> {
@@ -164,7 +165,7 @@ mod test {
             .map(|(idx,dir)| {
                 cavern.energise(idx,dir);
                 // println!("{:?}",cavern);
-                cavern.energy()
+                cavern.measure_energy()
             })
             .inspect(|d| println!("{d:2}"))
             .max();
@@ -177,7 +178,7 @@ mod test {
 
         println!("{:?}",cavern.move_beam(0,D::Right));
         println!("{:?}",cavern);
-        assert_eq!(cavern.energy(),46);
+        assert_eq!(cavern.measure_energy(), 46);
     }
 
     #[test]
