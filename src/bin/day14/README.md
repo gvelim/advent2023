@@ -133,15 +133,15 @@ array[O....#.... O.OO#....# .....##...  ...]
                 |          | 
                 |    ^     |
                 |    |     |
-      W*Index/H >  Index   < (Index/H+1)*W-1
+ index % W > 0  |< Index  >| index % W < W - 1
     Lower Bound              Higher Bound
 ```
 Therefore, we encapsulate the above logic in a function that takes (a) the current index position and (b) direction, and returns either the new `index` location or `nothing` if moving would push us **out of the logical bounds**   
 ```rust
 fn next(&self, idx: usize, dir:Direction) -> Option<usize> {
     match dir {
-        Direction::East if idx < (idx/self.lines)*self.width + self.width - 1 => Some(idx+1),
-        Direction::West if idx > (idx/self.lines)*self.width => Some(idx - 1),
+        Direction::East if idx % self.width < self.width - 1 => Some(idx + 1),
+        Direction::West if idx % self.width > 0 => Some(idx - 1),
         Direction::North if idx > self.width => Some(idx - self.width),
         Direction::South if idx < self.layout.len() - self.width => Some(idx + self.width),
         _ => None

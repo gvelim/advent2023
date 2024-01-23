@@ -58,7 +58,7 @@ impl FromStr for Instruction {
     type Err = IE;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Some(index) = s.chars().position(|c| ['=','-'].contains(&c)) {
+        if let Some(index) = s.chars().position(|c| "=-".contains(c)) {
             match (s.as_bytes()[index], &s[..index], &s[index+1..]) {
                 (b'-', label, _) => Ok(
                     I::Remove(label.into())
