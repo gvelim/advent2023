@@ -3,24 +3,25 @@ use std::fmt::{Debug, Formatter};
 use std::str::FromStr;
 
 type Position = usize;
+type Energy = usize;
 
 fn main() {
     let inp = std::fs::read_to_string("src/bin/day16/input.txt").expect("Ops!");
     let mut cavern = inp.parse::<Cavern>().unwrap_or_default();
 
     let t = std::time::Instant::now();
-    cavern.move_beam(0,D::Right);
-    println!("Part 1 : Cavern Energy = {:?} - {:?}",cavern.energy(),t.elapsed());
+    cavern.move_beam(0, D::Right);
+    println!("Part 1 : Cavern Energy = {:?} - {:?}", cavern.energy(), t.elapsed());
     assert_eq!(cavern.energy(),6902);
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub(crate) enum Direction { Up, Left, Down, Right, UpDown, LeftRight }
 use Direction as D;
 
 impl Direction {
-    fn direction(&mut self, tile: u8) -> &Direction {
-        *self = match (tile, *self) {
+    fn direction(&self, tile: u8) -> Direction {
+        match (tile, *self) {
             (b'/', D::Right) => D::Up,
             (b'/', D::Left) => D::Down,
             (b'/', D::Up) => D::Right,
@@ -32,8 +33,7 @@ impl Direction {
             (b'-', D::Up | D::Down) => D::LeftRight,
             (b'|' , D::Right | D::Left) => D::UpDown,
             (_,d) => d
-        };
-        self
+        }
     }
 }
 
@@ -47,7 +47,11 @@ pub(crate) struct Cavern {
 }
 
 impl Cavern {
-    fn step(&self, idx: usize, dir:Direction) -> Option<Position> {
+    fn energy(&self) -> Energy {
+        self.nrg.iter().filter(|c| b'#'.eq(c)).count()
+    }
+
+    fn step(&self, idx: Position, dir:Direction) -> Option<Position> {
         match dir {
             D::Right if idx % self.width < self.width-1 => Some(idx + 1),
             D::Left if idx % self.width > 0 => Some(idx - 1),
@@ -56,17 +60,29 @@ impl Cavern {
             _ => None
         }
     }
-    fn move_beam(&mut self, idx: usize, mut dir:Direction) -> Option<usize> {
 
-        if Some(true) == self.tail.get(&idx).map(|d| dir == *d) { return None }
-        if self.con[idx] != b'.' { self.tail.insert(idx,dir); }
+    fn move_beam(&mut self, idx: Position, dir:Direction) -> Option<Energy> {
 
+        // Has the bean hit a contraption
+        if self.con[idx] != b'.' {
+            // Cycle Detection: have we enter the contraption from the same direction ?
+            if Some(true) == self.tail.get(&idx).map(|d| dir.eq(d)) {
+                return None
+            }
+            else {
+                // Store beam direction at contraption point so we can detect the cycle
+                self.tail.insert(idx,dir);
+            }
+        }
+
+        // Energise cell
         self.nrg[idx] = b'#';
 
-        match *dir.direction(self.con[idx]) {
-            D::Right | D::Left | D::Up | D::Down => {
-                self.step(idx, dir).and_then(|next| self.move_beam(next, dir))
-            },
+        // Find new direction based on current tile
+        match dir.direction(self.con[idx]) {
+            d@(D::Right | D::Left | D::Up | D::Down) =>
+                self.step(idx, d).and_then(|next| self.move_beam(next, d))
+            ,
             D::LeftRight =>
                 Some(
                     self.step(idx, D::Left).and_then(|next| self.move_beam(next, D::Left)).unwrap_or(0)
@@ -79,9 +95,6 @@ impl Cavern {
                 )
         }
             .map(|count| count + 1)
-    }
-    fn energy(&self) -> usize {
-        self.nrg.iter().filter(|c| b'#'.eq(c)).count()
     }
 }
 
