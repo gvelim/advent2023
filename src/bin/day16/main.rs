@@ -1,67 +1,86 @@
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::str::FromStr;
-use Direction as D;
+
 type Position = usize;
 
 fn main() {
     todo!()
 }
 
-#[derive(Copy, Clone, Debug)]
-pub(crate) enum Direction { North=0, West, South, East }
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub(crate) enum Direction { Up, Left, Down, Right, UpDown, LeftRight }
+use Direction as D;
+
+impl Direction {
+    fn direction(&mut self, tile: u8) -> &Direction {
+        *self = match (tile, *self) {
+            (b'/', D::Right) => D::Up,
+            (b'/', D::Left) => D::Down,
+            (b'/', D::Up) => D::Right,
+            (b'/', D::Down) => D::Left,
+            (b'\\', D::Right) => D::Down,
+            (b'\\', D::Left) => D::Up,
+            (b'\\', D::Up) => D::Left,
+            (b'\\', D::Down) => D::Right,
+            (b'-', D::Up | D::Down) => D::LeftRight,
+            (b'|' , D::Right | D::Left) => D::UpDown,
+            (_,d) => d
+        };
+        self
+    }
+}
 
 #[derive(Default)]
 pub(crate) struct Cavern {
     width: usize,
     lines: usize,
-    layout: Vec<u8>,
-    hash: HashMap<usize,bool>
+    con: Vec<u8>,
+    nrg: Vec<u8>,
+    tail: HashMap<usize,Direction>
 }
 
 impl Cavern {
-    fn next(&self, idx: usize, dir:Direction) -> Option<Position> {
+    fn next_index(&self, idx: usize, dir:Direction) -> Option<Position> {
         match dir {
-            D::East if idx % self.width < self.width-1 => Some(idx + 1),
-            D::West if idx % self.width > 0 => Some(idx - 1),
-            D::North if (self.width..self.layout.len()).contains(&idx) => Some(idx - self.width),
-            D::South if idx < self.layout.len() - self.width => Some(idx + self.width),
+            D::Right if idx % self.width < self.width-1 => Some(idx + 1),
+            D::Left if idx % self.width > 0 => Some(idx - 1),
+            D::Up if (self.width..self.con.len()).contains(&idx) => Some(idx - self.width),
+            D::Down if idx < self.con.len() - self.width => Some(idx + self.width),
             _ => None
         }
     }
-    fn move_beam(&mut self, idx: usize, dir:Direction) -> Option<usize> {
-        if idx >= self.layout.len() { return None }
+    fn move_beam(&mut self, idx: usize, mut dir:Direction) -> Option<usize> {
+        if idx >= self.con.len() { return None }
         print!("{idx},");
-        if self.hash.insert(idx,true).is_some() {
-            return Some(0)
+
+        self.nrg[idx] = b'#';
+        if Some(true) == self.tail.get(&idx).map(|d| dir == *d) {
+            print!("C");
+            return None
         }
-
-        match (self.layout[idx], dir) {
-            (b'.', _) => self.next(idx,dir).and_then(|next| self.move_beam(next, dir)),
-            (b'/', D::East) => self.next(idx,D::North).and_then(|next| self.move_beam(next,D::North)),
-            (b'/', D::West) => self.next(idx,D::South).and_then(|next| self.move_beam(next,D::South)),
-            (b'/', D::North) => self.next(idx,D::East).and_then(|next| self.move_beam(next,D::East)),
-            (b'/', D::South) => self.next(idx,D::West).and_then(|next| self.move_beam(next,D::West)),
-            (b'\\', D::East) => self.next(idx,D::South).and_then(|next| self.move_beam(next,D::South)),
-            (b'\\', D::West) => self.next(idx,D::North).and_then(|next| self.move_beam(next,D::North)),
-            (b'\\', D::North) => self.next(idx,D::West).and_then(|next| self.move_beam(next,D::West)),
-            (b'\\', D::South) => self.next(idx,D::East).and_then(|next| self.move_beam(next,D::East)),
-            (b'-', D::East|D::West) => self.next(idx,dir).and_then(|next| self.move_beam(next,dir)),
-            (b'-', D::North|D::South) =>
+        if self.con[idx] != b'.' {
+            print!("K");
+            self.tail.insert(idx,dir);
+        }
+        match *dir.direction(self.con[idx]) {
+            D::Right | D::Left | D::Up | D::Down => {
+                self.next_index(idx, dir).and_then(|next| self.move_beam(next, dir))
+            },
+            D::LeftRight =>
                 Some(
-                    self.next(idx,D::West).and_then(|next| self.move_beam(next,D::West)).unwrap_or(0)
-                    + self.next(idx,D::East).and_then(|next| self.move_beam(next,D::East)).unwrap_or(0)
+                    self.next_index(idx, D::Left).and_then(|next| self.move_beam(next, D::Left)).unwrap_or(0)
+                    + self.next_index(idx, D::Right).and_then(|next| self.move_beam(next, D::Right)).unwrap_or(0)
                 ),
-            (b'|' , D::South|D::North) => self.next(idx,dir).and_then(|next| self.move_beam(next,dir)),
-            (b'|' , D::East|D::West) =>
+            D::UpDown =>
                 Some(
-                    self.next(idx,D::South).and_then(|next| self.move_beam(next,D::South)).unwrap_or(0)
-                    + self.next(idx,D::North).and_then(|next| self.move_beam(next,D::North)).unwrap_or(0)
-                ),
-            _ => unreachable!()
-        }.map(|count| count + 1)
+                    self.next_index(idx, D::Down).and_then(|next| self.move_beam(next, D::Down)).unwrap_or(0)
+                    + self.next_index(idx, D::Up).and_then(|next| self.move_beam(next, D::Up)).unwrap_or(0)
+                )
+        }
+            .map(|count| count + 1)
+            .or_else(|| { self.tail.remove(&idx); None })
     }
-
 }
 
 impl FromStr for Cavern {
@@ -71,10 +90,11 @@ impl FromStr for Cavern {
         Ok(Cavern {
             width: s.lines().next().map(|s| s.len()).unwrap(),
             lines: s.lines().count(),
-            layout: s.lines()
+            con: s.lines()
                 .flat_map(|line| line.bytes())
                 .collect::<Vec<_>>(),
-            hash: HashMap::new()
+            nrg: vec![b'.'; s.len()],
+            tail: HashMap::new()
         })
     }
 }
@@ -82,12 +102,15 @@ impl FromStr for Cavern {
 impl Debug for Cavern {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f,"Cavern\n")?;
-        write!(f,"Width:{}, Length:{}", self.width, self.lines)?;
-        for (i,c) in self.layout.iter().enumerate() {
-            if i % self.width == 0 {
-                writeln!(f)?
-            };
-            write!(f," {}", *c as char)?;
+        writeln!(f,"Width:{}, Length:{}", self.width, self.lines)?;
+
+        let mut citer = self.con.iter();
+        let mut eiter = self.nrg.iter();
+        for _ in 0..self.lines {
+            for _ in 0..self.width { write!(f, "{} ", *citer.next().expect("ops!") as char)? };
+            write!(f, "    ")?;
+            for _ in 0..self.width { write!(f, "{} ", *eiter.next().expect("ops!") as char)? };
+            writeln!(f)?;
         }
         Ok(())
     }
@@ -101,7 +124,7 @@ mod test {
         let inp = std::fs::read_to_string("src/bin/day16/sample.txt").expect("Ops!");
         let mut cavern = inp.parse::<Cavern>().unwrap_or_default();
 
-        println!("{:?}",cavern.move_beam(0,D::East));
+        println!("{:?}",cavern.move_beam(0,D::Right));
         println!("{:?}",cavern);
     }
 
