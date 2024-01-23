@@ -41,7 +41,7 @@ pub(crate) struct Cavern {
 }
 
 impl Cavern {
-    fn next_index(&self, idx: usize, dir:Direction) -> Option<Position> {
+    fn step(&self, idx: usize, dir:Direction) -> Option<Position> {
         match dir {
             D::Right if idx % self.width < self.width-1 => Some(idx + 1),
             D::Left if idx % self.width > 0 => Some(idx - 1),
@@ -63,23 +63,27 @@ impl Cavern {
             print!("K");
             self.tail.insert(idx,dir);
         }
+
         match *dir.direction(self.con[idx]) {
             D::Right | D::Left | D::Up | D::Down => {
-                self.next_index(idx, dir).and_then(|next| self.move_beam(next, dir))
+                self.step(idx, dir).and_then(|next| self.move_beam(next, dir))
             },
             D::LeftRight =>
                 Some(
-                    self.next_index(idx, D::Left).and_then(|next| self.move_beam(next, D::Left)).unwrap_or(0)
-                    + self.next_index(idx, D::Right).and_then(|next| self.move_beam(next, D::Right)).unwrap_or(0)
+                    self.step(idx, D::Left).and_then(|next| self.move_beam(next, D::Left)).unwrap_or(0)
+                    + self.step(idx, D::Right).and_then(|next| self.move_beam(next, D::Right)).unwrap_or(0)
                 ),
             D::UpDown =>
                 Some(
-                    self.next_index(idx, D::Down).and_then(|next| self.move_beam(next, D::Down)).unwrap_or(0)
-                    + self.next_index(idx, D::Up).and_then(|next| self.move_beam(next, D::Up)).unwrap_or(0)
+                    self.step(idx, D::Down).and_then(|next| self.move_beam(next, D::Down)).unwrap_or(0)
+                    + self.step(idx, D::Up).and_then(|next| self.move_beam(next, D::Up)).unwrap_or(0)
                 )
         }
             .map(|count| count + 1)
             .or_else(|| { self.tail.remove(&idx); None })
+    }
+    fn energy(&self) -> usize {
+        self.nrg.iter().filter(|c| b'#'.eq(c)).count()
     }
 }
 
@@ -121,11 +125,12 @@ mod test {
 
     #[test]
     fn test_move_bean() {
-        let inp = std::fs::read_to_string("src/bin/day16/sample.txt").expect("Ops!");
+        let inp = std::fs::read_to_string("src/bin/day16/input.txt").expect("Ops!");
         let mut cavern = inp.parse::<Cavern>().unwrap_or_default();
 
         println!("{:?}",cavern.move_beam(0,D::Right));
         println!("{:?}",cavern);
+        println!("Energy: {}",cavern.energy())
     }
 
     #[test]
