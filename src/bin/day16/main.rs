@@ -5,7 +5,13 @@ use std::str::FromStr;
 type Position = usize;
 
 fn main() {
-    todo!()
+    let inp = std::fs::read_to_string("src/bin/day16/input.txt").expect("Ops!");
+    let mut cavern = inp.parse::<Cavern>().unwrap_or_default();
+
+    let t = std::time::Instant::now();
+    cavern.move_beam(0,D::Right);
+    println!("Part 1 : Cavern Energy = {:?} - {:?}",cavern.energy(),t.elapsed());
+    assert_eq!(cavern.energy(),6902);
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -51,18 +57,11 @@ impl Cavern {
         }
     }
     fn move_beam(&mut self, idx: usize, mut dir:Direction) -> Option<usize> {
-        if idx >= self.con.len() { return None }
-        print!("{idx},");
+
+        if Some(true) == self.tail.get(&idx).map(|d| dir == *d) { return None }
+        if self.con[idx] != b'.' { self.tail.insert(idx,dir); }
 
         self.nrg[idx] = b'#';
-        if Some(true) == self.tail.get(&idx).map(|d| dir == *d) {
-            print!("C");
-            return None
-        }
-        if self.con[idx] != b'.' {
-            print!("K");
-            self.tail.insert(idx,dir);
-        }
 
         match *dir.direction(self.con[idx]) {
             D::Right | D::Left | D::Up | D::Down => {
@@ -80,7 +79,6 @@ impl Cavern {
                 )
         }
             .map(|count| count + 1)
-            .or_else(|| { self.tail.remove(&idx); None })
     }
     fn energy(&self) -> usize {
         self.nrg.iter().filter(|c| b'#'.eq(c)).count()
@@ -111,9 +109,9 @@ impl Debug for Cavern {
         let mut citer = self.con.iter();
         let mut eiter = self.nrg.iter();
         for _ in 0..self.lines {
-            for _ in 0..self.width { write!(f, "{} ", *citer.next().expect("ops!") as char)? };
-            write!(f, "    ")?;
-            for _ in 0..self.width { write!(f, "{} ", *eiter.next().expect("ops!") as char)? };
+            for _ in 0..self.width { write!(f, "{} ", *citer.next().unwrap() as char)? };
+            write!(f, "  ")?;
+            for _ in 0..self.width { write!(f, "{} ", *eiter.next().unwrap() as char)? };
             writeln!(f)?;
         }
         Ok(())
@@ -125,12 +123,12 @@ mod test {
 
     #[test]
     fn test_move_bean() {
-        let inp = std::fs::read_to_string("src/bin/day16/input.txt").expect("Ops!");
+        let inp = std::fs::read_to_string("src/bin/day16/sample.txt").expect("Ops!");
         let mut cavern = inp.parse::<Cavern>().unwrap_or_default();
 
         println!("{:?}",cavern.move_beam(0,D::Right));
         println!("{:?}",cavern);
-        println!("Energy: {}",cavern.energy())
+        assert_eq!(cavern.energy(),46);
     }
 
     #[test]
