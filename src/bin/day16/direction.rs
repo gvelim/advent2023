@@ -15,7 +15,7 @@ impl Direction {
             (b'\\', D::Down) => D::Right,
             (b'-', D::Up | D::Down) => D::LeftRight,
             (b'|' , D::Right | D::Left) => D::UpDown,
-            (_,d) => *d
+            (_, dir) => *dir
         }
     }
 }
