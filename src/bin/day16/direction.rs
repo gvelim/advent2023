@@ -3,7 +3,7 @@ pub(crate) enum Direction { Up, Left, Down, Right, UpDown, LeftRight }
 use Direction as D;
 
 impl Direction {
-    pub(crate) fn direction(&self, tile: u8) -> Direction {
+    pub(crate) fn next(&self, tile: u8) -> Direction {
         match (tile, self) {
             (b'/', D::Right) => D::Up,
             (b'/', D::Left) => D::Down,

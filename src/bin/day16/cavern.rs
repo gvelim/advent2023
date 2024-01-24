@@ -21,14 +21,14 @@ pub(crate) struct Cavern {
     pub(crate) lines: usize,
     con: std::rc::Rc<[u8]>,
     nrg: Vec<u8>,
-    tail: HashMap<usize,Direction>
+    tail: HashMap<usize,Vec<Direction>>
 }
 
 impl Cavern {
     pub(crate) fn measure_energy(&self) -> Energy {
         self.nrg.iter().filter(|c| b'#'.eq(c)).count()
     }
-    pub(crate) fn energise(&mut self, idx: Position, dir:Direction) -> Option<Energy> {
+    pub(crate) fn energise(&mut self, idx: Position, dir:Direction) {
         self.tail.clear();
         self.nrg.fill(b'.');
         self.move_beam(idx,dir)
@@ -43,40 +43,57 @@ impl Cavern {
             _ => None
         }
     }
-    pub(crate) fn move_beam(&mut self, idx: Position, dir:Direction) -> Option<Energy> {
+
+    fn move_beam(&mut self, idx: Position, dir:Direction) {
         use Direction as D;
 
-        // Has the bean hit a contraption
-        if self.con[idx] != b'.' {
-            // Cycle Detection: have we enter the contraption from the same direction ?
-            if Some(true) == self.tail.get(&idx).map(|d| dir.eq(d)) {
-                return None
-            }
-            else {
-                // Store beam direction at contraption point so we can detect the cycle
-                self.tail.insert(idx,dir);
-            }
-        }
+        let tile = self.con[idx];
+
+        // Has the light-beam fallen into a circle ?
+        if self.has_entered_cycle(tile, idx, dir) { return }
 
         // Energise cell
         self.nrg[idx] = b'#';
 
         // Find new direction based on current tile
-        match dir.direction(self.con[idx]) {
-            d@(D::Right | D::Left | D::Up | D::Down) =>
-                self.step(idx, d).and_then(|next| self.move_beam(next, d)),
-            D::LeftRight =>
-                Some(
-                    self.step(idx, D::Left).and_then(|next| self.move_beam(next, D::Left)).unwrap_or(0)
-                        + self.step(idx, D::Right).and_then(|next| self.move_beam(next, D::Right)).unwrap_or(0)
-                ),
-            D::UpDown =>
-                Some(
-                    self.step(idx, D::Down).and_then(|next| self.move_beam(next, D::Down)).unwrap_or(0)
-                        + self.step(idx, D::Up).and_then(|next| self.move_beam(next, D::Up)).unwrap_or(0)
-                )
+        match dir.next(tile) {
+            D::LeftRight => {
+                let _ = self.step(idx, D::Left).is_some_and(|pos| self.move_beam(pos, D::Left) == ());
+                let _ = self.step(idx, D::Right).is_some_and(|pos| self.move_beam(pos, D::Right) == ());
+            },
+            D::UpDown => {
+                let _ = self.step(idx, D::Down).is_some_and(|pos| self.move_beam(pos, D::Down) == ());
+                let _ = self.step(idx, D::Up).is_some_and(|pos| self.move_beam(pos, D::Up) == ());
+            },
+            d => {
+                let _ = self.step(idx, d).is_some_and(|pos| self.move_beam(pos, d) == ());
+            }
         }
-            .map(|count| count + 1)
+    }
+
+    fn has_entered_cycle(&mut self, tile: u8, idx: Position, dir: Direction) -> bool {
+        use Direction as D;
+
+        if tile == b'.' { return false }
+
+        // Cycle Detection: have we enter the contraption from the same direction ?
+        if Some(true) == self.tail.get(&idx).map(|d| d.contains(&dir)) { return true }
+
+        // Store beam direction at contraption point so we can detect the cycle
+        // Optimise around splitters by storing both opposite directions
+        // hence we stop re-entering the cycle from the opposite direction
+        let store = match (tile,dir) {
+            (b'-'|b'|', D::Up| D::Down) => [D::Up, D::Down],
+            (b'-'|b'|', D::Left| D::Right) => [D::Left, D::Right],
+            _ => [dir,dir]
+        };
+
+        self.tail.entry(idx)
+            .and_modify(|v| v.extend(store))
+            .or_insert(Vec::default())
+            .extend(store);
+
+        return false;
     }
 }
 
@@ -128,7 +145,7 @@ mod test {
             .inspect(|d| print!("{:?} -> ",d))
             .map(|(idx,dir)| {
                 cavern.energise(idx,dir);
-                // println!("{:?}",cavern);
+                println!("{:?}",cavern);
                 cavern.measure_energy()
             })
             .inspect(|d| println!("{d:2}"))
@@ -140,7 +157,7 @@ mod test {
         let inp = std::fs::read_to_string("src/bin/day16/sample.txt").expect("Ops!");
         let mut cavern = inp.parse::<Cavern>().unwrap();
 
-        println!("{:?}",cavern.move_beam(0,D::Right));
+        println!("{:?}",cavern.energise(0,D::Right));
         println!("{:?}",cavern);
         assert_eq!(cavern.measure_energy(), 46);
     }
