@@ -20,17 +20,17 @@ pub(crate) struct Cavern {
     pub(crate) width: usize,
     pub(crate) lines: usize,
     con: std::rc::Rc<[u8]>,
-    nrg: Vec<u8>,
+    nrg: Vec<bool>,
     tail: HashMap<usize,Vec<Direction>>
 }
 
 impl Cavern {
     pub(crate) fn measure_energy(&self) -> Energy {
-        self.nrg.iter().filter(|c| b'#'.eq(c)).count()
+        self.nrg.iter().filter(|&c| *c).count()
     }
     pub(crate) fn energise(&mut self, idx: Position, dir:Direction) {
         self.tail.clear();
-        self.nrg.fill(b'.');
+        self.nrg.fill(false);
         self.move_beam(idx,dir)
     }
     fn step(&self, idx: Position, dir:Direction) -> Option<Position> {
@@ -47,54 +47,49 @@ impl Cavern {
     fn move_beam(&mut self, idx: Position, dir:Direction) {
         use Direction as D;
 
-        let tile = self.con[idx];
-
         // Has the light-beam fallen into a circle ?
-        if self.has_entered_cycle(tile, idx, dir) { return }
+        if self.con[idx] != b'.' && self.has_entered_cycle(idx, dir) { return }
 
         // Energise cell
-        self.nrg[idx] = b'#';
+        self.nrg[idx] = true;
 
         // Find new direction based on current tile
-        match dir.next(tile) {
+        match dir.next(self.con[idx] ) {
             D::LeftRight => {
-                let _ = self.step(idx, D::Left).is_some_and(|pos| self.move_beam(pos, D::Left) == ());
-                let _ = self.step(idx, D::Right).is_some_and(|pos| self.move_beam(pos, D::Right) == ());
+                if let Some(pos) = self.step(idx, D::Left) { self.move_beam(pos, D::Left) };
+                if let Some(pos) = self.step(idx, D::Right) { self.move_beam(pos, D::Right) };
             },
             D::UpDown => {
-                let _ = self.step(idx, D::Down).is_some_and(|pos| self.move_beam(pos, D::Down) == ());
-                let _ = self.step(idx, D::Up).is_some_and(|pos| self.move_beam(pos, D::Up) == ());
+                if let Some(pos) = self.step(idx, D::Down) { self.move_beam(pos, D::Down) };
+                if let Some(pos) = self.step(idx, D::Up) { self.move_beam(pos, D::Up) };
             },
             d => {
-                let _ = self.step(idx, d).is_some_and(|pos| self.move_beam(pos, d) == ());
+                if let Some(pos) = self.step(idx, d) { self.move_beam(pos, d) };
             }
         }
     }
 
-    fn has_entered_cycle(&mut self, tile: u8, idx: Position, dir: Direction) -> bool {
+    fn has_entered_cycle(&mut self, idx: Position, dir: Direction) -> bool {
         use Direction as D;
-
-        // we check for cycles only when we've fallen on a contraption
-        if tile == b'.' { return false }
 
         // Cycle Detection: have we enter the contraption from the same direction before ?
         if Some(true) == self.tail.get(&idx).map(|d| d.contains(&dir)) { return true }
 
         // Store light-beam direction at contraption point, for cycles detection
+        let dir_vectors = self.tail.entry(idx).or_default();
+
         // Optimise around splitters by storing both opposite directions
         // this stops us from re-entering the cycle from the opposite direction
-        let store = match (tile,dir) {
-            (b'-'|b'|', D::Up| D::Down) => [D::Up, D::Down],
-            (b'-'|b'|', D::Left| D::Right) => [D::Left, D::Right],
-            _ => [dir,dir]
+        match (self.con[idx],dir) {
+            (b'-'|b'|', D::Up|D::Down) =>
+                dir_vectors.extend_from_slice(&[D::Up, D::Down]),
+            (b'-'|b'|', D::Left|D::Right) =>
+                dir_vectors.extend_from_slice(&[D::Left, D::Right]),
+            _ =>
+                dir_vectors.push(dir)
         };
 
-        self.tail.entry(idx)
-            .and_modify(|v| v.extend_from_slice(&store))
-            .or_insert(Vec::default())
-            .extend_from_slice(&store);
-
-        return false;
+        false
     }
 }
 
@@ -108,7 +103,7 @@ impl FromStr for Cavern {
             con: s.lines()
                 .flat_map(|line| line.bytes())
                 .collect::<std::rc::Rc<[u8]>>(),
-            nrg: vec![b'.'; s.len()],
+            nrg: vec![false; s.chars().count()],
             tail: HashMap::new()
         })
     }
@@ -126,7 +121,7 @@ impl Debug for Cavern {
         for _ in 0..self.lines {
             for _ in 0..self.width { write!(f, "{:2}", *citer.next().unwrap() as char)? };
             write!(f, "  ")?;
-            for _ in 0..self.width { write!(f, "{:2}", *eiter.next().unwrap() as char)? };
+            for _ in 0..self.width { write!(f, "{:2}", if *eiter.next().unwrap() {'#'} else {'.'} )? };
             writeln!(f)?;
         }
         Ok(())
