@@ -74,14 +74,15 @@ impl Cavern {
     fn has_entered_cycle(&mut self, tile: u8, idx: Position, dir: Direction) -> bool {
         use Direction as D;
 
+        // we check for cycles only when we've fallen on a contraption
         if tile == b'.' { return false }
 
-        // Cycle Detection: have we enter the contraption from the same direction ?
+        // Cycle Detection: have we enter the contraption from the same direction before ?
         if Some(true) == self.tail.get(&idx).map(|d| d.contains(&dir)) { return true }
 
-        // Store beam direction at contraption point so we can detect the cycle
+        // Store light-beam direction at contraption point, for cycles detection
         // Optimise around splitters by storing both opposite directions
-        // hence we stop re-entering the cycle from the opposite direction
+        // this stops us from re-entering the cycle from the opposite direction
         let store = match (tile,dir) {
             (b'-'|b'|', D::Up| D::Down) => [D::Up, D::Down],
             (b'-'|b'|', D::Left| D::Right) => [D::Left, D::Right],
@@ -89,9 +90,9 @@ impl Cavern {
         };
 
         self.tail.entry(idx)
-            .and_modify(|v| v.extend(store))
+            .and_modify(|v| v.extend_from_slice(&store))
             .or_insert(Vec::default())
-            .extend(store);
+            .extend_from_slice(&store);
 
         return false;
     }
