@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) enum Direction { Up, Left, Down, Right, UpDown, LeftRight }
 use Direction as D;
 
