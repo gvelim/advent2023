@@ -70,11 +70,10 @@ Contraption Collection Energy Collection
 The above is reflected by the below `struct`
 ```rust
 pub(crate) struct Cavern {
-    width: usize,
-    lines: usize,
+    pub(crate) width: usize,
+    pub(crate) lines: usize,
     con: std::rc::Rc<[u8]>,
-    nrg: Vec<bool>,
-    tail: HashMap<usize,Vec<Direction>>
+    nrg: Vec<(bool,Vec<Direction>)>,
 }
 ```
 ### Navigating the cavern
@@ -144,23 +143,18 @@ fn has_entered_cycle(&mut self, idx: Position, dir: Direction) -> bool {
     use Direction as D;
 
     // Cycle Detection: have we enter the contraption from the same direction before ?
-    if Some(true) == self.tail.get(&idx).map(|d| d.contains(&dir)) { return true }
+    if self.nrg[idx].1.contains(&dir) { return true }
 
     // Store light-beam direction at contraption point, for cycles detection
-    let dir_vectors = self.tail.entry(idx).or_insert(Vec::new());
-
     // Optimise around splitters by storing both opposite directions
     // this stops us from re-entering the cycle from the opposite direction
     match (self.con[idx],dir) {
-        (b'-'|b'|', D::Up|D::Down) =>
-            dir_vectors.extend_from_slice(&[D::Up, D::Down]),
-        (b'-'|b'|', D::Left|D::Right) =>
-            dir_vectors.extend_from_slice(&[D::Left, D::Right]),
-        _ =>
-            dir_vectors.push(dir)
+        (b'-', D::Up|D::Down) => self.nrg[idx].1.extend_from_slice(&[D::Up, D::Down,]),
+        (b'|', D::Left|D::Right) => self.nrg[idx].1.extend_from_slice(&[D::Left, D::Right]),
+        _ => self.nrg[idx].1.push(dir)
     };
-
-    return false;
+    
+    false
 }
 ```
 ### Traversing the light-beam through the contraption
@@ -186,23 +180,23 @@ fn move_beam(&mut self, idx: Position, dir:Direction) {
     if self.con[idx] != b'.' && self.has_entered_cycle(idx, dir) { return }
 
     // Energise cell
-    self.nrg[idx] = true;
+    self.nrg[idx].0 = true;
 
     // Find new direction based on current tile
-    match dir.next(self.con[idx] ) {
+    match dir.next( self.con[idx] ) {
         D::LeftRight => {
-            self.step(idx, D::Left).map(|pos| self.move_beam(pos, D::Left));
-            self.step(idx, D::Right).map(|pos| self.move_beam(pos, D::Right));
+            if let Some(pos) = self.step(idx, D::Left) { self.move_beam(pos, D::Left) };
+            if let Some(pos) = self.step(idx, D::Right) { self.move_beam(pos, D::Right) };
         },
         D::UpDown => {
-            self.step(idx, D::Down).map(|pos| self.move_beam(pos, D::Down));
-            self.step(idx, D::Up).map(|pos| self.move_beam(pos, D::Up));
+            if let Some(pos) = self.step(idx, D::Down) { self.move_beam(pos, D::Down) };
+            if let Some(pos) = self.step(idx, D::Up) { self.move_beam(pos, D::Up) };
         },
-        d => {
-            self.step(idx, d).map(|pos| self.move_beam(pos, d));
-        }
+        any =>
+            if let Some(pos) = self.step(idx, any) { self.move_beam(pos, any) }
     }
 }
+
 ```
 In part 2, to calculate all the entry points where the light-beam, enters the contraption, we resort to the below iterator `chain()` that produces all valid `(position, direction)` pairs
 ```rust

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::iter::repeat;
 use std::str::FromStr;
@@ -20,17 +19,15 @@ pub(crate) struct Cavern {
     pub(crate) width: usize,
     pub(crate) lines: usize,
     con: std::rc::Rc<[u8]>,
-    nrg: Vec<bool>,
-    tail: HashMap<usize,Vec<Direction>>
+    nrg: Vec<(bool,Vec<Direction>)>,
 }
 
 impl Cavern {
     pub(crate) fn measure_energy(&self) -> Energy {
-        self.nrg.iter().filter(|&c| *c).count()
+        self.nrg.iter().filter(|(c,_)| *c).count()
     }
     pub(crate) fn energise(&mut self, idx: Position, dir:Direction) {
-        self.tail.clear();
-        self.nrg.fill(false);
+        self.nrg.iter_mut().for_each(|(n,v)|{ *n = false; v.clear(); });
         self.move_beam(idx,dir)
     }
     fn step(&self, idx: Position, dir:Direction) -> Option<Position> {
@@ -51,7 +48,7 @@ impl Cavern {
         if self.con[idx] != b'.' && self.has_entered_cycle(idx, dir) { return }
 
         // Energise cell
-        self.nrg[idx] = true;
+        self.nrg[idx].0 = true;
 
         // Find new direction based on current tile
         match dir.next(self.con[idx] ) {
@@ -63,9 +60,8 @@ impl Cavern {
                 if let Some(pos) = self.step(idx, D::Down) { self.move_beam(pos, D::Down) };
                 if let Some(pos) = self.step(idx, D::Up) { self.move_beam(pos, D::Up) };
             },
-            d => {
-                if let Some(pos) = self.step(idx, d) { self.move_beam(pos, d) };
-            }
+            any =>
+                if let Some(pos) = self.step(idx, any) { self.move_beam(pos, any) }
         }
     }
 
@@ -73,22 +69,17 @@ impl Cavern {
         use Direction as D;
 
         // Cycle Detection: have we enter the contraption from the same direction before ?
-        if Some(true) == self.tail.get(&idx).map(|d| d.contains(&dir)) { return true }
+        if self.nrg[idx].1.contains(&dir) { return true }
 
         // Store light-beam direction at contraption point, for cycles detection
-        let dir_vectors = self.tail.entry(idx).or_default();
-
         // Optimise around splitters by storing both opposite directions
         // this stops us from re-entering the cycle from the opposite direction
         match (self.con[idx],dir) {
-            (b'-'|b'|', D::Up|D::Down) =>
-                dir_vectors.extend_from_slice(&[D::Up, D::Down]),
-            (b'-'|b'|', D::Left|D::Right) =>
-                dir_vectors.extend_from_slice(&[D::Left, D::Right]),
-            _ =>
-                dir_vectors.push(dir)
+            (b'-', D::Up|D::Down) => self.nrg[idx].1.extend_from_slice(&[D::Up, D::Down,]),
+            (b'|', D::Left|D::Right) => self.nrg[idx].1.extend_from_slice(&[D::Left, D::Right]),
+            _ => self.nrg[idx].1.push(dir)
         };
-
+        // println!("{:?} -> {:?}",(self.con[idx] as char,dir, idx), self.nrg[idx].1);
         false
     }
 }
@@ -103,8 +94,7 @@ impl FromStr for Cavern {
             con: s.lines()
                 .flat_map(|line| line.bytes())
                 .collect::<std::rc::Rc<[u8]>>(),
-            nrg: vec![false; s.chars().count()],
-            tail: HashMap::new()
+            nrg: vec![(false,vec![]); s.chars().count()]
         })
     }
 }
@@ -121,7 +111,7 @@ impl Debug for Cavern {
         for _ in 0..self.lines {
             for _ in 0..self.width { write!(f, "{:2}", *citer.next().unwrap() as char)? };
             write!(f, "  ")?;
-            for _ in 0..self.width { write!(f, "{:2}", if *eiter.next().unwrap() {'#'} else {'.'} )? };
+            for _ in 0..self.width { write!(f, "{:2}", if eiter.next().unwrap().0 {'#'} else {'.'} )? };
             writeln!(f)?;
         }
         Ok(())
