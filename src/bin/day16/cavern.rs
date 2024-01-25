@@ -94,7 +94,7 @@ impl FromStr for Cavern {
             con: s.lines()
                 .flat_map(|line| line.bytes())
                 .collect::<std::rc::Rc<[u8]>>(),
-            nrg: vec![(false,vec![]); s.chars().count()]
+            nrg: vec![(false,Vec::with_capacity(4)); s.chars().count()]
         })
     }
 }
