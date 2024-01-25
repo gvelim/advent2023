@@ -35,7 +35,7 @@ impl Cavern {
         match dir {
             D::Right if idx % self.width < self.width-1 => Some(idx + 1),
             D::Left if idx % self.width > 0 => Some(idx - 1),
-            D::Up if (self.width..self.con.len()).contains(&idx) => Some(idx - self.width),
+            D::Up if idx > self.width => Some(idx - self.width),
             D::Down if idx < self.con.len() - self.width => Some(idx + self.width),
             _ => None
         }
