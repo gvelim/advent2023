@@ -132,12 +132,14 @@ Circle here   .   | < . < . < . < . < - < |   .   \
               .   .   /   /   .   |   .   .   .   .   
 ``` 
 Dealing with those cyclical reflections is at the **core of the coding challenge**. Therefore, a critical observation is:
-* **_Re-visiting a mirror or splitter from the same direction will result in a cyclical reflection_**
+* Re-visiting a **mirror** from the **same direction** as before, will result in a cyclical reflection
+* Re-visiting a **splitter** from the **same or opposite direction** will result in a cyclical reflection
 
 Hence, to prevent from getting into cyclical reflections, 
 1. We will need for any mirror or splitters we have visited, remember (a) the location & (b) entry direction vector 
 2. If the `tile` we have stepped onto, is either a mirror or splitter and `current direction` == `saved direction`, then we have a **cycle forming condition** hence we have to stop the light-beam
 
+We reuse the `nrg[]` vector to capture also the `direction` vector at location `idx`, hence we reusing the existing structure eliminates the need of a `HashMap` and the processing cost associated with it.
 ```rust
 fn has_entered_cycle(&mut self, idx: Position, dir: Direction) -> bool {
     use Direction as D;
