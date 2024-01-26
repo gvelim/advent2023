@@ -8,11 +8,11 @@ type Energy = usize;
 
 pub(crate) fn entry_points(w:usize, h:usize) -> impl Iterator<Item=(Position, Direction)> + 'static {
     use Direction as D;
-
+    let len = w*h;
     (0..w).zip(repeat(D::Down))
-        .chain((w *(h-1)..w * h).zip(repeat(D::Up)))
-        .chain((0..w * h).step_by(w).zip(repeat(D::Right)))
-        .chain((0..w * h + 1).step_by(w).skip(1).map(|c| c-1).zip(repeat(D::Left)))
+        .chain((len-w..len).zip(repeat(D::Up)))
+        .chain((0..h).map(move |l| l*w).zip(repeat(D::Right)))
+        .chain((1..=h).map(move |l| l*w-1).zip(repeat(D::Left)))
 }
 
 pub(crate) struct Cavern {
@@ -119,6 +119,7 @@ impl Debug for Cavern {
 }
 #[cfg(test)]
 mod test {
+    use std::io::Read;
     use super::*;
     use Direction as D;
 
