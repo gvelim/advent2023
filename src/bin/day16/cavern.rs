@@ -2,6 +2,7 @@ use std::fmt::{Debug, Formatter};
 use std::iter::repeat;
 use std::str::FromStr;
 use crate::direction::Direction;
+use std::boxed::Box;
 
 type Position = usize;
 type Energy = usize;
@@ -18,8 +19,8 @@ pub(crate) fn entry_points(w:usize, h:usize) -> impl Iterator<Item=(Position, Di
 pub(crate) struct Cavern {
     pub(crate) width: usize,
     pub(crate) lines: usize,
-    con: std::rc::Rc<[u8]>,
-    nrg: Vec<(bool,Vec<Direction>)>,
+    con: Box<[u8]>,
+    nrg: Vec<(bool,Vec<Direction>)>
 }
 
 impl Cavern {
@@ -93,7 +94,7 @@ impl FromStr for Cavern {
             lines: s.lines().count(),
             con: s.lines()
                 .flat_map(|line| line.bytes())
-                .collect::<std::rc::Rc<[u8]>>(),
+                .collect::<Box<[u8]>>(),
             nrg: vec![(false,Vec::with_capacity(4)); s.chars().count()]
         })
     }
