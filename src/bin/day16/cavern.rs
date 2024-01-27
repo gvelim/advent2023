@@ -20,7 +20,7 @@ pub(crate) struct Cavern {
     pub(crate) width: usize,
     pub(crate) lines: usize,
     con: Box<[u8]>,
-    nrg: Vec<(bool,Vec<Direction>)>
+    nrg: Box<[(bool,Vec<Direction>)]>
 }
 
 impl Cavern {
@@ -92,10 +92,8 @@ impl FromStr for Cavern {
         Ok(Cavern {
             width: s.lines().next().map(|s| s.len()).unwrap(),
             lines: s.lines().count(),
-            con: s.lines()
-                .flat_map(|line| line.bytes())
-                .collect::<Box<[u8]>>(),
-            nrg: vec![(false,Vec::with_capacity(4)); s.chars().count()]
+            con: s.lines().flat_map(|line| line.bytes()).collect::<Box<[_]>>(),
+            nrg: s.lines().flat_map(|line| line.bytes()).map(|_| (false,Vec::with_capacity(4))).collect::<Box<[_]>>()
         })
     }
 }
@@ -120,7 +118,6 @@ impl Debug for Cavern {
 }
 #[cfg(test)]
 mod test {
-    use std::io::Read;
     use super::*;
     use Direction as D;
 
