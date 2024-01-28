@@ -72,8 +72,8 @@ The above is reflected by the below `struct`
 pub(crate) struct Cavern {
     pub(crate) width: usize,
     pub(crate) lines: usize,
-    con: std::rc::Rc<[u8]>,
-    nrg: Vec<(bool,Vec<Direction>)>,
+    con: Box<[u8]>,
+    nrg: Box<(bool,Vec<Direction>)>,
 }
 ```
 ### Navigating the cavern
