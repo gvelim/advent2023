@@ -142,7 +142,7 @@ fn next(&self, idx: usize, dir:Direction) -> Option<usize> {
     match dir {
         Direction::East if idx % self.width < self.width - 1 => Some(idx + 1),
         Direction::West if idx % self.width > 0 => Some(idx - 1),
-        Direction::North if idx > self.width => Some(idx - self.width),
+        Direction::North if idx > self.width - 1 => Some(idx - self.width),
         Direction::South if idx < self.layout.len() - self.width => Some(idx + self.width),
         _ => None
     }

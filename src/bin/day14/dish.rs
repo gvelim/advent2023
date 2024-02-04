@@ -21,7 +21,7 @@ impl ReflectorDish {
         match dir {
             D::East if idx % self.width < self.width - 1 => Some(idx + 1),
             D::West if idx % self.width > 0 => Some(idx - 1),
-            D::North if (self.width..self.layout.len()).contains(&idx) => Some(idx - self.width),
+            D::North if idx > self.width - 1 => Some(idx - self.width),
             D::South if idx < self.layout.len() - self.width => Some(idx + self.width),
             _ => None
         }
