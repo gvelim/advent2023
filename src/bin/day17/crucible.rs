@@ -1,63 +1,90 @@
-use crate::{citymap::CityMap, direction::Direction};
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
+use crate::{citymap::{CityMap,Heat,Position}, direction::Direction};
 use Direction as D;
 
-pub(crate) type Position = usize;
+#[derive(Debug,Ord,Eq)]
+struct Node(Position, Direction, Heat, usize);
+impl PartialEq<Self> for Node {
+    fn eq(&self, other: &Self) -> bool {
+        self.2 == other.2
+    }
+}
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(other.2.cmp(&self.2))
+    }
+}
 
 #[derive(Debug)]
 pub(crate) struct Crucible<'a> {
-    map: &'a CityMap,
+    cmap: &'a CityMap,
     pos: Position,
     dir: Direction,
-    heat: usize,
-    steps: u8
+    heat: Heat,
 }
 
 impl<'a> Crucible<'a> {
-    pub(crate) fn new(map: &CityMap, pos: Position, dir: D) -> Crucible {
-        Crucible { map, pos, dir, heat: map.map[pos] as usize, steps:0 }
+    pub(crate) fn new(map: &CityMap, pos: Position, dir: Direction) -> Crucible {
+        Crucible { cmap: map, pos, dir, heat: map[pos] }
     }
-    pub(crate) fn get_neighbours(&self) -> impl Iterator<Item=(Direction, Position)> + '_ {
-        match self.dir {
+    pub(crate) fn get_neighbours(&self, pos: Position, dir: Direction) -> impl Iterator<Item=(Direction, Position)> + '_ {
+        match dir {
             D::Up => [D::Up, D::Left, D::Right],
             D::Right => [D::Right, D::Up, D::Down],
             D::Down => [D::Down, D::Left, D::Right],
             D::Left => [D::Left, D::Up, D::Down],
         }
             .into_iter()
-            .filter_map(|dir|
-                self.map.step_onto(self.pos,dir).map(|p| (dir,p))
+            .filter_map(move |dir|
+                self.cmap.step_onto(pos, dir).map(|p| (dir, p))
             )
     }
-}
+    pub(crate) fn heat_to_target_block(&mut self, target: Position) -> Option<Heat> {
+        let mut history = vec![(u8::MAX,false,None); self.cmap.len()];
+        let mut heat_cost =
+            BinaryHeap::<Node>::from([Node(self.pos, self.dir, self.heat, 1)]);
 
-impl Iterator for Crucible<'_> {
-    type Item = Position;
+        while let Some(cblock) = heat_cost.pop() {
+            // println!("Popped {:?}",cblock);
+            let Node(pos, dir, heat, steps) = cblock;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        self
-            // get heat from neighbour city-blocks
-            .get_neighbours()
-            // calculate heat cost per neighbour
-            .filter(|block|
-                if !(self.steps > 2 && block.0 == self.dir) { true }
-                else { print!("{:?}❌, ",block); false }
-            )
-            .map(|block|
-                (block, self.heat + self.map.map[block.1] as usize)
-            )
-            .inspect(|d| print!("{:?}👀, ",d))
-            // pick block where heat_loss = min(block1, block2, block3)
-            .min_by_key(|&(_,a)| a)
-            .map(|block|{
-                // accumulate heat
-                self.heat = block.1;
-                // have we moved more than once in the same direction ?
-                self.steps = if block.0.0 == self.dir { self.steps + 1 } else { 1 };
-                print!("<= Min:{:?}, Cost:{:?}, Steps:{:?}",block,self.heat,self.steps);
-                // move onto city block
-                (self.dir, self.pos) = block.0;
-                self.pos
-            })
+            if pos == target {
+                for idx in 0..self.cmap.len() {
+                    if idx % 13 == 0 { println!(); }
+                    print!("{:2}/{:<3?}{}", self.cmap[idx], history[idx].0,
+                           match history[idx].2 {
+                               None => '*',
+                               Some(D::Right) => 'R',
+                               Some(D::Left) => 'L',
+                               Some(D::Up) => 'U',
+                               Some(D::Down) => 'D'
+                           });
+                }
+                println!();
+                return Some(history[pos].0)
+            }
+
+            self.get_neighbours(pos,dir)
+                .filter(|next|
+                    !(steps > 2 && next.0 == dir)
+                )
+                .for_each(|next| {
+                    if !history[next.1].1 {
+                        let cost = self.cmap[next.1] + heat;
+                        if history[next.1].0 > cost {
+                            let s = if next.0 == dir { steps + 1 } else { 1 };
+                            history[next.1].0 = cost;
+                            history[next.1].2 = Some(dir);
+                            // println!("\t{:?}", Node(next.1, next.0, cost, s));
+                            heat_cost.push(Node(next.1, next.0, cost, s));
+                        }
+                    }
+                });
+
+            history[pos].1 = true;
+        }
+        None
     }
 }
 
@@ -71,15 +98,7 @@ mod test {
         let map = input.parse::<CityMap>().expect("ops");
 
         let mut c = map.get_crucible(0, D::Right);
-        println!("Move to -> {:?}",c.next());
-        println!("Move to -> {:?}",c.next());
-        println!("Move to -> {:?}",c.next());
-        println!("Move to -> {:?}",c.next());
-        println!("Move to -> {:?}",c.next());
-        println!("Move to -> {:?}",c.next());
-        println!("Move to -> {:?}",c.next());
-        println!("Move to -> {:?}",c.next());
-        println!("Move to -> {:?}",c.next());
+        println!("{:?}",c.heat_to_target_block(168));
     }
     #[test]
     fn test_neighbour_blocks() {
@@ -97,7 +116,7 @@ mod test {
 
         for ((inp,dir), out) in data.into_iter() {
             let crucible = map.get_crucible(inp, dir);
-            let iter = crucible.get_neighbours();
+            let iter = crucible.get_neighbours(inp,dir);
             iter.enumerate()
                 .inspect(|d| println!("{:?} => {:?}",(inp,dir), d))
                 .for_each(|(i,p)|

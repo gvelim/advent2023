@@ -1,18 +1,24 @@
 use std::fmt::{Debug, Formatter};
+use std::ops::Index;
 use std::rc::Rc;
 use std::str::FromStr;
-use crate::{crucible::{Crucible, Position}, direction::Direction};
+use crate::{crucible::Crucible, direction::Direction};
 use Direction as D;
 
-type Heat = u8;
+pub(crate) type Heat = u8;
+pub(crate) type Position = usize;
+
 
 pub(crate) struct CityMap {
     width: usize,
     lines: usize,
-    pub(crate) map: Rc<[Heat]>,
+    map: Rc<[Heat]>,
 }
+
 impl CityMap {
-    pub(crate) fn get_crucible(&self, pos: Position, dir: D) -> Crucible {
+    pub(crate) fn len(&self) -> usize { self.map.len() }
+
+    pub(crate) fn get_crucible(&self, pos: Position, dir: Direction) -> Crucible {
         Crucible::new(self,pos,dir)
     }
     pub(crate) fn step_onto(&self, from: Position, dir: D) -> Option<Position> {
@@ -24,6 +30,13 @@ impl CityMap {
             D::Down if from < self.map.len() - self.width => Some(from + self.width),
             _ => None
         }
+    }
+}
+impl Index<usize> for CityMap {
+    type Output = Heat;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.map[index]
     }
 }
 
