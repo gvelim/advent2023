@@ -3,8 +3,15 @@ use std::collections::BinaryHeap;
 use crate::{citymap::{CityMap,Heat,Position}, direction::Direction};
 use Direction as D;
 
-#[derive(Debug,Ord,Eq)]
+const STEPS: usize = 3;
+
+#[derive(Debug,Eq)]
 struct Node(Position, Direction, Heat, usize);
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.2.cmp(&self.2).then_with(|| self.1.cmp(&other.1))
+    }
+}
 impl PartialEq<Self> for Node {
     fn eq(&self, other: &Self) -> bool {
         self.2 == other.2
@@ -12,7 +19,7 @@ impl PartialEq<Self> for Node {
 }
 impl PartialOrd for Node {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(other.2.cmp(&self.2))
+        Some(self.cmp(other))
     }
 }
 
@@ -40,49 +47,48 @@ impl<'a> Crucible<'a> {
                 self.cmap.step_onto(pos, dir).map(|p| (dir, p))
             )
     }
-    pub(crate) fn heat_to_target_block(&mut self, target: Position) -> Option<Heat> {
-        let mut history = vec![(u8::MAX,false,None); self.cmap.len()];
-        let mut heat_cost =
-            BinaryHeap::<Node>::from([Node(self.pos, self.dir, self.heat, 1)]);
 
-        while let Some(cblock) = heat_cost.pop() {
-            // println!("Popped {:?}",cblock);
-            let Node(pos, dir, heat, steps) = cblock;
+    pub(crate) fn heat_to_target_block(&mut self, target: Position) -> Option<Heat> {
+        let mut history = vec![(Heat::MAX,false,None); self.cmap.len()];
+        let mut heat_cost = BinaryHeap::<Node>::new();
+        heat_cost.push( Node(self.pos, self.dir, self.heat, 1));
+
+        while let Some(block) = heat_cost.pop() {
+            // println!("Popped {:?}",block);
+            let Node(pos, dir, heat, steps) = block;
 
             if pos == target {
+                let mut path = std::collections::HashSet::<Position>::new();
+                path.insert(target);
+                let mut par: Option<Position> = history[target].2;
+                while let Some(p) = par {
+                    path.insert(p);
+                    par = history[p].2;
+                }
+
                 for idx in 0..self.cmap.len() {
-                    if idx % 13 == 0 { println!(); }
+                    if idx % self.cmap.width() == 0 { println!(); }
                     print!("{:2}/{:<3?}{}", self.cmap[idx], history[idx].0,
-                           match history[idx].2 {
-                               None => '*',
-                               Some(D::Right) => 'R',
-                               Some(D::Left) => 'L',
-                               Some(D::Up) => 'U',
-                               Some(D::Down) => 'D'
-                           });
+                        if path.contains(&idx) { '*' } else { ' ' }
+                    );
                 }
                 println!();
                 return Some(history[pos].0)
             }
 
             self.get_neighbours(pos,dir)
-                .filter(|next|
-                    !(steps > 2 && next.0 == dir)
+                .filter(|(d,_)|
+                    !(steps >= STEPS && dir.eq(d))
                 )
-                .for_each(|next| {
-                    if !history[next.1].1 {
-                        let cost = self.cmap[next.1] + heat;
-                        if history[next.1].0 > cost {
-                            let s = if next.0 == dir { steps + 1 } else { 1 };
-                            history[next.1].0 = cost;
-                            history[next.1].2 = Some(dir);
-                            // println!("\t{:?}", Node(next.1, next.0, cost, s));
-                            heat_cost.push(Node(next.1, next.0, cost, s));
-                        }
+                .for_each(|(d,p)| {
+                    let cost = heat + self.cmap[p];
+                    if cost < history[p].0 {
+                        let s = if d == dir { steps + 1 } else { 1 };
+                        history[p].0 = cost;
+                        history[p].2 = Some(pos);
+                        heat_cost.push(Node(p, d, cost, s));
                     }
                 });
-
-            history[pos].1 = true;
         }
         None
     }
@@ -98,7 +104,7 @@ mod test {
         let map = input.parse::<CityMap>().expect("ops");
 
         let mut c = map.get_crucible(0, D::Right);
-        println!("{:?}",c.heat_to_target_block(168));
+        println!("{:?}",c.heat_to_target_block(map.len()-1));
     }
     #[test]
     fn test_neighbour_blocks() {

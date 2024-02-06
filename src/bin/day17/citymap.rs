@@ -16,12 +16,15 @@ pub(crate) struct CityMap {
 }
 
 impl CityMap {
+    #[inline]
+    pub(crate) fn width(&self) -> usize { self.width}
+    #[inline]
     pub(crate) fn len(&self) -> usize { self.map.len() }
 
     pub(crate) fn get_crucible(&self, pos: Position, dir: Direction) -> Crucible {
         Crucible::new(self,pos,dir)
     }
-    pub(crate) fn step_onto(&self, from: Position, dir: D) -> Option<Position> {
+    pub(crate) fn step_onto(&self, from: Position, dir: Direction) -> Option<Position> {
         if from >= self.map.len() { return None }
         match dir {
             D::Right if from % self.width < self.width-1 => Some(from + 1),
@@ -50,7 +53,7 @@ impl FromStr for CityMap {
             map: s
                 .lines()
                 .flat_map(|line| line.bytes())
-                .map(|c| c - b'0')
+                .map(|c| (c - b'0') as Heat)
                 .collect::<Rc<_>>(),
         })
     }
