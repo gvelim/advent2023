@@ -1,4 +1,4 @@
-use std::cmp::{Ordering, Reverse};
+use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::io::Read;
 use crate::{citymap::{CityMap,Heat,Position}, direction::Direction};
@@ -12,7 +12,7 @@ type Step = usize;
 struct Node(Position, Direction, Heat);
 impl Ord for Node {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.2.cmp(&other.2)
+        other.2.cmp(&self.2)
     }
 }
 impl PartialOrd for Node {
@@ -46,13 +46,13 @@ impl<'a> Crucible<'a> {
     }
 
     pub(crate) fn heat_to_target_block(&mut self, target: Position) -> Option<Heat> {
-        let mut history = vec![(u8::MAX,None,None,1); self.cmap.len()];
-        let mut heat_cost = BinaryHeap::<Reverse<Node>>::new();
+        let mut dist = vec![(Heat::MAX, None, None, 1); self.cmap.len()];
+        let mut queue = BinaryHeap::<Node>::new();
 
-        let print_citymap = |target: Position, history: &Vec<(Heat,Option<Position>,Option<Direction>,Step)> | {
+        let print_citymap = |pos: Position, history: &Vec<(Heat, Option<Position>, Option<Direction>, Step)> | {
             let mut path = std::collections::HashSet::<Position>::new();
-            path.insert(target);
-            let mut par: Option<Position> = history[target].1;
+            path.insert(pos);
+            let mut par: Option<Position> = history[pos].1;
             while let Some(p) = par {
                 path.insert(p);
                 par = history[p].1;
@@ -72,20 +72,21 @@ impl<'a> Crucible<'a> {
             println!();
         };
 
-        heat_cost.push( Reverse(Node(self.pos, self.dir, 0)));
-        history[self.pos] = (0,None,None,1);
+        queue.push( Node(self.pos, self.dir, 0) );
+        dist[self.pos] = (0, None, None, 1);
 
-        while let Some(Reverse(block)) = heat_cost.pop() {
+        while let Some(block) = queue.pop() {
             println!("Popped {:?}",block);
             let Node(pos, dir, heat) = block;
 
             if pos == target {
-                print_citymap(pos,&history);
+                print_citymap(pos,&dist);
                 return Some(heat)
             }
 
-            if history[pos].0 < heat { continue }
-            let steps = history[pos].3;
+            if heat > dist[pos].0 { assert!(true); continue }
+
+            let steps = dist[pos].3;
             self.get_neighbours(pos,dir)
                 .filter(|(d,_)|
                     !(steps == STEPS && dir.eq(d))
@@ -93,17 +94,13 @@ impl<'a> Crucible<'a> {
                 .for_each(|(d,p)| {
                     let heat_sum = heat + self.cmap[p];
                     println!("\t{:?}",(d, p, heat_sum));
-                    if heat_sum < history[p].0 {
-                        let s = if d == dir { steps + 1 } else { 1 };
-                        history[p].0 = heat_sum;
-                        history[p].1 = Some(pos);
-                        history[p].2 = Some(d);
-                        history[p].3 = s;
-                        heat_cost.push(Reverse(Node(p, d, heat_sum)));
+                    if heat_sum < dist[p].0 {
+                        dist[p] = (heat_sum, Some(pos), Some(d), if d == dir { steps + 1 } else { 1 });
+                        queue.push(Node(p, d, heat_sum));
                     }
                 });
-            print_citymap(pos, &history);
-            // let _ = std::io::stdin().read(&mut [0;1]);
+            print_citymap(pos, &dist);
+            let _ = std::io::stdin().read(&mut [0;1]);
         }
         None
     }
