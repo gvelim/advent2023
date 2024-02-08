@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
+use std::io::Read;
 use crate::{citymap::{CityMap,Heat,Position}, direction::Direction};
 use Direction as D;
 
@@ -9,7 +10,7 @@ const STEPS: usize = 3;
 struct Node(Position, Direction, Heat, usize);
 impl Ord for Node {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.2.cmp(&self.2).then_with(|| self.1.cmp(&other.1))
+        other.2.cmp(&self.2).then_with(|| self.3.cmp(&other.3))
     }
 }
 impl PartialEq<Self> for Node {
@@ -27,13 +28,12 @@ impl PartialOrd for Node {
 pub(crate) struct Crucible<'a> {
     cmap: &'a CityMap,
     pos: Position,
-    dir: Direction,
-    heat: Heat,
+    dir: Direction
 }
 
 impl<'a> Crucible<'a> {
     pub(crate) fn new(map: &CityMap, pos: Position, dir: Direction) -> Crucible {
-        Crucible { cmap: map, pos, dir, heat: map[pos] }
+        Crucible { cmap: map, pos, dir }
     }
     pub(crate) fn get_neighbours(&self, pos: Position, dir: Direction) -> impl Iterator<Item=(Direction, Position)> + '_ {
         match dir {
@@ -49,39 +49,48 @@ impl<'a> Crucible<'a> {
     }
 
     pub(crate) fn heat_to_target_block(&mut self, target: Position) -> Option<Heat> {
-        let mut history = vec![(Heat::MAX,false,None); self.cmap.len()];
+        let mut history = vec![(u8::MAX,false,None); self.cmap.len()];
         let mut heat_cost = BinaryHeap::<Node>::new();
-        heat_cost.push( Node(self.pos, self.dir, self.heat, 1));
+
+        let print_citymap = |target: Position, history: &Vec<(Heat,bool,Option<Position>)> | {
+            let mut path = std::collections::HashSet::<Position>::new();
+            path.insert(target);
+            let mut par: Option<Position> = history[target].2;
+            while let Some(p) = par {
+                path.insert(p);
+                par = history[p].2;
+            }
+
+            for idx in 0..self.cmap.len() {
+                if idx % self.cmap.width() == 0 { println!(); }
+                print!("{:2}/{:<3?}{:1}", self.cmap[idx], history[idx].0,
+                       if path.contains(&idx) { '►' } else { ' ' }
+                );
+            }
+            println!();
+        };
+
+        heat_cost.push( Node(self.pos, self.dir, 0, 1));
+        history[self.pos] = (0,true,None);
 
         while let Some(block) = heat_cost.pop() {
-            // println!("Popped {:?}",block);
+            println!("Popped {:?}",block);
             let Node(pos, dir, heat, steps) = block;
 
             if pos == target {
-                let mut path = std::collections::HashSet::<Position>::new();
-                path.insert(target);
-                let mut par: Option<Position> = history[target].2;
-                while let Some(p) = par {
-                    path.insert(p);
-                    par = history[p].2;
-                }
-
-                for idx in 0..self.cmap.len() {
-                    if idx % self.cmap.width() == 0 { println!(); }
-                    print!("{:2}/{:<3?}{}", self.cmap[idx], history[idx].0,
-                        if path.contains(&idx) { '*' } else { ' ' }
-                    );
-                }
-                println!();
-                return Some(history[pos].0)
+                print_citymap(pos,&history);
+                return Some(heat)
             }
+
+            if history[pos].0 < heat { continue }
 
             self.get_neighbours(pos,dir)
                 .filter(|(d,_)|
-                    !(steps >= STEPS && dir.eq(d))
+                    !(steps == STEPS && dir.eq(d))
                 )
                 .for_each(|(d,p)| {
                     let cost = heat + self.cmap[p];
+                    println!("\t{:?}",(d,p,cost));
                     if cost < history[p].0 {
                         let s = if d == dir { steps + 1 } else { 1 };
                         history[p].0 = cost;
@@ -89,6 +98,8 @@ impl<'a> Crucible<'a> {
                         heat_cost.push(Node(p, d, cost, s));
                     }
                 });
+            print_citymap(pos, &history);
+            // let _ = std::io::stdin().read(&mut [0;1]);
         }
         None
     }
@@ -113,7 +124,9 @@ mod test {
 
         let data = [
             ((13,D::Right), vec![(D::Right, 14),(D::Up, 0),(D::Down, 26)]),
+            ((13,D::Left), vec![(D::Up, 0),(D::Down, 26)]),
             ((25,D::Left), vec![(D::Left, 24),(D::Up, 12),(D::Down, 38)]),
+            ((25,D::Right), vec![(D::Up, 12),(D::Down, 38)]),
             ((168,D::Up),vec![(D::Up, 155),(D::Left, 167)]),
             ((0,D::Up),vec![(D::Right, 1)]),
             ((12,D::Right),vec![(D::Down, 25)]),
