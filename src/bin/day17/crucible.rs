@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::cmp::{Ordering, Reverse};
 use std::collections::BinaryHeap;
 use std::io::Read;
 use crate::{citymap::{CityMap,Heat,Position}, direction::Direction};
@@ -6,16 +6,13 @@ use Direction as D;
 
 const STEPS: usize = 3;
 
-#[derive(Debug,Eq)]
-struct Node(Position, Direction, Heat, usize);
+type Step = usize;
+
+#[derive(Debug, Eq, PartialEq)]
+struct Node(Position, Direction, Heat);
 impl Ord for Node {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.2.cmp(&self.2).then_with(|| self.3.cmp(&other.3))
-    }
-}
-impl PartialEq<Self> for Node {
-    fn eq(&self, other: &Self) -> bool {
-        self.2 == other.2
+        self.2.cmp(&other.2)
     }
 }
 impl PartialOrd for Node {
@@ -43,39 +40,44 @@ impl<'a> Crucible<'a> {
             D::Left => [D::Left, D::Up, D::Down],
         }
             .into_iter()
-            .filter_map(move |dir|
-                self.cmap.step_onto(pos, dir).map(|p| (dir, p))
+            .filter_map(move |d|
+                self.cmap.step_onto(pos, d).map(|p| (d, p))
             )
     }
 
     pub(crate) fn heat_to_target_block(&mut self, target: Position) -> Option<Heat> {
-        let mut history = vec![(u8::MAX,false,None); self.cmap.len()];
-        let mut heat_cost = BinaryHeap::<Node>::new();
+        let mut history = vec![(u8::MAX,None,None,1); self.cmap.len()];
+        let mut heat_cost = BinaryHeap::<Reverse<Node>>::new();
 
-        let print_citymap = |target: Position, history: &Vec<(Heat,bool,Option<Position>)> | {
+        let print_citymap = |target: Position, history: &Vec<(Heat,Option<Position>,Option<Direction>,Step)> | {
             let mut path = std::collections::HashSet::<Position>::new();
             path.insert(target);
-            let mut par: Option<Position> = history[target].2;
+            let mut par: Option<Position> = history[target].1;
             while let Some(p) = par {
                 path.insert(p);
-                par = history[p].2;
+                par = history[p].1;
             }
 
             for idx in 0..self.cmap.len() {
                 if idx % self.cmap.width() == 0 { println!(); }
-                print!("{:2}/{:<3?}{:1}", self.cmap[idx], history[idx].0,
-                       if path.contains(&idx) { '►' } else { ' ' }
+                print!("{a:1}{:2}/{:<3?}", self.cmap[idx], history[idx].0,
+                       a=if path.contains(&idx) {
+                           match history[idx].2 {
+                               None => '◼', Some(D::Up) => '▲', Some(D::Down) => '▼',
+                               Some(D::Left) => '◀', Some(D::Right) => '▶',
+                           }
+                       } else { ' ' }
                 );
             }
             println!();
         };
 
-        heat_cost.push( Node(self.pos, self.dir, 0, 1));
-        history[self.pos] = (0,true,None);
+        heat_cost.push( Reverse(Node(self.pos, self.dir, 0)));
+        history[self.pos] = (0,None,None,1);
 
-        while let Some(block) = heat_cost.pop() {
+        while let Some(Reverse(block)) = heat_cost.pop() {
             println!("Popped {:?}",block);
-            let Node(pos, dir, heat, steps) = block;
+            let Node(pos, dir, heat) = block;
 
             if pos == target {
                 print_citymap(pos,&history);
@@ -83,19 +85,21 @@ impl<'a> Crucible<'a> {
             }
 
             if history[pos].0 < heat { continue }
-
+            let steps = history[pos].3;
             self.get_neighbours(pos,dir)
                 .filter(|(d,_)|
                     !(steps == STEPS && dir.eq(d))
                 )
                 .for_each(|(d,p)| {
-                    let cost = heat + self.cmap[p];
-                    println!("\t{:?}",(d,p,cost));
-                    if cost < history[p].0 {
+                    let heat_sum = heat + self.cmap[p];
+                    println!("\t{:?}",(d, p, heat_sum));
+                    if heat_sum < history[p].0 {
                         let s = if d == dir { steps + 1 } else { 1 };
-                        history[p].0 = cost;
-                        history[p].2 = Some(pos);
-                        heat_cost.push(Node(p, d, cost, s));
+                        history[p].0 = heat_sum;
+                        history[p].1 = Some(pos);
+                        history[p].2 = Some(d);
+                        history[p].3 = s;
+                        heat_cost.push(Reverse(Node(p, d, heat_sum)));
                     }
                 });
             print_citymap(pos, &history);
