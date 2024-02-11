@@ -24,7 +24,7 @@ impl CityMap {
     pub(crate) fn get_crucible(&self, pos: Position, dir: Direction) -> Crucible {
         Crucible::new(self,pos,dir)
     }
-    pub(crate) fn step(&self, from: Position, dir: Direction) -> Option<Position> {
+    pub(crate) fn move_from(&self, from: Position, dir: Direction) -> Option<Position> {
         if from >= self.map.len() { return None }
         match dir {
             D::Right if from % self.width < self.width-1 => Some(from + 1),
@@ -97,7 +97,7 @@ mod test {
             ((168, D::Down), None)
         ];
         for ((p,d),out) in data {
-            assert_eq!(map.step(p, d), out);
+            assert_eq!(map.move_from(p, d), out);
         }
     }
     #[test]

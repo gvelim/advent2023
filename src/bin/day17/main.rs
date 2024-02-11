@@ -9,7 +9,7 @@ fn main() {
     let map = input.parse::<CityMap>().expect("ops");
 
     let mut c = map.get_crucible(0, crate::direction::Direction::Right);
-    println!("{:?}",c.heat_to_target_block(map.len()-1));
+    println!("{:?}",c.heat_to_target_block_a(map.len()-1));
 
 }
 
