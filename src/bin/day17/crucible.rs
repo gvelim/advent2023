@@ -9,7 +9,7 @@ const STEPS: usize = 3;
 type Step = usize;
 
 #[derive(Debug, Eq, PartialEq)]
-struct Node(Position, Direction, Heat);
+struct Node(Position, Direction, Heat, Step);
 impl Ord for Node {
     fn cmp(&self, other: &Self) -> Ordering {
         other.2.cmp(&self.2)
@@ -60,46 +60,51 @@ impl<'a> Crucible<'a> {
 
             for idx in 0..self.cmap.len() {
                 if idx % self.cmap.width() == 0 { println!(); }
-                print!("{a:1}{:2}/{:<3?}", self.cmap[idx], history[idx].0,
+                print!("{a:1}{:2}/{:<3?}:{b} |", self.cmap[idx], history[idx].0,
                        a=if path.contains(&idx) {
                            match history[idx].2 {
                                None => '◼', Some(D::Up) => '▲', Some(D::Down) => '▼',
                                Some(D::Left) => '◀', Some(D::Right) => '▶',
                            }
                        } else { ' ' }
+                    ,b=history[idx].3
                 );
             }
             println!();
         };
 
-        queue.push( Node(self.pos, self.dir, 0) );
-        dist[self.pos] = (0, None, None, 2);
+        queue.push( Node(self.pos, self.dir, 0, 1) );
+        dist[self.pos] = (0, None, None, 1);
 
         while let Some(block) = queue.pop() {
-            // println!("Popped {:?}",block);
-            let Node(pos, dir, heat) = block;
+            println!("Popped {:?}",block);
+            let Node(pos, dir, heat, steps) = block;
 
             if pos == target {
                 print_citymap(pos,&dist);
+                println!("{:?}",queue);
                 return Some(heat)
             }
 
             if heat > dist[pos].0 { continue }
 
-            let steps = dist[pos].3;
+            // let steps = dist[pos].3;
             self.get_neighbours(pos,dir)
                 .filter(|(d,_)|
                     !(steps == STEPS && dir.eq(d))
                 )
                 .for_each(|(d,p)| {
                     let heat_sum = heat + self.cmap[p];
-                    // println!("\t{:?}",(d, p, heat_sum));
-                    if heat_sum < dist[p].0 {
-                        dist[p] = (heat_sum, Some(pos), Some(d), if d == dir { steps + 1 } else { 1 });
-                        queue.push(Node(p, d, heat_sum));
-                    }
+                    print!("\t({p},{:?},{heat_sum}",d);
+                    if heat_sum <= dist[p].0 {
+                        let s = if d == dir { steps + 1 } else { 1 };
+                        println!(",{s}) ✅");
+                        dist[p] = (heat_sum, Some(pos), Some(d), s);
+                        queue.push(Node(p, d, heat_sum, s));
+                    } else { println!(") ❌") }
                 });
-            // print_citymap(pos, &dist);
+            print_citymap(pos, &dist);
+            println!("{:?}",queue);
             // let _ = std::io::stdin().read(&mut [0;1]);
         }
         None
