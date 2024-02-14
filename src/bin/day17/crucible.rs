@@ -26,7 +26,7 @@ impl PartialOrd<Self> for Block {
 }
 impl Ord for Block {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.0.cmp(&self.0)
+        other.0.cmp(&self.0).then_with(|| other.1.2.cmp(&self.1.2))
     }
 }
 
@@ -54,50 +54,51 @@ impl<'a> Crucible<'a> {
         })
     }
 
-    fn print_path(&self, node: Node, cost_map: &HashMap::<Node,(Heat, Option<Node>)>) {
+    fn print_path(&self, target: Node, cost_map: &HashMap::<Node,(Heat, Option<Node>)>) {
 
-        let mut history: Vec<Option<(Heat, Position, Direction, Step)>> = vec![None;self.cmap.len()];
+        let mut path: Vec<Option<(Heat, Direction, Step)>> = vec![None; self.cmap.len()];
 
-        let (mut heat, mut par) = cost_map[&node];
-        history[node.0] = Some((heat,node.0,node.1,node.2));
-        while let Some(n) = par {
-            (heat, par) = cost_map[&n];
-            history[n.0] = Some((heat,n.0,n.1,n.2));
+        let (mut heat, mut parent) = cost_map[&target];
+        path[target.0] = Some((heat, target.1, target.2));
+        while let Some(n) = parent {
+            (heat, parent) = cost_map[&n];
+            path[n.0] = Some((heat, n.1, n.2));
         }
 
         for idx in 0..self.cmap.len() {
             if idx % self.cmap.width() == 0 { println!(); }
             print!("{a}{:2}/{:<3?}:{b} |", self.cmap[idx],
-                   history[idx].map(|(h,..)| h).unwrap_or(0),
-                   a=if history[idx].is_some() {
-                       match history[idx].map(|(_,_,d,_)| d) {
+                   path[idx].map(|(h,..)| h).unwrap_or(0),
+                   a=if path[idx].is_some() {
+                       match path[idx].map(|(_,d,_)| d) {
                            None => '◼', Some(D::Up) => '▲', Some(D::Down) => '▼',
                            Some(D::Left) => '◀', Some(D::Right) => '▶',
                        }
                    } else { ' ' }
-                ,b=history[idx].map(|(..,s)| s).unwrap_or(0)
+                   , b= path[idx].map(|(..,s)| s).unwrap_or(0)
             );
         }
         println!();
     }
 
     pub(crate) fn heat_to_target_block(&mut self, target: Position, rng: Range<usize>) -> Option<Heat> {
-        let mut costmap = HashMap::<Node,(Heat, Option<Node>)>::new();
+        let mut cost_map = HashMap::<Node,(Heat, Option<Node>)>::new();
         let mut queue = BinaryHeap::<Block>::new();
 
         queue.push( Block(0, Node(self.pos, self.dir, 0)) );
-        costmap.insert(Node(self.pos, self.dir, 0),(0,None));
+        cost_map.insert(Node(self.pos, self.dir, 0), (0, None));
 
         while let Some(Block(heat, node)) = queue.pop() {
             println!("Popped {:?}",(heat, &node));
 
             if node.0 == target {
-                self.print_path(node, &costmap);
+                self.print_path(node, &cost_map);
                 return Some(heat)
             }
 
-            let Node(pos, dir, steps) = node;
+            if heat > cost_map.get(&node).unwrap_or(&(Heat::MAX, None)).0 { continue }
 
+            let Node(pos, dir, steps) = node;
             self.get_neighbours(pos,dir)
                 .filter(|(d,_)|
                     !(steps == rng.end && dir.eq(d))
@@ -105,14 +106,14 @@ impl<'a> Crucible<'a> {
                 .for_each(|(d,p)| {
                     let heat_sum = heat + self.cmap[p];
                     print!("\t({p},{:?},{heat_sum}",d);
-                    if heat_sum < costmap.get(&Node(p,d,steps)).unwrap_or(&(Heat::MAX,None)).0 {
-                        let s = if d == dir { steps + 1 } else { 1 };
+                    let s = if d == dir { steps + 1 } else { 1 };
+                    if heat_sum < cost_map.get(&Node(p, d, s)).unwrap_or(&(Heat::MAX, None)).0 {
                         println!(",{s}) ✅");
-                        costmap.insert(Node(p, d, s),(heat_sum, Some(node)));
+                        cost_map.insert(Node(p, d, s), (heat_sum, Some(node)));
                         queue.push(Block(heat_sum, Node(p, d, s)));
                     } else { println!(") ❌") }
                 });
-            // self.print_path(node, &costmap);
+            self.print_path(node, &cost_map);
             // println!("{:?}",queue);
             // let _ = std::io::stdin().read(&mut [0;1]);
         }
