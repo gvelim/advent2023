@@ -1,23 +1,32 @@
 use std::cmp::Ordering;
-use std::collections::BinaryHeap;
+use std::collections::{BinaryHeap, HashMap};
 use std::io::Read;
+use std::rc::Rc;
 use crate::{citymap::{CityMap,Heat,Position}, direction::Direction};
 use Direction as D;
 
-const STEPS: usize = 2;
+const STEPS: usize = 3;
 
 type Step = usize;
 
-#[derive(Debug, Eq, PartialEq)]
-struct Node(Position, Direction, Heat, Step);
-impl Ord for Node {
-    fn cmp(&self, other: &Self) -> Ordering {
-        other.2.cmp(&self.2)
+#[derive(Debug, Eq, PartialEq, Hash, PartialOrd)]
+struct Node(Position, Direction, Step);
+
+#[derive(Debug, Eq)]
+struct Block(Heat,Node);
+impl PartialEq<Self> for Block {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
     }
 }
-impl PartialOrd for Node {
+impl PartialOrd<Self> for Block {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
+    }
+}
+impl Ord for Block {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.0.cmp(&self.0)
     }
 }
 
@@ -69,24 +78,24 @@ impl<'a> Crucible<'a> {
         println!();
     }
 
-    pub(crate) fn heat_to_target_block_a(&mut self, target: Position) -> Option<Heat> {
-        let mut dist = vec![(Heat::MAX, None, None, 0); self.cmap.len()];
-        let mut queue = BinaryHeap::<Node>::new();
+    pub(crate) fn heat_to_target_block(&mut self, target: Position) -> Option<Heat> {
+        let mut costmap = HashMap::<Node,Heat>::new();
+        let mut queue = BinaryHeap::<Block>::new();
 
-        queue.push( Node(self.pos, self.dir, 0, 1) );
-        dist[self.pos] = (0, None, None, 0);
+        queue.push( Block(0, Node(self.pos, self.dir, 0)) );
+        costmap.insert(Node(self.pos, self.dir, 0),0);
 
-        while let Some(block) = queue.pop() {
-            println!("Popped {:?}",block);
-            let Node(pos, dir, heat, steps) = block;
+        while let Some(Block(heat, node)) = queue.pop() {
+            println!("Popped {:?}",(heat, &node));
 
-            if pos == target {
-                self.print_path(pos,&dist);
-                println!("{:?}",queue);
+            if node.0 == target {
                 return Some(heat)
             }
 
-            if heat > dist[pos].0 { continue }
+            if heat > *costmap.get(&node).unwrap_or(&Heat::MAX) { continue }
+
+            let Node(pos, dir, steps) = node;
+
             self.get_neighbours(pos,dir)
                 .filter(|(d,_)|
                     !(steps == STEPS && dir.eq(d))
@@ -94,48 +103,16 @@ impl<'a> Crucible<'a> {
                 .for_each(|(d,p)| {
                     let heat_sum = heat + self.cmap[p];
                     print!("\t({p},{:?},{heat_sum}",d);
-                    if heat_sum <= dist[p].0 {
+                    if heat_sum < *costmap.get(&Node(p,d,steps)).unwrap_or(&Heat::MAX) {
                         let s = if d == dir { steps + 1 } else { 1 };
                         println!(",{s}) ✅");
-                        dist[p] = (heat_sum, Some(pos), Some(d), s);
-                        queue.push(Node(p, d, heat_sum, s));
+                        costmap.insert(Node(p, d, s),heat_sum);
+                        queue.push(Block(heat_sum, Node(p, d, s)));
                     } else { println!(") ❌") }
                 });
-            self.print_path(pos, &dist);
+            // self.print_path(pos, &costmap);
             println!("{:?}",queue);
             // let _ = std::io::stdin().read(&mut [0;1]);
-        }
-        None
-    }
-    pub(crate) fn heat_to_target_block_b(&mut self, target: Position) -> Option<Heat> {
-        let mut dist = vec![(Heat::MAX, None, None, 0); self.cmap.len()];
-        let mut queue = BinaryHeap::<Node>::new();
-
-        queue.push( Node(self.pos, self.dir, 0, 0) );
-        dist[self.pos] = (0, None, None, 0);
-
-        while let Some(block) = queue.pop() {
-            let Node(pos, dir, heat, steps) = block;
-
-            if pos == target {
-                self.print_path(pos,&dist);
-                println!("{:?}",queue);
-                return Some(heat)
-            }
-
-            if heat > dist[pos].0 { continue }
-            dir.directions_b()
-                .for_each(|dir| {
-                    let mut heat_sum = heat;
-                    self.look_ahead(pos,dir,STEPS)
-                        .for_each(|(d, p)|{
-                            heat_sum += self.cmap[p];
-                            if heat_sum < dist[p].0 {
-                                dist[p] = (heat_sum, Some(pos), Some(dir), steps);
-                                queue.push(Node(p, d, heat_sum, steps));
-                            }
-                        })
-                });
         }
         None
     }
@@ -151,11 +128,7 @@ mod test {
         let map = input.parse::<CityMap>().expect("ops");
 
         let mut c = map.get_crucible(0, D::Right);
-        // println!("{:?}",c.heat_to_target_block_a(map.len()-1));
-        assert_eq!(
-            c.heat_to_target_block_a(map.len()-1),
-            c.heat_to_target_block_b(map.len()-1)
-        )
+        println!("{:?}",c.heat_to_target_block(map.len()-1));
     }
     #[test]
     fn test_neighbour_blocks() {
