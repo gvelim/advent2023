@@ -5,7 +5,7 @@ use std::str::FromStr;
 use crate::{crucible::Crucible, direction::Direction};
 use Direction as D;
 
-pub(crate) type Heat = u8;
+pub(crate) type Heat = u16;
 pub(crate) type Position = usize;
 
 

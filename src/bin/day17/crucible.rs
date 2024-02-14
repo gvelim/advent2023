@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
 use std::io::Read;
-use std::rc::Rc;
+use std::ops::Range;
 use crate::{citymap::{CityMap,Heat,Position}, direction::Direction};
 use Direction as D;
 
@@ -9,7 +9,7 @@ const STEPS: usize = 3;
 
 type Step = usize;
 
-#[derive(Debug, Eq, PartialEq, Hash, PartialOrd)]
+#[derive(Debug, Eq, PartialEq, Hash, PartialOrd, Copy, Clone)]
 struct Node(Position, Direction, Step);
 
 #[derive(Debug, Eq)]
@@ -54,64 +54,66 @@ impl<'a> Crucible<'a> {
         })
     }
 
-    fn print_path(&self, pos: Position, history: &Vec<(Heat, Option<Position>, Option<Direction>, Step)>) {
-        let mut path = std::collections::HashSet::<Position>::new();
-        path.insert(pos);
-        let mut par: Option<Position> = history[pos].1;
-        while let Some(p) = par {
-            path.insert(p);
-            par = history[p].1;
+    fn print_path(&self, node: Node, cost_map: &HashMap::<Node,(Heat, Option<Node>)>) {
+
+        let mut history: Vec<Option<(Heat, Position, Direction, Step)>> = vec![None;self.cmap.len()];
+
+        let (mut heat, mut par) = cost_map[&node];
+        history[node.0] = Some((heat,node.0,node.1,node.2));
+        while let Some(n) = par {
+            (heat, par) = cost_map[&n];
+            history[n.0] = Some((heat,n.0,n.1,n.2));
         }
 
         for idx in 0..self.cmap.len() {
             if idx % self.cmap.width() == 0 { println!(); }
-            print!("{a:1}{:2}/{:<3?}:{b} |", self.cmap[idx], history[idx].0,
-                   a=if path.contains(&idx) {
-                       match history[idx].2 {
+            print!("{a}{:2}/{:<3?}:{b} |", self.cmap[idx],
+                   history[idx].map(|(h,..)| h).unwrap_or(0),
+                   a=if history[idx].is_some() {
+                       match history[idx].map(|(_,_,d,_)| d) {
                            None => '◼', Some(D::Up) => '▲', Some(D::Down) => '▼',
                            Some(D::Left) => '◀', Some(D::Right) => '▶',
                        }
                    } else { ' ' }
-                ,b=history[idx].3
+                ,b=history[idx].map(|(..,s)| s).unwrap_or(0)
             );
         }
         println!();
     }
 
-    pub(crate) fn heat_to_target_block(&mut self, target: Position) -> Option<Heat> {
-        let mut costmap = HashMap::<Node,Heat>::new();
+    pub(crate) fn heat_to_target_block(&mut self, target: Position, rng: Range<usize>) -> Option<Heat> {
+        let mut costmap = HashMap::<Node,(Heat, Option<Node>)>::new();
         let mut queue = BinaryHeap::<Block>::new();
 
         queue.push( Block(0, Node(self.pos, self.dir, 0)) );
-        costmap.insert(Node(self.pos, self.dir, 0),0);
+        costmap.insert(Node(self.pos, self.dir, 0),(0,None));
 
         while let Some(Block(heat, node)) = queue.pop() {
             println!("Popped {:?}",(heat, &node));
 
             if node.0 == target {
+                self.print_path(node, &costmap);
                 return Some(heat)
             }
-
-            if heat > *costmap.get(&node).unwrap_or(&Heat::MAX) { continue }
 
             let Node(pos, dir, steps) = node;
 
             self.get_neighbours(pos,dir)
                 .filter(|(d,_)|
-                    !(steps == STEPS && dir.eq(d))
+                    !(steps == rng.end && dir.eq(d))
                 )
                 .for_each(|(d,p)| {
                     let heat_sum = heat + self.cmap[p];
                     print!("\t({p},{:?},{heat_sum}",d);
-                    if heat_sum < *costmap.get(&Node(p,d,steps)).unwrap_or(&Heat::MAX) {
+                    if heat_sum < costmap.get(&Node(p,d,steps)).unwrap_or(&(Heat::MAX,None)).0 {
                         let s = if d == dir { steps + 1 } else { 1 };
                         println!(",{s}) ✅");
-                        costmap.insert(Node(p, d, s),heat_sum);
+                        costmap.insert(Node(p, d, s),(heat_sum, Some(node)));
                         queue.push(Block(heat_sum, Node(p, d, s)));
                     } else { println!(") ❌") }
                 });
-            // self.print_path(pos, &costmap);
-            println!("{:?}",queue);
+            // self.print_path(node, &costmap);
+            // println!("{:?}",queue);
             // let _ = std::io::stdin().read(&mut [0;1]);
         }
         None
@@ -128,7 +130,7 @@ mod test {
         let map = input.parse::<CityMap>().expect("ops");
 
         let mut c = map.get_crucible(0, D::Right);
-        println!("{:?}",c.heat_to_target_block(map.len()-1));
+        println!("{:?}",c.heat_to_target_block(map.len()-1, 0..STEPS));
     }
     #[test]
     fn test_neighbour_blocks() {
