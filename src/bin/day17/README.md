@@ -29,22 +29,44 @@ Because it is difficult to keep the top-heavy crucible going in a straight line 
 
 One way to minimize heat loss is this path:
 ```
-2>>34^>>>1323
-32v>>>35v5623
-32552456v>>54
-3446585845v52
-4546657867v>6
-14385987984v4
-44578769877v6
-36378779796v>
-465496798688v
-456467998645v
-12246868655<v
-25465488877v5
-43226746555v>
+▶ 2/0  :0 |▶ 4/4  :1 |▶ 1/5  :2 |  3/0  :0 |  4/0  :0 |▲ 3/23 :1 |▶ 2/25 :1 |▶ 3/28 :2 |▶ 1/29 :3 |  1/0  :0 |  3/0  :0 |  2/0  :0 |  3/0  :0 |
+  3/0  :0 |  2/0  :0 |▼ 1/6  :1 |▶ 5/11 :1 |▶ 4/15 :2 |▶ 5/20 :3 |  3/0  :0 |  5/0  :0 |▼ 3/32 :1 |▶ 5/37 :1 |  6/0  :0 |  2/0  :0 |  3/0  :0 |
+  3/0  :0 |  2/0  :0 |  5/0  :0 |  5/0  :0 |  2/0  :0 |  4/0  :0 |  5/0  :0 |  6/0  :0 |  5/0  :0 |▼ 4/41 :1 |▶ 2/43 :1 |  5/0  :0 |  4/0  :0 |
+  3/0  :0 |  4/0  :0 |  4/0  :0 |  6/0  :0 |  5/0  :0 |  8/0  :0 |  5/0  :0 |  8/0  :0 |  4/0  :0 |  5/0  :0 |▼ 4/47 :1 |  5/0  :0 |  2/0  :0 |
+  4/0  :0 |  5/0  :0 |  4/0  :0 |  6/0  :0 |  6/0  :0 |  5/0  :0 |  7/0  :0 |  8/0  :0 |  6/0  :0 |  7/0  :0 |▼ 5/52 :2 |▶ 3/55 :1 |  6/0  :0 |
+  1/0  :0 |  4/0  :0 |  3/0  :0 |  8/0  :0 |  5/0  :0 |  9/0  :0 |  8/0  :0 |  7/0  :0 |  9/0  :0 |  8/0  :0 |  4/0  :0 |▼ 5/60 :1 |  4/0  :0 |
+  4/0  :0 |  4/0  :0 |  5/0  :0 |  7/0  :0 |  8/0  :0 |  7/0  :0 |  6/0  :0 |  9/0  :0 |  8/0  :0 |  7/0  :0 |  7/0  :0 |▼ 6/66 :2 |  6/0  :0 |
+  3/0  :0 |  6/0  :0 |  3/0  :0 |  7/0  :0 |  8/0  :0 |  7/0  :0 |  7/0  :0 |  9/0  :0 |  7/0  :0 |  9/0  :0 |  6/0  :0 |▼ 5/71 :3 |▶ 3/74 :1 |
+  4/0  :0 |  6/0  :0 |  5/0  :0 |  4/0  :0 |  9/0  :0 |  6/0  :0 |  7/0  :0 |  9/0  :0 |  8/0  :0 |  6/0  :0 |  8/0  :0 |  8/0  :0 |▼ 7/81 :1 |
+  4/0  :0 |  5/0  :0 |  6/0  :0 |  4/0  :0 |  6/0  :0 |  7/0  :0 |  9/0  :0 |  9/0  :0 |  8/0  :0 |  6/0  :0 |  4/0  :0 |  5/0  :0 |▼ 3/84 :2 |
+  1/0  :0 |  2/0  :0 |  2/0  :0 |  4/0  :0 |  6/0  :0 |  8/0  :0 |  6/0  :0 |  8/0  :0 |  6/0  :0 |  5/0  :0 |  5/0  :0 |◀ 6/93 :1 |▼ 3/87 :3 |
+  2/0  :0 |  5/0  :0 |  4/0  :0 |  6/0  :0 |  5/0  :0 |  4/0  :0 |  8/0  :0 |  8/0  :0 |  8/0  :0 |  7/0  :0 |  7/0  :0 |▼ 3/96 :1 |  5/0  :0 |
+  4/0  :0 |  3/0  :0 |  2/0  :0 |  2/0  :0 |  6/0  :0 |  7/0  :0 |  4/0  :0 |  6/0  :0 |  5/0  :0 |  5/0  :0 |  5/0  :0 |▼ 3/99 :2 |▶ 3/102:1 |
 ```
 This path never moves more than three consecutive blocks in the same direction and incurs a heat loss of only `102`.
 
 Directing the crucible from the lava pool to the machine parts factory, but not moving more than three consecutive blocks in the same direction, **what is the least heat loss it can incur?**
 ## Part 2
+Elves are going to upgrade to **ultra crucibles**. Once an ultra crucible starts moving in a direction, it needs to move **a minimum of four blocks** in that direction before it can turn (or even before it can stop at the end). However, it will eventually start to get wobbly: an ultra crucible can move **a maximum of ten consecutive blocks** without turning
+
+In the above example, an ultra crucible could follow this path to minimize heat loss:
+```
+2>>>>>>>>1323
+32154535v5623
+32552456v4254
+34465858v5452
+45466578v>>>>
+143859879845v
+445787698776v
+363787797965v
+465496798688v
+456467998645v
+122468686556v
+254654888773v
+432267465553v
+```
+In the above example, an ultra crucible would incur the minimum possible heat loss of 94.
+
+Directing the ultra crucible from the lava pool to the machine parts factory, **what is the least heat loss it can incur**?
+
 ## Approach

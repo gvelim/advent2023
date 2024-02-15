@@ -26,7 +26,7 @@ impl PartialOrd<Self> for Block {
 }
 impl Ord for Block {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.0.cmp(&self.0).then_with(|| other.1.2.cmp(&self.1.2))
+        other.0.cmp(&self.0).then_with(|| self.1.2.cmp(&other.1.2))
     }
 }
 
@@ -74,8 +74,8 @@ impl<'a> Crucible<'a> {
                            None => '◼', Some(D::Up) => '▲', Some(D::Down) => '▼',
                            Some(D::Left) => '◀', Some(D::Right) => '▶',
                        }
-                   } else { ' ' }
-                   , b= path[idx].map(|(..,s)| s).unwrap_or(0)
+                   } else { ' ' },
+                   b=path[idx].map(|(..,s)| s).unwrap_or(0)
             );
         }
         println!();
@@ -89,7 +89,7 @@ impl<'a> Crucible<'a> {
         cost_map.insert(Node(self.pos, self.dir, 0), (0, None));
 
         while let Some(Block(heat, node)) = queue.pop() {
-            println!("Popped {:?}",(heat, &node));
+            // println!("Popped {:?}",(heat, &node));
 
             if node.0 == target {
                 self.print_path(node, &cost_map);
@@ -105,15 +105,15 @@ impl<'a> Crucible<'a> {
                 )
                 .for_each(|(d,p)| {
                     let heat_sum = heat + self.cmap[p];
-                    print!("\t({p},{:?},{heat_sum}",d);
+                    // print!("\t({p},{:?},{heat_sum}",d);
                     let s = if d == dir { steps + 1 } else { 1 };
                     if heat_sum < cost_map.get(&Node(p, d, s)).unwrap_or(&(Heat::MAX, None)).0 {
-                        println!(",{s}) ✅");
+                        // println!(",{s}) ✅");
                         cost_map.insert(Node(p, d, s), (heat_sum, Some(node)));
                         queue.push(Block(heat_sum, Node(p, d, s)));
-                    } else { println!(") ❌") }
+                    }// else { println!(") ❌") }
                 });
-            self.print_path(node, &cost_map);
+            // self.print_path(node, &cost_map);
             // println!("{:?}",queue);
             // let _ = std::io::stdin().read(&mut [0;1]);
         }
