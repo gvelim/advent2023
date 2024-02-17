@@ -41,14 +41,7 @@ impl<'a> Crucible<'a> {
     pub(crate) fn new(map: &CityMap, pos: Position, dir: Direction) -> Crucible {
         Crucible { cmap: map, pos, dir }
     }
-    fn get_neighbours(&self, pos: Position, dir: Direction) -> impl Iterator<Item=(Direction, Position)> + '_ {
-        dir.directions()
-            .filter_map(move |d|
-                self.cmap.move_from(pos, d).map(|p| (d, p))
-            )
-    }
-
-    fn get_neighbours_2(&self, pos: Position, dir: Direction, step: Step, min: usize) -> impl Iterator<Item=(Direction, Position, Step)> + '_ {
+    fn get_neighbours(&self, pos: Position, dir: Direction, step: Step, min: usize) -> impl Iterator<Item=(Direction, Position, Step)> + '_ {
         dir.directions()
             .filter(move |d| (step < min && *d == dir) || step >= min)
             .filter_map(move |d|
@@ -104,14 +97,14 @@ impl<'a> Crucible<'a> {
             // println!("Popped {:?}",(heat, &node));
 
             if node.0 == target {
-                // self.print_path(node, &cost_map);
+                self.print_path(node, &cost_map);
                 return Some(heat)
             }
 
             if heat > cost_map.get(&node).unwrap_or(&(Heat::MAX, None)).0 { continue }
 
             let Node(pos, dir , steps) = node;
-            self.get_neighbours_2(pos, dir, steps, rng.start)
+            self.get_neighbours(pos, dir, steps, rng.start)
                 .filter(|(d,..)|
                     !(steps == rng.end && dir.eq(d))
                 )
@@ -142,7 +135,16 @@ mod test {
         let map = input.parse::<CityMap>().expect("ops");
 
         let mut c = map.get_crucible(0, D::Right);
-        println!("{:?}",c.heat_to_target_block(map.len()-1, 4..10));
+        assert_eq!(
+            Some(102),
+            c.heat_to_target_block(map.len()-1, 1..3)
+        );
+
+        let mut c = map.get_crucible(0, D::Right);
+        assert_eq!(
+            Some(94),
+            c.heat_to_target_block(map.len()-1, 4..10)
+        );
     }
     #[test]
     fn test_neighbour_blocks() {
@@ -150,19 +152,19 @@ mod test {
         let map = input.parse::<CityMap>().expect("ops");
 
         let data = [
-            ((13,D::Right), vec![(D::Right, 14),(D::Up, 0),(D::Down, 26)]),
-            ((13,D::Left), vec![(D::Up, 0),(D::Down, 26)]),
-            ((25,D::Left), vec![(D::Left, 24),(D::Up, 12),(D::Down, 38)]),
-            ((25,D::Right), vec![(D::Up, 12),(D::Down, 38)]),
-            ((168,D::Up),vec![(D::Up, 155),(D::Left, 167)]),
-            ((0,D::Up),vec![(D::Right, 1)]),
-            ((12,D::Right),vec![(D::Down, 25)]),
-            ((156,D::Left),vec![(D::Up, 143)])
+            ((13,D::Right), vec![(D::Right, 14, 2),(D::Up, 0, 1),(D::Down, 26, 1)]),
+            ((13,D::Left), vec![(D::Up, 0, 1),(D::Down, 26, 1)]),
+            ((25,D::Left), vec![(D::Left, 24, 2),(D::Up, 12, 1),(D::Down, 38, 1)]),
+            ((25,D::Right), vec![(D::Up, 12, 1),(D::Down, 38, 1)]),
+            ((168,D::Up),vec![(D::Up, 155, 2),(D::Left, 167, 1)]),
+            ((0,D::Up),vec![(D::Right, 1, 1)]),
+            ((12,D::Right),vec![(D::Down, 25, 1)]),
+            ((156,D::Left),vec![(D::Up, 143, 1)])
         ];
 
         for ((inp,dir), out) in data.into_iter() {
             let crucible = map.get_crucible(inp, dir);
-            let iter = crucible.get_neighbours(inp,dir);
+            let iter = crucible.get_neighbours(inp,dir,1,1);
             iter.enumerate()
                 .inspect(|d| println!("{:?} => {:?}",(inp,dir), d))
                 .for_each(|(i,p)|
