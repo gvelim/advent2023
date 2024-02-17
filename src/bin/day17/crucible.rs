@@ -41,13 +41,25 @@ impl<'a> Crucible<'a> {
     pub(crate) fn new(map: &CityMap, pos: Position, dir: Direction) -> Crucible {
         Crucible { cmap: map, pos, dir }
     }
-    pub(crate) fn get_neighbours(&self, pos: Position, dir: Direction) -> impl Iterator<Item=(Direction, Position)> + '_ {
+    fn get_neighbours(&self, pos: Position, dir: Direction) -> impl Iterator<Item=(Direction, Position)> + '_ {
         dir.directions()
             .filter_map(move |d|
                 self.cmap.move_from(pos, d).map(|p| (d, p))
             )
     }
-    pub(crate) fn look_ahead(&self, pos: Position, dir: Direction, steps: Step) -> impl Iterator<Item=(Direction, Position)> + '_ {
+
+    fn get_neighbours_2(&self, pos: Position, dir: Direction, step: Step, min: usize) -> impl Iterator<Item=(Direction, Position, Step)> + '_ {
+        dir.directions()
+            .filter(move |d| (step < min && *d == dir) || step >= min)
+            .filter_map(move |d|
+                self.cmap.move_from(pos, d)
+                    .map(|p|
+                        (d, p, if d == dir {step + 1} else { 1 })
+                    )
+            )
+    }
+
+    fn look_ahead(&self, pos: Position, dir: Direction, steps: Step) -> impl Iterator<Item=(Direction, Position)> + '_ {
         let mut np = pos;
         (0..steps).filter_map(move |_| {
             self.cmap.move_from(np, dir).map(|p|{ np = p; (dir, p)})
@@ -89,31 +101,30 @@ impl<'a> Crucible<'a> {
         cost_map.insert(Node(self.pos, self.dir, 0), (0, None));
 
         while let Some(Block(heat, node)) = queue.pop() {
-            // println!("Popped {:?}",(heat, &node));
+            println!("Popped {:?}",(heat, &node));
 
             if node.0 == target {
-                // self.print_path(node, &cost_map);
+                self.print_path(node, &cost_map);
                 return Some(heat)
             }
 
             if heat > cost_map.get(&node).unwrap_or(&(Heat::MAX, None)).0 { continue }
 
-            let Node(pos, dir, steps) = node;
-            self.get_neighbours(pos,dir)
-                .filter(|(d,_)|
+            let Node(pos, dir , steps) = node;
+            self.get_neighbours_2(pos, dir, steps, rng.start)
+                .filter(|(d,..)|
                     !(steps == rng.end && dir.eq(d))
                 )
-                .for_each(|(d,p)| {
+                .for_each(|(d,p, s)| {
                     let heat_sum = heat + self.cmap[p];
-                    // print!("\t({p},{:?},{heat_sum}",d);
-                    let s = if d == dir { steps + 1 } else { 1 };
+                    print!("\t({p},{:?},{heat_sum}",d);
                     if heat_sum < cost_map.get(&Node(p, d, s)).unwrap_or(&(Heat::MAX, None)).0 {
-                        // println!(",{s}) ✅");
+                        println!(",{s}) ✅");
                         cost_map.insert(Node(p, d, s), (heat_sum, Some(node)));
                         queue.push(Block(heat_sum, Node(p, d, s)));
-                    }// else { println!(") ❌") }
+                    } else { println!(") ❌") }
                 });
-            // self.print_path(node, &cost_map);
+            self.print_path(node, &cost_map);
             // println!("{:?}",queue);
             // let _ = std::io::stdin().read(&mut [0;1]);
         }
@@ -131,7 +142,7 @@ mod test {
         let map = input.parse::<CityMap>().expect("ops");
 
         let mut c = map.get_crucible(0, D::Right);
-        println!("{:?}",c.heat_to_target_block(map.len()-1, 0..STEPS));
+        println!("{:?}",c.heat_to_target_block(map.len()-1, 4..10));
     }
     #[test]
     fn test_neighbour_blocks() {
