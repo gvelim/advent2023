@@ -10,6 +10,10 @@ fn main() {
 
     let mut c = map.get_crucible(0, crate::direction::Direction::Right);
     let t = std::time::Instant::now();
-    println!("Part 1: {:?} = {:?}",c.heat_to_target_block(map.len()-1, 0..3), t.elapsed());
+    println!("Part 1: {:?} = {:?}",c.heat_to_target_block(map.len()-1, 1..3), t.elapsed());
+
+    let mut c = map.get_crucible(0, crate::direction::Direction::Right);
+    let t = std::time::Instant::now();
+    println!("Part 2: {:?} = {:?}",c.heat_to_target_block(map.len()-1, 4..10), t.elapsed());
 
 }

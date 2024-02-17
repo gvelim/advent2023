@@ -101,10 +101,10 @@ impl<'a> Crucible<'a> {
         cost_map.insert(Node(self.pos, self.dir, 0), (0, None));
 
         while let Some(Block(heat, node)) = queue.pop() {
-            println!("Popped {:?}",(heat, &node));
+            // println!("Popped {:?}",(heat, &node));
 
             if node.0 == target {
-                self.print_path(node, &cost_map);
+                // self.print_path(node, &cost_map);
                 return Some(heat)
             }
 
@@ -117,14 +117,14 @@ impl<'a> Crucible<'a> {
                 )
                 .for_each(|(d,p, s)| {
                     let heat_sum = heat + self.cmap[p];
-                    print!("\t({p},{:?},{heat_sum}",d);
+                    // print!("\t({p},{:?},{heat_sum}",d);
                     if heat_sum < cost_map.get(&Node(p, d, s)).unwrap_or(&(Heat::MAX, None)).0 {
-                        println!(",{s}) ✅");
+                        // println!(",{s}) ✅");
                         cost_map.insert(Node(p, d, s), (heat_sum, Some(node)));
                         queue.push(Block(heat_sum, Node(p, d, s)));
-                    } else { println!(") ❌") }
+                    }// else { println!(") ❌") }
                 });
-            self.print_path(node, &cost_map);
+            // self.print_path(node, &cost_map);
             // println!("{:?}",queue);
             // let _ = std::io::stdin().read(&mut [0;1]);
         }
