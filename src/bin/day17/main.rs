@@ -9,6 +9,7 @@ fn main() {
     let map = input.parse::<CityMap>().expect("ops");
 
     let mut c = map.get_crucible(0, crate::direction::Direction::Right);
-    println!("{:?}",c.heat_to_target_block(map.len()-1, 0..3));
+    let t = std::time::Instant::now();
+    println!("Part 1: {:?} = {:?}",c.heat_to_target_block(map.len()-1, 0..3), t.elapsed());
 
 }

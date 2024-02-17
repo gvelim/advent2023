@@ -92,7 +92,7 @@ impl<'a> Crucible<'a> {
             // println!("Popped {:?}",(heat, &node));
 
             if node.0 == target {
-                self.print_path(node, &cost_map);
+                // self.print_path(node, &cost_map);
                 return Some(heat)
             }
 
