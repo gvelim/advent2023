@@ -2,12 +2,8 @@ use std::fmt::{Debug, Formatter};
 use std::ops::Index;
 use std::rc::Rc;
 use std::str::FromStr;
-use crate::{crucible::Crucible, direction::Direction};
+use crate::{crucible::Crucible, direction::Direction, block::{Heat,Position}};
 use Direction as D;
-
-pub(crate) type Heat = u16;
-pub(crate) type Position = usize;
-
 
 pub(crate) struct CityMap {
     width: usize,
