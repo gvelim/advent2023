@@ -26,8 +26,7 @@ impl<'a> Crucible<'a> {
             // if step < min then move same direction otherwise move all directions
             .filter(move |d|  dir.eq(d) || step >= rng.start)
             // if step == max direction then drop same direction
-            .filter(move |d| !(step == rng.end && dir.eq(d))
-            )
+            .filter(move |d| step < rng.end || dir.ne(d) )
             // extract CityBlocks from valid moves remaining
             .filter_map(move |d|
                 self.cmap.move_from(pos, d)
@@ -48,7 +47,7 @@ impl<'a> Crucible<'a> {
             // println!("Popped {:?}",(heat, &node));
 
             if node.0 == target {
-                self.print_path(node, &cost_map);
+                // self.print_path(node, &cost_map);
                 return Some(heat)
             }
 
