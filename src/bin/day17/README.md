@@ -81,7 +81,7 @@ The above information is encapsulated by the below tuple structure
 struct CityBlock( Position, Direction, Step);
 ```
 
-The **position constraint** is implemented by the `move_from()` function, that based on aVector<CityBlocks>`, it  maps a `(Position,Direction)` tuple into the next valid CityBlock position (`index`) or `None` if there is no valid position.
+The **position constraint** is implemented by the `move_from()` function, that based on a `Vector<CityBlocks>`, it  maps a `(Position,Direction)` tuple into the next valid CityBlock position (vector index) or `None` if there is no valid position.
 ```rust
 fn move_from(&self, from: Position, dir: Direction) -> Option<Position> {
     if from >= self.map.len() { return None }
@@ -135,26 +135,27 @@ We already know that a `Crucible's` move is dependent on 3 key constraints
 3. Number of Steps at current position
 
 Therefore, at a certain position i.e. (10,10), we may have incurred different costs depending on constraints 2 & 3, for example
-1. (10,10), arrived from Left, and it is the 3rd step left, hence have to turn
-2. (10,10), arrived from Up, and it is the 1st step down, and can move down or turn
-3. (10,10), arrived from Down, and it is the 1st step up, and can move Up or turn
+1. (10,10), arrived from Left, and it is the 3rd step left, hence we have to take a turn
+2. (10,10), arrived from Up, and it is the 1st step downwards, hence we can move further down or turn
+3. (10,10), arrived from Down, and it is the 1st step upwards, hence we can move further up or turn
 4. etc
 
-Therefore, the cost at Position `P` is defined in terms of Direction `D` & Step `S`. Hence, the path cost at any specific position P is
+Therefore, the cost at Position `P` is defined in terms of current Direction `D` and Step `S`. Hence, the path cost at any specific position P is
 ```
 Cost at path position P = f( Position, Direction, Step )
 ```
-With the above definition, we understand every step in the path is we can use the [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra's_algorithm) to calculate the path with the least heat lost.
+With the above definition for every step in the path, we can use the [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra's_algorithm) to calculate the series of `( Position, Direction, Step )` steps the form the path with the least heat loss.
 
 Hence in our case the below algorithm will
-1. Push in the priority queue the starting CityBlock with Heat loss equal to zero
-2. Pull from the priority queue the CityBlock with the lowest accumulated heat loss
-3. If the CityBlock is the target position then return cumulative heat loss and exit  
-3. Otherwise, for every CityBlock addressable from current CityBlock
-   4. Calculate the heat loss to be incurred if we step on the addressable CityBlock
-   5. if the new heat loss at the addressable CityBlock is better than previously calculated (if any and stored in the heat_map) then 
-      6. Store heat loss value in the heat_map and for addressable CityBlock
-      7. Push (addressable CityBlock, heat loss) in the priority queue for further exploration
+1. Push in the priority `queue` the starting CityBlock with Heat loss equal to zero
+2. Pull from the priority `queue` the CityBlock with the lowest accumulated heat loss
+3. If the CityBlock pulled is at the target position then return the cumulative heat loss and exit  
+3. Otherwise, for each `neighbour()` CityBlock to current; pulled from the queue
+   1. Sum up current and neighnour's heat losses 
+   2. if the heat loss `sum()` is lower than anything previously calculated against the neighbour, then 
+      1. Store heat loss `sum()` in the `heat_map` hashmap against the neighbour
+      2. Push neighbour CityBlock and heat loss `sum()` to the priority queue for further exploration
+3. Repeat step 2 until no more CityBlocks left in the queue for processing
 
 ```rust
 fn heat_loss_at_target(&mut self, start: CityBlock, target: Position, rng: Range<usize>) -> Option<Heat> {
