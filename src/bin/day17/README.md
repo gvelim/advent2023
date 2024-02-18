@@ -51,22 +51,157 @@ Elves are going to upgrade to **ultra crucibles**. Once an ultra crucible starts
 
 In the above example, an ultra crucible could follow this path to minimize heat loss:
 ```
-▶ 2/0  :0 |▶ 4/4  :1 |▶ 1/5  :2 |▶ 3/8  :3 |▶ 4/12 :4 |▶ 3/15 :5 |▶ 2/17 :6 |▶ 3/20 :7 |▶ 1/21 :8 |  1/0  :0 |  3/0  :0 |  2/0  :0 |  3/0  :0 |
-  3/0  :0 |  2/0  :0 |  1/0  :0 |  5/0  :0 |  4/0  :0 |  5/0  :0 |  3/0  :0 |  5/0  :0 |▼ 3/24 :1 |  5/0  :0 |  6/0  :0 |  2/0  :0 |  3/0  :0 |
-  3/0  :0 |  2/0  :0 |  5/0  :0 |  5/0  :0 |  2/0  :0 |  4/0  :0 |  5/0  :0 |  6/0  :0 |▼ 5/29 :2 |  4/0  :0 |  2/0  :0 |  5/0  :0 |  4/0  :0 |
-  3/0  :0 |  4/0  :0 |  4/0  :0 |  6/0  :0 |  5/0  :0 |  8/0  :0 |  5/0  :0 |  8/0  :0 |▼ 4/33 :3 |  5/0  :0 |  4/0  :0 |  5/0  :0 |  2/0  :0 |
-  4/0  :0 |  5/0  :0 |  4/0  :0 |  6/0  :0 |  6/0  :0 |  5/0  :0 |  7/0  :0 |  8/0  :0 |▼ 6/39 :4 |▶ 7/46 :1 |▶ 5/51 :2 |▶ 3/54 :3 |▶ 6/60 :4 |
-  1/0  :0 |  4/0  :0 |  3/0  :0 |  8/0  :0 |  5/0  :0 |  9/0  :0 |  8/0  :0 |  7/0  :0 |  9/0  :0 |  8/0  :0 |  4/0  :0 |  5/0  :0 |▼ 4/64 :1 |
-  4/0  :0 |  4/0  :0 |  5/0  :0 |  7/0  :0 |  8/0  :0 |  7/0  :0 |  6/0  :0 |  9/0  :0 |  8/0  :0 |  7/0  :0 |  7/0  :0 |  6/0  :0 |▼ 6/70 :2 |
-  3/0  :0 |  6/0  :0 |  3/0  :0 |  7/0  :0 |  8/0  :0 |  7/0  :0 |  7/0  :0 |  9/0  :0 |  7/0  :0 |  9/0  :0 |  6/0  :0 |  5/0  :0 |▼ 3/73 :3 |
-  4/0  :0 |  6/0  :0 |  5/0  :0 |  4/0  :0 |  9/0  :0 |  6/0  :0 |  7/0  :0 |  9/0  :0 |  8/0  :0 |  6/0  :0 |  8/0  :0 |  8/0  :0 |▼ 7/80 :4 |
-  4/0  :0 |  5/0  :0 |  6/0  :0 |  4/0  :0 |  6/0  :0 |  7/0  :0 |  9/0  :0 |  9/0  :0 |  8/0  :0 |  6/0  :0 |  4/0  :0 |  5/0  :0 |▼ 3/83 :5 |
-  1/0  :0 |  2/0  :0 |  2/0  :0 |  4/0  :0 |  6/0  :0 |  8/0  :0 |  6/0  :0 |  8/0  :0 |  6/0  :0 |  5/0  :0 |  5/0  :0 |  6/0  :0 |▼ 3/86 :6 |
-  2/0  :0 |  5/0  :0 |  4/0  :0 |  6/0  :0 |  5/0  :0 |  4/0  :0 |  8/0  :0 |  8/0  :0 |  8/0  :0 |  7/0  :0 |  7/0  :0 |  3/0  :0 |▼ 5/91 :7 |
-  4/0  :0 |  3/0  :0 |  2/0  :0 |  2/0  :0 |  6/0  :0 |  7/0  :0 |  4/0  :0 |  6/0  :0 |  5/0  :0 |  5/0  :0 |  5/0  :0 |  3/0  :0 |▼ 3/94 :8 |
-```
+▶ 2/0  : 0 |▶ 4/4  : 1 |▶ 1/5  : 2 |▶ 3/8  : 3 |▶ 4/12 : 4 |▶ 3/15 : 5 |▶ 2/17 : 6 |▶ 3/20 : 7 |▶ 1/21 : 8 |  1/0  : 0 |  3/0  : 0 |  2/0  : 0 |  3/0  : 0 |
+  3/0  : 0 |  2/0  : 0 |  1/0  : 0 |  5/0  : 0 |  4/0  : 0 |  5/0  : 0 |  3/0  : 0 |  5/0  : 0 |▼ 3/24 : 1 |  5/0  : 0 |  6/0  : 0 |  2/0  : 0 |  3/0  : 0 |
+  3/0  : 0 |  2/0  : 0 |  5/0  : 0 |  5/0  : 0 |  2/0  : 0 |  4/0  : 0 |  5/0  : 0 |  6/0  : 0 |▼ 5/29 : 2 |  4/0  : 0 |  2/0  : 0 |  5/0  : 0 |  4/0  : 0 |
+  3/0  : 0 |  4/0  : 0 |  4/0  : 0 |  6/0  : 0 |  5/0  : 0 |  8/0  : 0 |  5/0  : 0 |  8/0  : 0 |▼ 4/33 : 3 |  5/0  : 0 |  4/0  : 0 |  5/0  : 0 |  2/0  : 0 |
+  4/0  : 0 |  5/0  : 0 |  4/0  : 0 |  6/0  : 0 |  6/0  : 0 |  5/0  : 0 |  7/0  : 0 |  8/0  : 0 |▼ 6/39 : 4 |▶ 7/46 : 1 |▶ 5/51 : 2 |▶ 3/54 : 3 |▶ 6/60 : 4 |
+  1/0  : 0 |  4/0  : 0 |  3/0  : 0 |  8/0  : 0 |  5/0  : 0 |  9/0  : 0 |  8/0  : 0 |  7/0  : 0 |  9/0  : 0 |  8/0  : 0 |  4/0  : 0 |  5/0  : 0 |▼ 4/64 : 1 |
+  4/0  : 0 |  4/0  : 0 |  5/0  : 0 |  7/0  : 0 |  8/0  : 0 |  7/0  : 0 |  6/0  : 0 |  9/0  : 0 |  8/0  : 0 |  7/0  : 0 |  7/0  : 0 |  6/0  : 0 |▼ 6/70 : 2 |
+  3/0  : 0 |  6/0  : 0 |  3/0  : 0 |  7/0  : 0 |  8/0  : 0 |  7/0  : 0 |  7/0  : 0 |  9/0  : 0 |  7/0  : 0 |  9/0  : 0 |  6/0  : 0 |  5/0  : 0 |▼ 3/73 : 3 |
+  4/0  : 0 |  6/0  : 0 |  5/0  : 0 |  4/0  : 0 |  9/0  : 0 |  6/0  : 0 |  7/0  : 0 |  9/0  : 0 |  8/0  : 0 |  6/0  : 0 |  8/0  : 0 |  8/0  : 0 |▼ 7/80 : 4 |
+  4/0  : 0 |  5/0  : 0 |  6/0  : 0 |  4/0  : 0 |  6/0  : 0 |  7/0  : 0 |  9/0  : 0 |  9/0  : 0 |  8/0  : 0 |  6/0  : 0 |  4/0  : 0 |  5/0  : 0 |▼ 3/83 : 5 |
+  1/0  : 0 |  2/0  : 0 |  2/0  : 0 |  4/0  : 0 |  6/0  : 0 |  8/0  : 0 |  6/0  : 0 |  8/0  : 0 |  6/0  : 0 |  5/0  : 0 |  5/0  : 0 |  6/0  : 0 |▼ 3/86 : 6 |
+  2/0  : 0 |  5/0  : 0 |  4/0  : 0 |  6/0  : 0 |  5/0  : 0 |  4/0  : 0 |  8/0  : 0 |  8/0  : 0 |  8/0  : 0 |  7/0  : 0 |  7/0  : 0 |  3/0  : 0 |▼ 5/91 : 7 |
+  4/0  : 0 |  3/0  : 0 |  2/0  : 0 |  2/0  : 0 |  6/0  : 0 |  7/0  : 0 |  4/0  : 0 |  6/0  : 0 |  5/0  : 0 |  5/0  : 0 |  5/0  : 0 |  3/0  : 0 |▼ 3/94 : 
+  ```
 In the above example, an ultra crucible would incur the minimum possible heat loss of `94`.
 
 Directing the ultra crucible from the lava pool to the machine parts factory, **what is the least heat loss it can incur**?
 
 ## Approach
+### Navigating the CityMap
+For each `CityBlock` that we are stepping onto, the decision on **"where can we move next?"** is dictated by,
+1. **Current position** and available moves, especially around edges & corners 
+2. **Vector of direction**: either turn left, turn right or move in same direction
+3. **Steps in same direction**: no more than 3 consecutive steps
+
+The above information is encapsulated by the below tuple structure
+```rust
+struct CityBlock( Position, Direction, Step);
+```
+
+The **position constraint** is implemented by the `move_from()` function, that based on aVector<CityBlocks>`, it  maps a `(Position,Direction)` tuple into the next valid CityBlock position (`index`) or `None` if there is no valid position.
+```rust
+fn move_from(&self, from: Position, dir: Direction) -> Option<Position> {
+    if from >= self.map.len() { return None }
+    match dir {
+        D::Right if from % self.width < self.width-1 => Some(from + 1),
+        D::Left if from % self.width > 0 => Some(from - 1),
+        D::Up if from > self.width - 1 => Some(from - self.width),
+        D::Down if from < self.map.len() - self.width => Some(from + self.width),
+        _ => None
+    }
+}
+```
+The **direction constrain** is implemented by the `directions()` function which provides the applicable directions given the current direction vector 
+```rust
+pub(crate) enum Direction { Up,  Right, Down, Left }
+
+impl Direction {
+    fn directions(&self) -> impl Iterator<Item=Direction> + 'static {
+        use Direction as D;
+        match self{
+            D::Up => [D::Up, D::Left, D::Right],
+            D::Right => [D::Right, D::Up, D::Down],
+            D::Down => [D::Down, D::Left, D::Right],
+            D::Left => [D::Left, D::Up, D::Down],
+        }.into_iter()
+    }
+}
+```
+Therefore, at a given CityBlock, finding all **valid** neighbour CityBlocks that we can **step onto**, is expressed by the below function. The function returns an `Iterator` that **iterates along the remaining valid directions** and outputs the valid CityBlocks that we can step onto, therefore complying to all three movement constraints.
+```rust
+fn neighbour_blocks(&self, current: CityBlock, rng: &Range<usize>) -> impl Iterator<Item=CityBlock> + '_ {
+    let CityBlock(pos, dir, step) = current;
+    dir.directions()
+        // drop same direction vector if we have already moved max number of steps e.g. 3
+        .filter(move |d| step < rng.end || dir.ne(d) )
+        // extract CityBlocks that are valid moves
+        .filter_map(move |d|
+            self.citymap.move_from(pos, d)
+                .map(|p|
+                    CityBlock(p, d, if d == dir {step + 1} else { 1 })
+                )
+        )
+}
+```
+## Finding the path with the minimum heat loss
+To find out the path with the **minimum heat loss** across any two `CityBlocks`, will require to explore all possible paths combinations connecting the two `CityBlocks`. Hence, it is **critical** to understand how we calculate the path cost `C` at a path position `P`.
+
+We already know that a `Crucible's` move is dependent on 3 key constraints
+1. Current Position
+2. Current Direction vector
+3. Number of Steps at current position
+
+Therefore, at a certain position i.e. (10,10), we may have incurred different costs depending on constraints 2 & 3, for example
+1. (10,10), arrived from Left, and it is the 3rd step left, hence have to turn
+2. (10,10), arrived from Up, and it is the 1st step down, and can move down or turn
+3. (10,10), arrived from Down, and it is the 1st step up, and can move Up or turn
+4. etc
+
+Therefore, the cost at Position `P` is defined in terms of Direction `D` & Step `S`. Hence, the path cost at any specific position P is
+```
+Cost at path position P = f( Position, Direction, Step )
+```
+With the above definition, we understand every step in the path is we can use the [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra's_algorithm) to calculate the path with the least heat lost.
+
+Hence in our case the below algorithm will
+1. Push in the priority queue the starting CityBlock with Heat loss equal to zero
+2. Pull from the priority queue the CityBlock with the lowest accumulated heat loss
+3. If the CityBlock is the target position then return cumulative heat loss and exit  
+3. Otherwise, for every CityBlock addressable from current CityBlock
+   4. Calculate the heat loss to be incurred if we step on the addressable CityBlock
+   5. if the new heat loss at the addressable CityBlock is better than previously calculated (if any and stored in the heat_map) then 
+      6. Store heat loss value in the heat_map and for addressable CityBlock
+      7. Push (addressable CityBlock, heat loss) in the priority queue for further exploration
+
+```rust
+fn heat_loss_at_target(&mut self, start: CityBlock, target: Position, rng: Range<usize>) -> Option<Heat> {
+    let mut heat_map = HashMap::<CityBlock,Heat>::new();
+    let mut queue = BinaryHeap::<QueuedCityBlock>::new();
+    
+    queue.push( QueuedCityBlock(0, start) );
+    heat_map.insert(start,0);
+
+    while let Some(QueuedCityBlock(heat, node)) = queue.pop() {
+        if node.0 == target { return Some(heat) }
+        self.neighbour_blocks(node, &rng)
+            .for_each(|n| {
+                let CityBlock(p, d, s) = n;
+                let heat_sum = heat + self.cmap[p];
+                if heat_sum < heat_map.get(&CityBlock(p, d, s)).unwrap_or(&(Heat::MAX, None)).0 {
+                    heat_map.insert(CityBlock(p, d, s), heat_sum);
+                    queue.push(QueuedCityBlock(heat_sum, CityBlock(p, d, s)));
+                }
+            });
+    }
+    None
+}
+```
+## Part 2
+Part 2 alters the step constrains by enforcing
+1. to move **a minimum of four blocks** when start moving in a new direction, and before it can turn (or even before it can stop at the end). 
+2. to move **a maximum of ten consecutive blocks** in one direction
+
+Therefore the only adjustment that we need to do here is to the `neighbour_blocks()` where we 
+* only enforce same direction for CityBlocks with `step < 4`
+* stop same direction move for CityBlocks with `step > 10`
+```rust
+fn neighbour_blocks(&self, node: CityBlock, rng: &Range<usize>) -> impl Iterator<Item=CityBlock> + '_ {
+    let CityBlock(pos, dir, step) = node;
+    dir.directions()
+        // if step < min then move same direction otherwise move all directions
+        .filter(move |d|  dir.eq(d) || step >= rng.start)
+        // if step == max direction then drop same direction
+        .filter(move |d| step < rng.end || dir.ne(d) )
+        // extract CityBlocks from valid moves remaining
+        .filter_map(move |d|
+            self.cmap.move_from(pos, d)
+                .map(|p|
+                    CityBlock(p, d, if d == dir {step + 1} else { 1 })
+                )
+        ) 
+}
+
+```
