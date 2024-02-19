@@ -1,11 +1,12 @@
 
 use std::collections::{BinaryHeap, HashMap};
-use std::io::Read;
+// use std::io::Read;
 use std::ops::Range;
 use crate::{
     citymap::CityMap,
     direction::Direction,
-    block::*
+    block::*,
+    path::HeatLossPath
 };
 use Direction as D;
 
@@ -36,32 +37,28 @@ impl<'a> Crucible<'a> {
             )
     }
 
-    pub(crate) fn heat_loss_at_target(&mut self, target: Position, rng: Range<usize>) -> Option<Heat> {
+    pub(crate) fn heat_loss_at_target(&mut self, target: Position, rng: Range<usize>) -> Option<HeatLossPath> {
         let mut cost_map = HashMap::<CityBlock,(Heat, Option<CityBlock>)>::new();
         let mut queue = BinaryHeap::<QueuedCityBlock>::new();
 
         queue.push( QueuedCityBlock(0, CityBlock(self.pos, self.dir, 0)) );
         cost_map.insert(CityBlock(self.pos, self.dir, 0), (0, None));
 
-        while let Some(QueuedCityBlock(heat, node)) = queue.pop() {
+        while let Some(QueuedCityBlock(heat, block)) = queue.pop() {
             // println!("Popped {:?}",(heat, &node));
 
-            if node.0 == target {
-                // self.print_path(node, &cost_map);
-                return Some(heat)
+            if block.0 == target {
+                return Some(HeatLossPath::new(cost_map, block))
             }
 
-            if heat > cost_map.get(&node).unwrap_or(&(Heat::MAX, None)).0 { continue }
-
-            self.neighbour_blocks(node, &rng)
-                .for_each(|n| {
-                    let CityBlock(p, d, s) = n;
-                    let heat_sum = heat + self.cmap[p];
+            self.neighbour_blocks(block, &rng)
+                .for_each(|neighbour| {
+                    let heat_sum = heat + self.cmap[neighbour.0];
                     // print!("\t({p},{:?},{heat_sum}",d);
-                    if heat_sum < cost_map.get(&CityBlock(p, d, s)).unwrap_or(&(Heat::MAX, None)).0 {
+                    if heat_sum < cost_map.get(&neighbour).unwrap_or(&(Heat::MAX, None)).0 {
                         // println!(",{s}) ✅");
-                        cost_map.insert(CityBlock(p, d, s), (heat_sum, Some(node)));
-                        queue.push(QueuedCityBlock(heat_sum, CityBlock(p, d, s)));
+                        cost_map.insert(neighbour, (heat_sum, Some(block)));
+                        queue.push(QueuedCityBlock(heat_sum, neighbour));
                     }// else { println!(") ❌") }
                 });
             // self.print_path(node, &cost_map);
@@ -70,15 +67,12 @@ impl<'a> Crucible<'a> {
         }
         None
     }
-    fn print_path(&self, target: CityBlock, cost_map: &HashMap::<CityBlock,(Heat, Option<CityBlock>)>) {
+    fn print_path(&self, mut hlp: HeatLossPath) {
 
         let mut path: Vec<Option<(Heat, Direction, Step)>> = vec![None; self.cmap.len()];
 
-        let (mut heat, mut parent) = cost_map[&target];
-        path[target.0] = Some((heat, target.1, target.2));
-        while let Some(n) = parent {
-            (heat, parent) = cost_map[&n];
-            path[n.0] = Some((heat, n.1, n.2));
+        while let Some((heat, parent)) = hlp.next() {
+            path[parent.0] = Some((heat, parent.1, parent.2));
         }
 
         for idx in 0..self.cmap.len() {
@@ -108,16 +102,20 @@ mod test {
         let map = input.parse::<CityMap>().expect("ops");
 
         let mut c = map.get_crucible(0, D::Right);
+        let Some(path) = c.heat_loss_at_target(map.len()-1, 1..3) else { panic!("Path not found") };
         assert_eq!(
-            Some(102),
-            c.heat_loss_at_target(map.len()-1, 1..3)
+            102,
+            path.heat_loss_total()
         );
+        c.print_path(path);
 
         let mut c = map.get_crucible(0, D::Right);
+        let Some(path) = c.heat_loss_at_target(map.len()-1, 4..10) else { panic!("Path not found") };
         assert_eq!(
-            Some(94),
-            c.heat_loss_at_target(map.len()-1, 4..10)
+            94,
+            path.heat_loss_total()
         );
+        c.print_path(path);
     }
     #[test]
     fn test_neighbour_blocks() {
