@@ -165,18 +165,14 @@ fn heat_loss_at_target(&mut self, start: CityBlock, target: Position, rng: Range
     queue.push( QueuedCityBlock(0, start) );
     heat_map.insert(start,0);
 
-    while let Some(QueuedCityBlock(heat, node)) = queue.pop() {
-        if node.0 == target { return Some(heat) }
-        self.neighbour_blocks(node, &rng)
-            .for_each(|n| {
-                let CityBlock(p, d, s) = n;
-                let heat_sum = heat + self.cmap[p];
-                if heat_sum < heat_map.get(&CityBlock(p, d, s)).unwrap_or(&(Heat::MAX, None)).0 {
-                    heat_map.insert(CityBlock(p, d, s), heat_sum);
-                    queue.push(QueuedCityBlock(heat_sum, CityBlock(p, d, s)));
-                }
-            });
-    }
+    self.neighbour_blocks(block, &rng)
+            .for_each(|neighbour| {
+               let heat_sum = heat + self.cmap[neighbour.0];
+               if heat_sum < cost_map.get(&neighbour).unwrap_or(&(Heat::MAX, None)).0 {
+                 cost_map.insert(neighbour, (heat_sum, Some(block)));
+                 queue.push(QueuedCityBlock(heat_sum, neighbour));
+              }
+           });
     None
 }
 ```
