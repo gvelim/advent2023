@@ -76,22 +76,22 @@ mod test {
     fn test_crucible_next() {
         let input = std::fs::read_to_string("src/bin/day17/sample.txt").expect("File Not Found!");
         let map = input.parse::<CityMap>().expect("ops");
-        let mut c = map.get_crucible(0, D::Right);
 
-        let Some(path) = c.find_path_to(map.len()-1, 1..3) else { panic!("Path not found") };
-        assert_eq!(
-            102,
-            path.total_heat_loss()
-        );
-        map.display_path(path);
+        let test_ranges = |result: Heat, rng:Range<usize>| {
+            let mut c = map.get_crucible(0, D::Right);
+            c.find_path_to(map.len()-1, rng)
+                .map(|path| {
+                    map.display_path(&path);
+                    assert_eq!(
+                        result,
+                        path.total_heat_loss()
+                    );
+                })
+                .or_else(|| panic!("Path not found"));
+        };
 
-        let mut c = map.get_crucible(0, D::Right);
-        let Some(path) = c.find_path_to(map.len()-1, 4..10) else { panic!("Path not found") };
-        assert_eq!(
-            94,
-            path.total_heat_loss()
-        );
-        map.display_path(path);
+        test_ranges(102,1..3);
+        test_ranges(94,4..10);
     }
     #[test]
     fn test_neighbour_blocks() {
