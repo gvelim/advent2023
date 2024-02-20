@@ -6,9 +6,8 @@ use crate::{
     citymap::CityMap,
     direction::Direction,
     block::*,
-    path::HeatLossPath
+    path::CityMapPath
 };
-use Direction as D;
 
 #[derive(Debug)]
 pub(crate) struct Crucible<'a> {
@@ -37,85 +36,62 @@ impl<'a> Crucible<'a> {
             )
     }
 
-    pub(crate) fn heat_loss_at_target(&mut self, target: Position, rng: Range<usize>) -> Option<HeatLossPath> {
+    pub(crate) fn find_path_to(&mut self, target: Position, rng: Range<usize>) -> Option<CityMapPath> {
         let mut cost_map = HashMap::<CityBlock,(Heat, Option<CityBlock>)>::new();
         let mut queue = BinaryHeap::<QueuedCityBlock>::new();
-
+        // push starting conditions of zero heat, zero steps
         queue.push( QueuedCityBlock(0, CityBlock(self.pos, self.dir, 0)) );
         cost_map.insert(CityBlock(self.pos, self.dir, 0), (0, None));
-
+        // pull the next block with the least heat cost from the queue
         while let Some(QueuedCityBlock(heat, block)) = queue.pop() {
-            // println!("Popped {:?}",(heat, &node));
-
+            // is this block our target ?
             if block.0 == target {
-                return Some(HeatLossPath::new(cost_map, block))
+                // yes, return the path cost map with the starting block for traversing it
+                return Some(CityMapPath::new(cost_map, block))
             }
-
+            // get all feasible neighbouring blocks given the constraints
             self.neighbour_blocks(block, &rng)
                 .for_each(|neighbour| {
+                    // calculate cost if we are to move to this neighbour
                     let heat_sum = heat + self.cmap[neighbour.0];
-                    // print!("\t({p},{:?},{heat_sum}",d);
+                    // is the cost higher than previously found ? if not, store it
                     if heat_sum < cost_map.get(&neighbour).unwrap_or(&(Heat::MAX, None)).0 {
-                        // println!(",{s}) ✅");
+                        // remember the heat cost at this block along the block we stepped from
                         cost_map.insert(neighbour, (heat_sum, Some(block)));
+                        // push neighbouring block to priority queue for processing
                         queue.push(QueuedCityBlock(heat_sum, neighbour));
-                    }// else { println!(") ❌") }
+                    }
                 });
-            // self.print_path(node, &cost_map);
-            // println!("{:?}",queue);
-            // let _ = std::io::stdin().read(&mut [0;1]);
         }
         None
-    }
-    fn print_path(&self, mut hlp: HeatLossPath) {
-
-        let mut path: Vec<Option<(Heat, Direction, Step)>> = vec![None; self.cmap.len()];
-
-        while let Some((heat, parent)) = hlp.next() {
-            path[parent.0] = Some((heat, parent.1, parent.2));
-        }
-
-        for idx in 0..self.cmap.len() {
-            if idx % self.cmap.width() == 0 { println!(); }
-            print!("{a}{:2}/{:<3?}:{b:2} |", self.cmap[idx],
-                   path[idx].map(|(h,..)| h).unwrap_or(0),
-                   a=if path[idx].is_some() {
-                       match path[idx].map(|(_,d,_)| d) {
-                           None => '◼', Some(D::Up) => '▲', Some(D::Down) => '▼',
-                           Some(D::Left) => '◀', Some(D::Right) => '▶',
-                       }
-                   } else { ' ' },
-                   b=path[idx].map(|(..,s)| s).unwrap_or(0)
-            );
-        }
-        println!();
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use Direction as D;
 
     #[test]
     fn test_crucible_next() {
         let input = std::fs::read_to_string("src/bin/day17/sample.txt").expect("File Not Found!");
         let map = input.parse::<CityMap>().expect("ops");
-
         let mut c = map.get_crucible(0, D::Right);
-        let Some(path) = c.heat_loss_at_target(map.len()-1, 1..3) else { panic!("Path not found") };
+
+        let Some(path) = c.find_path_to(map.len()-1, 1..3) else { panic!("Path not found") };
         assert_eq!(
             102,
-            path.heat_loss_total()
+            path.total_heat_loss()
         );
-        c.print_path(path);
+        map.display_path(path);
 
         let mut c = map.get_crucible(0, D::Right);
-        let Some(path) = c.heat_loss_at_target(map.len()-1, 4..10) else { panic!("Path not found") };
+        let Some(path) = c.find_path_to(map.len()-1, 4..10) else { panic!("Path not found") };
         assert_eq!(
             94,
-            path.heat_loss_total()
+            path.total_heat_loss()
         );
-        c.print_path(path);
+        map.display_path(path);
     }
     #[test]
     fn test_neighbour_blocks() {

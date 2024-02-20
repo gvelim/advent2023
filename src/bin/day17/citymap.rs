@@ -4,6 +4,8 @@ use std::rc::Rc;
 use std::str::FromStr;
 use crate::{crucible::Crucible, direction::Direction, block::{Heat,Position}};
 use Direction as D;
+use crate::block::Step;
+use crate::path::CityMapPath;
 
 pub(crate) struct CityMap {
     width: usize,
@@ -12,8 +14,6 @@ pub(crate) struct CityMap {
 }
 
 impl CityMap {
-    #[inline]
-    pub(crate) fn width(&self) -> usize { self.width}
     #[inline]
     pub(crate) fn len(&self) -> usize { self.map.len() }
 
@@ -30,6 +30,31 @@ impl CityMap {
             _ => None
         }
     }
+    pub fn display_path(&self, cm_path: CityMapPath) {
+
+        let mut path: Vec<Option<(Heat, Direction, Step)>> = vec![None; self.len()];
+
+        cm_path.iter()
+            .for_each(|(heat, block)|
+                     path[block.0] = Some((heat, block.1, block.2))
+            );
+
+        for idx in 0..self.len() {
+            if idx % self.width == 0 { println!(); }
+            print!("{a}{:2}/{:<3?}:{b:2} |", self[idx],
+                   path[idx].map(|(h,..)| h).unwrap_or(0),
+                   a=if path[idx].is_some() {
+                       match path[idx].map(|(_,d,_)| d) {
+                           None => '◼', Some(D::Up) => '▲', Some(D::Down) => '▼',
+                           Some(D::Left) => '◀', Some(D::Right) => '▶',
+                       }
+                   } else { ' ' },
+                   b=path[idx].map(|(..,s)| s).unwrap_or(0)
+            );
+        }
+        println!();
+    }
+
 }
 impl Index<usize> for CityMap {
     type Output = Heat;
