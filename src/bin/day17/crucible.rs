@@ -36,7 +36,7 @@ impl<'a> Crucible<'a> {
             )
     }
 
-    pub(crate) fn find_path_to(&mut self, target: Position, rng: Range<usize>) -> Option<CityMapPath> {
+    pub(crate) fn find_path_to(&mut self, target: Position, rng: Range<Position>) -> Option<CityMapPath> {
         let mut cost_map = HashMap::<CityBlock,(Heat, Option<CityBlock>)>::new();
         let mut queue = BinaryHeap::<QueuedCityBlock>::new();
         // push starting conditions of zero heat, zero steps
@@ -77,7 +77,7 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day17/sample.txt").expect("File Not Found!");
         let map = input.parse::<CityMap>().expect("ops");
 
-        let test_ranges = |result: Heat, rng:Range<usize>| {
+        let test_ranges = |result: Heat, rng:Range<Position>| {
             let mut c = map.get_crucible(0, D::Right);
             c.find_path_to(map.len()-1, rng)
                 .map(|path| {
