@@ -1,4 +1,3 @@
-#![feature(slice_group_by)]
 #![feature(iter_collect_into)]
 
 mod direction;
@@ -59,7 +58,6 @@ fn main() {
 mod test {
     use super::*;
     use crate::direction::Direction::{Down, Left, Right, Up};
-    use crate::pipeloop::Step;
 
     static INPUT_PART1: &str = "..F7.\n.FJ|.\nSJ.L7\n|F--J\nLJ...";
     static INPUT_PART2: &str = ".............\n\

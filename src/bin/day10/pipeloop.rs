@@ -18,7 +18,7 @@ impl PipeLoop {
                 cmp => cmp
             });
 
-        self.path.group_by_mut(|(_, a), (_, b)| a.1 == b.1)
+        self.path.chunk_by_mut(|(_, a), (_, b)| a.1 == b.1)
     }
 }
 
