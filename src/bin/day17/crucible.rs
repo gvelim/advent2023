@@ -1,6 +1,5 @@
 
 use std::collections::{BinaryHeap, HashMap};
-// use std::io::Read;
 use std::ops::Range;
 use crate::{
     citymap::CityMap,
@@ -77,21 +76,17 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day17/sample.txt").expect("File Not Found!");
         let map = input.parse::<CityMap>().expect("ops");
 
-        let test_ranges = |result: Heat, rng:Range<Position>| {
+        let test_ranges = |rng:Range<Position>| -> Option<Heat> {
             let mut c = map.get_crucible(0, D::Right);
             c.find_path_to(map.len()-1, rng)
                 .map(|path| {
                     map.display_path(&path);
-                    assert_eq!(
-                        result,
-                        path.total_heat_loss()
-                    );
+                    path.total_heat_loss()
                 })
-                .or_else(|| panic!("Path not found"));
         };
 
-        test_ranges(102,1..3);
-        test_ranges(94,4..10);
+        assert_eq!(test_ranges(1..3), Some(102));
+        assert_eq!(test_ranges(4..10), Some(94));
     }
     #[test]
     fn test_neighbour_blocks() {

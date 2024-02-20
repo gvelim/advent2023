@@ -2,10 +2,13 @@ use std::fmt::{Debug, Formatter};
 use std::ops::Index;
 use std::rc::Rc;
 use std::str::FromStr;
-use crate::{crucible::Crucible, direction::Direction, block::{Heat,Position}};
+use crate::{
+    crucible::Crucible,
+    direction::Direction,
+    block::{Heat,Position,Step},
+    path::CityMapPath
+};
 use Direction as D;
-use crate::block::Step;
-use crate::path::CityMapPath;
 
 pub(crate) struct CityMap {
     width: usize,
@@ -41,7 +44,8 @@ impl CityMap {
 
         for idx in 0..self.len() {
             if idx % self.width == 0 { println!(); }
-            print!("{a}{:2}/{:<3?}:{b:2} |", self[idx],
+            print!("{a}{:2}/{:<3?}:{b:2} |",
+                   self[idx],
                    path[idx].map(|(h,..)| h).unwrap_or(0),
                    a=if path[idx].is_some() {
                        match path[idx].map(|(_,d,_)| d) {
