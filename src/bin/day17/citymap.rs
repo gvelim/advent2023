@@ -30,7 +30,7 @@ impl CityMap {
             _ => None
         }
     }
-    pub fn display_path(&self, cm_path: CityMapPath) {
+    pub fn display_path(&self, cm_path: &CityMapPath) {
 
         let mut path: Vec<Option<(Heat, Direction, Step)>> = vec![None; self.len()];
 
