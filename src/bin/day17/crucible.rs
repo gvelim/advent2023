@@ -36,29 +36,23 @@ impl<'a> Crucible<'a> {
     }
 
     pub(crate) fn find_path_to(&mut self, target: Position, rng: Range<Position>) -> Option<CityMapPath> {
+
         let mut cost_map = HashMap::<CityBlock,(Heat, Option<CityBlock>)>::new();
         let mut queue = BinaryHeap::<QueuedCityBlock>::new();
-        // push starting conditions of zero heat, zero steps
-        queue.push( QueuedCityBlock(0, CityBlock(self.pos, self.dir, 0)) );
+
+        queue.push( QueuedCityBlock(0, CityBlock(self.pos, self.dir, 0)) );                         // push starting conditions of zero heat, zero steps
         cost_map.insert(CityBlock(self.pos, self.dir, 0), (0, None));
-        // pull the next block with the least heat cost from the queue
-        while let Some(QueuedCityBlock(heat, block)) = queue.pop() {
-            // is this block our target ?
-            if block.0 == target {
-                // yes, return the path cost map with the starting block for traversing it
-                return Some(CityMapPath::new(cost_map, block))
+
+        while let Some(QueuedCityBlock(heat, block)) = queue.pop() {                // pull the next block with the least heat cost from the queue
+            if block.0 == target {                                                                  // is this block our target ?
+                return Some(CityMapPath::new(cost_map, block))                                      // yes, return the path cost map with the starting block for traversing it
             }
-            // get all feasible neighbouring blocks given the constraints
-            self.neighbour_blocks(block, &rng)
+            self.neighbour_blocks(block, &rng)                             // get all feasible neighbouring blocks given the constraints
                 .for_each(|neighbour| {
-                    // calculate cost if we are to move to this neighbour
-                    let heat_sum = heat + self.cmap[neighbour.0];
-                    // is the cost higher than previously found ? if not, store it
-                    if heat_sum < cost_map.get(&neighbour).unwrap_or(&(Heat::MAX, None)).0 {
-                        // remember the heat cost at this block along the block we stepped from
-                        cost_map.insert(neighbour, (heat_sum, Some(block)));
-                        // push neighbouring block to priority queue for processing
-                        queue.push(QueuedCityBlock(heat_sum, neighbour));
+                    let heat_sum = heat + self.cmap[neighbour.0];                             // calculate cost if we are to move to this neighbour
+                    if heat_sum < cost_map.get(&neighbour).unwrap_or(&(Heat::MAX, None)).0 { // is the cost higher than previously found ? if not, store it
+                        cost_map.insert(neighbour, (heat_sum, Some(block)));                     // remember the heat cost at this block along the block we stepped from
+                        queue.push(QueuedCityBlock(heat_sum, neighbour));                           // push neighbouring block to priority queue for processing
                     }
                 });
         }
@@ -72,20 +66,19 @@ mod test {
     use Direction as D;
 
     #[test]
-    fn test_crucible_next() {
+    fn test_find_path_to() {
         let input = std::fs::read_to_string("src/bin/day17/sample.txt").expect("File Not Found!");
         let map = input.parse::<CityMap>().expect("ops");
 
         let test_ranges = |rng:Range<Position>| -> Option<Heat> {
-            let mut c = map.get_crucible(0, D::Right);
-            c.find_path_to(map.len()-1, rng)
+            map.get_crucible(0, D::Right)
+                .find_path_to(map.len()-1, rng)
                 .map(|path| {
                     map.display_path(&path);
                     path.total_heat_loss()
                 })
         };
-
-        assert_eq!(test_ranges(1..3), Some(102));
+        assert_eq!(test_ranges(0..3), Some(102));
         assert_eq!(test_ranges(4..10), Some(94));
     }
     #[test]
