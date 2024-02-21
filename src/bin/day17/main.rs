@@ -1,6 +1,6 @@
 use std::ops::Range;
 use crate::{
-    block::{Heat, Position},
+    block::{Heat, Step},
     citymap::CityMap,
     direction::Direction as D
 };
@@ -15,7 +15,7 @@ fn main() {
     let input = std::fs::read_to_string("src/bin/day17/input.txt").expect("File Not Found!");
     let map = input.parse::<CityMap>().expect("ops");
 
-    let total_heat_loss = |rng: Range<Position>| -> Option<Heat> {
+    let total_heat_loss = |rng: Range<Step>| -> Option<Heat> {
         map.get_crucible(0, D::Right)
             .find_path_to(map.len()-1, rng)
             .map(|path| path.total_heat_loss() )
