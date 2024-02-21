@@ -19,7 +19,7 @@ impl<'a> Crucible<'a> {
     pub(crate) fn new(map: &CityMap, pos: Position, dir: Direction) -> Crucible {
         Crucible { cmap: map, pos, dir }
     }
-    fn neighbour_blocks(&'a self, node: CityBlock, rng: &'a Range<Position>) -> impl Iterator<Item=CityBlock> + '_ {
+    fn neighbour_blocks(&'a self, node: CityBlock, rng: &'a Range<Step>) -> impl Iterator<Item=CityBlock> + '_ {
         let CityBlock(pos, dir, step) = node;
         dir.directions()
             // if step < min then move same direction otherwise move all directions
@@ -35,7 +35,7 @@ impl<'a> Crucible<'a> {
             )
     }
 
-    pub(crate) fn find_path_to(&mut self, target: Position, rng: Range<Position>) -> Option<CityMapPath> {
+    pub(crate) fn find_path_to(&mut self, target: Position, rng: Range<Step>) -> Option<CityMapPath> {
 
         let mut cost_map = HashMap::<CityBlock,(Heat, Option<CityBlock>)>::new();
         let mut queue = BinaryHeap::<QueuedCityBlock>::new();
@@ -70,7 +70,7 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day17/sample.txt").expect("File Not Found!");
         let map = input.parse::<CityMap>().expect("ops");
 
-        let test_ranges = |rng:Range<Position>| -> Option<Heat> {
+        let test_ranges = |rng:Range<Step>| -> Option<Heat> {
             map.get_crucible(0, D::Right)
                 .find_path_to(map.len()-1, rng)
                 .map(|path| {
