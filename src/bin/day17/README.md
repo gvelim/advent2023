@@ -140,9 +140,10 @@ Therefore, at a certain position i.e. (10,10), we may have incurred different co
 3. (10,10), arrived from Down, and it is the 1st step upwards, hence we can move further up or turn
 4. etc
 
-Therefore, the cost at Position `P` is defined in terms of current Direction `D` and Step `S`. Hence, the path cost at any specific position P is
+Therefore, the cost at Position `P` is defined in terms of all the previous/past Blocks with Position `P`, Direction `D` and Step `S` leading to the position `P`. Hence, the path cost at any specific position P is
 ```
-Cost at path position P = f( Position, Direction, Step )
+Cost at path position P =  Cost at P + Parent_Cost( Position, Direction, Step )
+with Parent_Cost expressed by the same formula recursively.
 ```
 With the above definition for every step in the path, we can use the [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra's_algorithm) to calculate the series of `( Position, Direction, Step )` steps the form the path with the least heat loss.
 
