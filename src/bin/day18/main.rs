@@ -4,9 +4,14 @@ fn main() {
 
 }
 
-#[derive(Debug)]
 struct InstructionSet {
     set: std::rc::Rc<[Instruction]>
+}
+
+impl InstructionSet {
+    fn iter(&self) -> impl Iterator<Item = &Instruction> + '_ {
+        self.set.iter()
+    }
 }
 
 impl FromStr for InstructionSet {
@@ -97,7 +102,7 @@ mod test {
             Err(e) => panic!("{:?}",e),
         };
     
-        set.set.iter().for_each(|ins| println!("{:?}",ins) );
+        set.iter().for_each(|ins| println!("{:?}",ins) );
         assert_eq!(set.set.len(), 14);
     }
 
