@@ -40,9 +40,10 @@ struct Instruction {
 
 #[derive(PartialEq)]
 enum InstructionErr {
-    InvalidDirection,
-    InvalidRunLength,
-    InvalidRGB
+    InvalidDirection(String),
+    InvalidRunLength(String),
+    InvalidRGB(String),
+    InvalidFormat(String)
 }
 impl Debug for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -53,9 +54,10 @@ impl Debug for Instruction {
 impl Debug for InstructionErr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InvalidDirection => write!(f, "Cannot parse Direction. Check instruction format"),
-            Self::InvalidRunLength => write!(f, "Cannot parse RunLength. Check instruction format"),
-            Self::InvalidRGB => write!(f, "Cannot parse RGB values. Check instruction format"),
+            Self::InvalidDirection(s) => write!(f, "Cannot parse Direction. Received: {:?}",s),
+            Self::InvalidRunLength(s) => write!(f, "Cannot parse RunLength. Received: {:?}",s),
+            Self::InvalidRGB(s) => write!(f, "Cannot parse RGB values. Received: {:?}",s),
+            Self::InvalidFormat(s) => write!(f, "Expecting 3 parts. Received: {:?}",s),
         }
     }
 }
@@ -65,11 +67,12 @@ impl FromStr for Instruction {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut split = s.split_whitespace();
-        
-        let dir = split.next().ok_or(InstructionErr::InvalidDirection)?;
-        let run = split.next().ok_or(InstructionErr::InvalidRunLength)?;
-        let rgb = split.next().ok_or(InstructionErr::InvalidRGB)?.trim_matches(['(',')','#']);
-        if rgb.len() != 6 { return Err(InstructionErr::InvalidRGB);}
+        if split.clone().count() != 3 { return Err(InstructionErr::InvalidFormat(format!("{}",s)))}
+
+        let dir = split.next().ok_or(InstructionErr::InvalidDirection(format!("{}",s)))?;
+        let run = split.next().ok_or(InstructionErr::InvalidRunLength(format!("{}",s)))?;
+        let rgb = split.next().ok_or(InstructionErr::InvalidRGB(format!("{}",s)))?.trim_matches(['(',')','#']);
+        if rgb.len() != 6 { return Err(InstructionErr::InvalidRGB(format!("{}",s)));}
 
         Ok(Instruction {
             dir: match dir {
@@ -78,12 +81,12 @@ impl FromStr for Instruction {
                 "R" => Some(Direction::R),
                 "U" => Some(Direction::U),
                 _ => None
-            }.ok_or(InstructionErr::InvalidDirection)?,
-            run: usize::from_str(run).or(Err(InstructionErr::InvalidRunLength))?,
+            }.ok_or(InstructionErr::InvalidDirection(format!("{}",s)))?,
+            run: usize::from_str(run).or(Err(InstructionErr::InvalidRunLength(format!("{}",s))))?,
             rgb: (
-                u8::from_str_radix(&rgb[..=1],16).or(Err(InstructionErr::InvalidRGB))?,
-                u8::from_str_radix(&rgb[2..=3],16).or(Err(InstructionErr::InvalidRGB))?,
-                u8::from_str_radix(&rgb[4..=5],16).or(Err(InstructionErr::InvalidRGB))?
+                u8::from_str_radix(&rgb[..=1],16).or(Err(InstructionErr::InvalidRGB(format!("{}",s))))?,
+                u8::from_str_radix(&rgb[2..=3],16).or(Err(InstructionErr::InvalidRGB(format!("{}",s))))?,
+                u8::from_str_radix(&rgb[4..=5],16).or(Err(InstructionErr::InvalidRGB(format!("{}",s))))?
             )
         })
     }
@@ -112,13 +115,14 @@ mod test {
             ("U 10 (4d17d2)", Ok(Instruction { dir: Direction::U, run: 10, rgb: (0x4d,0x17,0xD2)})),
             ("U 10 #4d17d2", Ok(Instruction { dir: Direction::U, run: 10, rgb: (0x4d,0x17,0xD2)})),
             ("U 10 4d17d2", Ok(Instruction { dir: Direction::U, run: 10, rgb: (0x4d,0x17,0xD2)})),
-            ("K 5 (#af8603)", Err(InstructionErr::InvalidDirection)),
-            ("L a (#1a3700)", Err(InstructionErr::InvalidRunLength)),
-            ("U 10 (#6534071)", Err(InstructionErr::InvalidRGB)),
-            ("U 10 (#65L071)", Err(InstructionErr::InvalidRGB)),
-            ("U 10 (#G071)", Err(InstructionErr::InvalidRGB)),
-            ("U 10 [#4d17d2]", Err(InstructionErr::InvalidRGB)),
-            ("U 10 (*4d17d2)", Err(InstructionErr::InvalidRGB)),
+            ("K 5 (#af8603)", Err(InstructionErr::InvalidDirection("K 5 (#af8603)".to_string()))),
+            ("L a (#1a3700)", Err(InstructionErr::InvalidRunLength("L a (#1a3700)".to_string()))),
+            ("U 10 (#6534071)", Err(InstructionErr::InvalidRGB("U 10 (#6534071)".to_string()))),
+            ("U 10 (#65L071)", Err(InstructionErr::InvalidRGB("U 10 (#65L071)".to_string()))),
+            ("U 10 (#G071)", Err(InstructionErr::InvalidRGB("U 10 (#G071)".to_string()))),
+            ("U 10 [#4d17d2]", Err(InstructionErr::InvalidRGB("U 10 [#4d17d2]".to_string()))),
+            ("U 10 (*4d17d2)", Err(InstructionErr::InvalidRGB("U 10 (*4d17d2)".to_string()))),
+            ("U10 (#534071)", Err(InstructionErr::InvalidFormat("U10 (#534071)".to_string()))),
         ];
 
         for (inp,out) in data {
