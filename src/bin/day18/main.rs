@@ -67,26 +67,25 @@ impl FromStr for Instruction {
         let mut split = s.split_whitespace();
         
         let dir = split.next().ok_or(InstructionErr::InvalidDirection)?;
-        let dir = match dir {
+        let run = split.next().ok_or(InstructionErr::InvalidRunLength)?;
+        let rgb = split.next().ok_or(InstructionErr::InvalidRGB)?.trim_matches(['(',')','#']);
+        if rgb.len() != 6 { return Err(InstructionErr::InvalidRGB);}
+
+        Ok(Instruction {
+            dir: match dir {
                 "D" => Some(Direction::D),
                 "L" => Some(Direction::L),
                 "R" => Some(Direction::R),
                 "U" => Some(Direction::U),
                 _ => None
-            }.ok_or(InstructionErr::InvalidDirection)?;
-        
-        let run = split.next().ok_or(InstructionErr::InvalidRunLength)?;
-        let run = usize::from_str(run).or(Err(InstructionErr::InvalidRunLength))?;
-        
-        let rgb = split.next().ok_or(InstructionErr::InvalidRGB)?.trim_matches(['(',')','#']);
-        if rgb.len() != 6 { return Err(InstructionErr::InvalidRGB);}
-        let rgb = (
-            u8::from_str_radix(&rgb[..=1],16).or(Err(InstructionErr::InvalidRGB))?,
-            u8::from_str_radix(&rgb[2..=3],16).or(Err(InstructionErr::InvalidRGB))?,
-            u8::from_str_radix(&rgb[4..=5],16).or(Err(InstructionErr::InvalidRGB))?,
-        );
-
-        Ok(Instruction { dir, run, rgb })
+            }.ok_or(InstructionErr::InvalidDirection)?,
+            run: usize::from_str(run).or(Err(InstructionErr::InvalidRunLength))?,
+            rgb: (
+                u8::from_str_radix(&rgb[..=1],16).or(Err(InstructionErr::InvalidRGB))?,
+                u8::from_str_radix(&rgb[2..=3],16).or(Err(InstructionErr::InvalidRGB))?,
+                u8::from_str_radix(&rgb[4..=5],16).or(Err(InstructionErr::InvalidRGB))?
+            )
+        })
     }
 }
 
@@ -125,7 +124,7 @@ mod test {
         for (inp,out) in data {
             let instr = inp.parse::<Instruction>();
             println!("Test => \n\tInput: {:?}, \n\tOutput: {:?}", inp, instr);
-            assert_eq!( instr, out)
+            assert_eq!( instr, out);
         }
 
     }
