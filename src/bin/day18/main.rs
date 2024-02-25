@@ -1,110 +1,106 @@
-use std::{error::Error, fmt::{Debug, Display}, str::FromStr};
+mod instruction;
+mod digplan;
+
+use std::cmp::Ordering;
+use std::collections::BTreeMap;
+use std::fmt::{Debug, Formatter};
+use instruction::{Instruction, RGB, Direction};
+use digplan::DigPlan;
 
 fn main() {
 
 }
 
-struct InstructionSet {
-    set: std::rc::Rc<[Instruction]>
-}
+type Depth = u8;
 
-impl InstructionSet {
-    fn iter(&self) -> impl Iterator<Item = &Instruction> + '_ {
-        self.set.iter()
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+struct Position(isize,isize);
+
+impl PartialOrd<Self> for Position {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
-impl FromStr for InstructionSet {
-    type Err = InstructionErr;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut set = vec![];
-        for line in s.lines() {
-            set.push( line.parse::<Instruction>()? );
-        }
-        Ok(InstructionSet{
-            set: set.into()
-        })
+impl Ord for Position {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.1.cmp(&other.1).then_with(|| self.0.cmp(&other.0))
     }
 }
 
-#[derive(Debug,PartialEq)]
-enum Direction { U, R, D, L}
-
-#[derive(PartialEq)]
-struct Instruction {
-    dir: Direction, 
-    run: usize,
-    rgb: (u8,u8,u8)
-}
-
-impl FromStr for Instruction {
-    type Err = InstructionErr;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut split = s.split_whitespace();
-        if split.clone().count() != 3 { return Err(InstructionErr::InvalidFormat(format!("{}",s)))}
-
-        let dir = split.next().ok_or(InstructionErr::InvalidDirection(format!("{}",s)))?;
-        let run = split.next().ok_or(InstructionErr::InvalidRunLength(format!("{}",s)))?;
-        let rgb = split.next().ok_or(InstructionErr::InvalidRGB(format!("{}",s)))?.trim_matches(['(',')','#']);
-        if rgb.len() != 6 { return Err(InstructionErr::InvalidRGB(format!("{}",s)));}
-
-        Ok(Instruction {
-            dir: match dir {
-                "D" => Some(Direction::D),
-                "L" => Some(Direction::L),
-                "R" => Some(Direction::R),
-                "U" => Some(Direction::U),
-                _ => None
-            }.ok_or(InstructionErr::InvalidDirection(format!("{}",s)))?,
-            run: usize::from_str(run).or(Err(InstructionErr::InvalidRunLength(format!("{}",s))))?,
-            rgb: (
-                u8::from_str_radix(&rgb[..=1],16).or(Err(InstructionErr::InvalidRGB(format!("{}",s))))?,
-                u8::from_str_radix(&rgb[2..=3],16).or(Err(InstructionErr::InvalidRGB(format!("{}",s))))?,
-                u8::from_str_radix(&rgb[4..=5],16).or(Err(InstructionErr::InvalidRGB(format!("{}",s))))?
-            )
-        })
+impl Position {
+    fn next(&mut self, dir: Direction) -> &mut Self {
+        match dir {
+            Direction::U => self.1 -= 1,
+            Direction::R => self.0 += 1,
+            Direction::D => self.1 += 1,
+            Direction::L => self.0 -= 1,
+        };
+        self
     }
 }
 
-impl Debug for Instruction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {} (#{:02x}{:02x}{:02x})",self.dir,self.run,self.rgb.0,self.rgb.1,self.rgb.2)?;
+#[derive(Debug, Copy, Clone)]
+struct Trench(Depth, RGB);
+
+struct Lagoon {
+    map: BTreeMap<Position, Trench>
+}
+
+impl Default for Lagoon {
+    fn default() -> Self {
+        Lagoon { map: BTreeMap::new() }
+    }
+}
+
+impl Lagoon {
+    fn get_digger(&mut self, pos: Position, depth: Depth) -> Digger {
+        Digger { lagoon:self, pos, depth }
+    }
+    fn min_pos(&self) -> Option<&Position> {
+        self.map
+            .first_key_value()
+            .map(|(pos,_)| pos)
+    }
+    fn max_pos(&self) -> Option<&Position> {
+        self.map
+            .last_key_value()
+            .map(|(pos,_)| pos)
+    }
+}
+
+impl Debug for Lagoon {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let min = self.min_pos().unwrap();
+        let max = self.max_pos().unwrap();
+
+        writeln!(f,"Lagoon")?;
+        for y in min.1..=max.1 {
+            for x in min.0..=max.0 {
+                write!(f,"{:2}",
+                       if self.map.get(&Position(x,y)).is_some() {'#'} else {'.'}
+                )?;
+            };
+            writeln!(f)?;
+        };
+
         Ok(())
     }
 }
-
-impl Display for Instruction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Debug>::fmt(&self, f)
-    }
+struct Digger<'a> {
+    lagoon: &'a mut Lagoon,
+    pos: Position,
+    depth: Depth
 }
 
-#[derive(PartialEq)]
-enum InstructionErr {
-    InvalidDirection(String),
-    InvalidRunLength(String),
-    InvalidRGB(String),
-    InvalidFormat(String)
-}
-
-impl Error for InstructionErr {}
-
-impl Display for InstructionErr {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Debug>::fmt(&self, f)
-    }
-}
-
-impl Debug for InstructionErr {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::InvalidDirection(s) => write!(f, "Cannot parse Direction. Received: {:?}",s),
-            Self::InvalidRunLength(s) => write!(f, "Cannot parse RunLength. Received: {:?}",s),
-            Self::InvalidRGB(s) => write!(f, "Cannot parse RGB values. Received: {:?}",s),
-            Self::InvalidFormat(s) => write!(f, "Expecting 3 parts. Received: {:?}",s),
-        }
+impl Digger<'_> {
+    fn dig(&mut self, instr: &Instruction) -> usize {
+        let Digger{ lagoon, pos, depth} = self;
+        (0..instr.run)
+            .take_while(|_|
+                lagoon.map.insert(*pos.next(instr.dir), Trench(*depth, instr.rgb)).is_none()
+            )
+            .count()
     }
 }
 
@@ -113,44 +109,24 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_instructionset_parse()  {
-        let inp = std::fs::read_to_string("./src/bin/day18/sample.txt").expect("Ops!");
-        let set = match inp.parse::<InstructionSet>() {
-            Ok(set) => set,
-            Err(e) => panic!("{}",e),
-        };
-    
-        let mut iter = set.iter();
-        inp.lines()
-            .for_each(|line| {
-                let out = &format!("{:?}",iter.next().unwrap());
-                println!("{line} => {out}");
-                assert_eq!(line,out);
-            });
+    fn test_dig() {
+        let inp = std::fs::read_to_string("./src/bin/day18/sample.txt").expect("ops");
+        let plan = inp.parse::<DigPlan>().expect("failed to load Dig Plan");
+
+        let mut lagoon = Lagoon::default();
+        let mut digger = lagoon.get_digger(Position(0, 0), 1);
+
+        let total = plan.iter()
+            .map(|i| {
+                assert_eq!(digger.dig(i), i.run);
+                i.run
+            })
+            .sum::<usize>();
+
+        println!("Steps: {total}\n{:?}",lagoon);
+        println!("{:?}", lagoon.min_pos());
+        println!("{:?}", lagoon.max_pos());
     }
 
-    #[test]
-    fn test_instruction_parse() {
-        let data = [
-            ("R 6 (#4d17d2)", Ok(Instruction { dir: Direction::R, run: 6, rgb: (0x4d,0x17,0xD2)})),
-            ("U 10 (4d17d2)", Ok(Instruction { dir: Direction::U, run: 10, rgb: (0x4d,0x17,0xD2)})),
-            ("U 10 #4d17d2", Ok(Instruction { dir: Direction::U, run: 10, rgb: (0x4d,0x17,0xD2)})),
-            ("U 10 4d17d2", Ok(Instruction { dir: Direction::U, run: 10, rgb: (0x4d,0x17,0xD2)})),
-            ("K 5 (#af8603)", Err(InstructionErr::InvalidDirection("K 5 (#af8603)".to_string()))),
-            ("L a (#1a3700)", Err(InstructionErr::InvalidRunLength("L a (#1a3700)".to_string()))),
-            ("U 10 (#6534071)", Err(InstructionErr::InvalidRGB("U 10 (#6534071)".to_string()))),
-            ("U 10 (#65L071)", Err(InstructionErr::InvalidRGB("U 10 (#65L071)".to_string()))),
-            ("U 10 (#G071)", Err(InstructionErr::InvalidRGB("U 10 (#G071)".to_string()))),
-            ("U 10 [#4d17d2]", Err(InstructionErr::InvalidRGB("U 10 [#4d17d2]".to_string()))),
-            ("U 10 (*4d17d2)", Err(InstructionErr::InvalidRGB("U 10 (*4d17d2)".to_string()))),
-            ("U10 (#534071)", Err(InstructionErr::InvalidFormat("U10 (#534071)".to_string()))),
-        ];
-
-        for (inp,out) in data {
-            let instr = inp.parse::<Instruction>();
-            println!("Test => \n\tInput: {:?}, \n\tOutput: {:?}", inp, instr);
-            assert_eq!( instr, out);
-        }
-
-    }
 }
+
