@@ -1,4 +1,4 @@
-use std::{fmt::Debug, str::FromStr};
+use std::{error::Error, fmt::{Debug, Display}, str::FromStr};
 
 fn main() {
 
@@ -20,7 +20,7 @@ impl FromStr for InstructionSet {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut set = vec![];
         for line in s.lines() {
-            set.push( line.parse::<Instruction>()?);
+            set.push( line.parse::<Instruction>()? );
         }
         Ok(InstructionSet{
             set: set.into()
@@ -36,30 +36,6 @@ struct Instruction {
     dir: Direction, 
     run: usize,
     rgb: (u8,u8,u8)
-}
-
-#[derive(PartialEq)]
-enum InstructionErr {
-    InvalidDirection(String),
-    InvalidRunLength(String),
-    InvalidRGB(String),
-    InvalidFormat(String)
-}
-impl Debug for Instruction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {} (#{:02x}{:02x}{:02x})",self.dir,self.run,self.rgb.0,self.rgb.1,self.rgb.2)?;
-        Ok(())
-    }
-}
-impl Debug for InstructionErr {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::InvalidDirection(s) => write!(f, "Cannot parse Direction. Received: {:?}",s),
-            Self::InvalidRunLength(s) => write!(f, "Cannot parse RunLength. Received: {:?}",s),
-            Self::InvalidRGB(s) => write!(f, "Cannot parse RGB values. Received: {:?}",s),
-            Self::InvalidFormat(s) => write!(f, "Expecting 3 parts. Received: {:?}",s),
-        }
-    }
 }
 
 impl FromStr for Instruction {
@@ -92,6 +68,46 @@ impl FromStr for Instruction {
     }
 }
 
+impl Debug for Instruction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?} {} (#{:02x}{:02x}{:02x})",self.dir,self.run,self.rgb.0,self.rgb.1,self.rgb.2)?;
+        Ok(())
+    }
+}
+
+impl Display for Instruction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Debug>::fmt(&self, f)
+    }
+}
+
+#[derive(PartialEq)]
+enum InstructionErr {
+    InvalidDirection(String),
+    InvalidRunLength(String),
+    InvalidRGB(String),
+    InvalidFormat(String)
+}
+
+impl Error for InstructionErr {}
+
+impl Display for InstructionErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Debug>::fmt(&self, f)
+    }
+}
+
+impl Debug for InstructionErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvalidDirection(s) => write!(f, "Cannot parse Direction. Received: {:?}",s),
+            Self::InvalidRunLength(s) => write!(f, "Cannot parse RunLength. Received: {:?}",s),
+            Self::InvalidRGB(s) => write!(f, "Cannot parse RGB values. Received: {:?}",s),
+            Self::InvalidFormat(s) => write!(f, "Expecting 3 parts. Received: {:?}",s),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -101,11 +117,16 @@ mod test {
         let inp = std::fs::read_to_string("./src/bin/day18/sample.txt").expect("Ops!");
         let set = match inp.parse::<InstructionSet>() {
             Ok(set) => set,
-            Err(e) => panic!("{:?}",e),
+            Err(e) => panic!("{}",e),
         };
     
-        set.iter().for_each(|ins| println!("{:?}",ins) );
-        assert_eq!(set.set.len(), 14);
+        let mut iter = set.iter();
+        inp.lines()
+            .for_each(|line| {
+                let out = &format!("{:?}",iter.next().unwrap());
+                println!("{line} => {out}");
+                assert_eq!(line,out);
+            });
     }
 
     #[test]

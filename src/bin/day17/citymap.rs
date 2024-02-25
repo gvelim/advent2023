@@ -60,10 +60,10 @@ impl CityMap {
     }
 
 }
-impl Index<usize> for CityMap {
+impl Index<Position> for CityMap {
     type Output = Heat;
 
-    fn index(&self, index: usize) -> &Self::Output {
+    fn index(&self, index: Position) -> &Self::Output {
         &self.map[index]
     }
 }
