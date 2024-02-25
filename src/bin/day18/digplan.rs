@@ -1,6 +1,5 @@
 use std::str::FromStr;
 use crate::instruction::{Instruction, InstructionErr};
-use crate::{Depth, Digger, Lagoon, Position};
 
 pub(crate) struct DigPlan {
     set: std::rc::Rc<[Instruction]>

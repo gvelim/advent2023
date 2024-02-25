@@ -13,8 +13,10 @@ fn main() {
 
 type Depth = u8;
 
+type Unit = i16;
+
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
-struct Position(isize,isize);
+struct Position(Unit,Unit);
 
 impl PartialOrd<Self> for Position {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -44,39 +46,42 @@ impl Position {
 struct Trench(Depth, RGB);
 
 struct Lagoon {
+    min: Position,
+    max: Position,
     map: BTreeMap<Position, Trench>
 }
 
 impl Default for Lagoon {
     fn default() -> Self {
-        Lagoon { map: BTreeMap::new() }
+        Lagoon {
+            min: Position(Unit::MAX,Unit::MAX),
+            max: Position(Unit::MIN,Unit::MIN),
+            map: BTreeMap::new()
+        }
     }
 }
 
 impl Lagoon {
-    fn get_digger(&mut self, pos: Position, depth: Depth) -> Digger {
-        Digger { lagoon:self, pos, depth }
+    fn dig(&mut self, pos: Position, trench: Trench) -> Option<Trench> {
+        self.min.0 = std::cmp::min(self.min.0, pos.0);
+        self.min.1 = std::cmp::min(self.min.1, pos.1);
+        self.max.0 = std::cmp::max(self.max.0, pos.0);
+        self.max.1 = std::cmp::max(self.max.1, pos.1);
+        self.map.insert(pos, trench)
     }
-    fn min_pos(&self) -> Option<&Position> {
-        self.map
-            .first_key_value()
-            .map(|(pos,_)| pos)
+    fn min_pos(&self) -> Option<Position> {
+        Some(self.min)
     }
-    fn max_pos(&self) -> Option<&Position> {
-        self.map
-            .last_key_value()
-            .map(|(pos,_)| pos)
+    fn max_pos(&self) -> Option<Position> {
+        Some(self.max)
     }
 }
 
 impl Debug for Lagoon {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let min = self.min_pos().unwrap();
-        let max = self.max_pos().unwrap();
-
         writeln!(f,"Lagoon")?;
-        for y in min.1..=max.1 {
-            for x in min.0..=max.0 {
+        for y in self.min.1..=self.max.1 {
+            for x in self.min.0..=self.max.0 {
                 write!(f,"{:2}",
                        if self.map.get(&Position(x,y)).is_some() {'#'} else {'.'}
                 )?;
@@ -87,18 +92,21 @@ impl Debug for Lagoon {
         Ok(())
     }
 }
-struct Digger<'a> {
-    lagoon: &'a mut Lagoon,
+struct Digger {
     pos: Position,
     depth: Depth
 }
 
-impl Digger<'_> {
-    fn dig(&mut self, instr: &Instruction) -> usize {
-        let Digger{ lagoon, pos, depth} = self;
+impl Digger {
+    fn new(pos: Position, depth: Depth) -> Digger {
+        Digger { pos, depth }
+    }
+
+    fn dig(&mut self, lagoon: &mut Lagoon, instr: &Instruction) -> usize {
+        let Digger{ pos, depth} = self;
         (0..instr.run)
             .take_while(|_|
-                lagoon.map.insert(*pos.next(instr.dir), Trench(*depth, instr.rgb)).is_none()
+                lagoon.dig(*pos.next(instr.dir), Trench(*depth, instr.rgb)).is_none()
             )
             .count()
     }
@@ -114,12 +122,12 @@ mod test {
         let plan = inp.parse::<DigPlan>().expect("failed to load Dig Plan");
 
         let mut lagoon = Lagoon::default();
-        let mut digger = lagoon.get_digger(Position(0, 0), 1);
+        let mut digger = Digger::new(Position(0, 0), 1);
 
         let total = plan.iter()
-            .map(|i| {
-                assert_eq!(digger.dig(i), i.run);
-                i.run
+            .map(|ins| {
+                assert_eq!(digger.dig(&mut lagoon, ins), ins.run);
+                ins.run
             })
             .sum::<usize>();
 
