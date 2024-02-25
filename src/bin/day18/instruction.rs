@@ -1,13 +1,24 @@
 use std::error::Error;
-use std::fmt::{Debug, Display};
+use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
 
 #[derive(Debug,PartialEq, Copy, Clone)]
 pub(crate) enum Direction { U, R, D, L }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone)]
 pub struct RGB(u8,u8,u8);
+
+impl Debug for RGB {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "#{:x}{:x}{:x}", self.0,self.1,self.2)
+    }
+}
+impl Display for RGB {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <Self as Debug>::fmt(self,f)
+    }
+}
 
 #[derive(PartialEq, Clone)]
 pub(crate) struct Instruction {

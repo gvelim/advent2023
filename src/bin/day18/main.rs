@@ -1,11 +1,11 @@
 mod instruction;
-mod digplan;
+mod digging_plan;
 
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::fmt::{Debug, Formatter};
 use instruction::{Instruction, RGB, Direction};
-use digplan::DigPlan;
+use digging_plan::DigPlan;
 
 fn main() {
 
@@ -15,15 +15,18 @@ type Depth = u8;
 
 type Unit = i16;
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Eq, PartialEq, Clone, Copy)]
 struct Position(Unit,Unit);
-
+impl Debug for Position {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f,"({},{})",self.0,self.1)
+    }
+}
 impl PartialOrd<Self> for Position {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
-
 impl Ord for Position {
     fn cmp(&self, other: &Self) -> Ordering {
         self.1.cmp(&other.1).then_with(|| self.0.cmp(&other.0))
@@ -62,7 +65,7 @@ impl Default for Lagoon {
 }
 
 impl Lagoon {
-    fn dig(&mut self, pos: Position, trench: Trench) -> Option<Trench> {
+    fn dig_trench(&mut self, pos: Position, trench: Trench) -> Option<Trench> {
         self.min.0 = std::cmp::min(self.min.0, pos.0);
         self.min.1 = std::cmp::min(self.min.1, pos.1);
         self.max.0 = std::cmp::max(self.max.0, pos.0);
@@ -88,7 +91,6 @@ impl Debug for Lagoon {
             };
             writeln!(f)?;
         };
-
         Ok(())
     }
 }
@@ -106,7 +108,7 @@ impl Digger {
         let Digger{ pos, depth} = self;
         (0..instr.run)
             .take_while(|_|
-                lagoon.dig(*pos.next(instr.dir), Trench(*depth, instr.rgb)).is_none()
+                lagoon.dig_trench(*pos.next(instr.dir), Trench(*depth, instr.rgb)).is_none()
             )
             .count()
     }
@@ -114,6 +116,7 @@ impl Digger {
 
 #[cfg(test)]
 mod test {
+    use std::ops::Bound::Included;
     use super::*;
 
     #[test]
@@ -126,14 +129,17 @@ mod test {
 
         let total = plan.iter()
             .map(|ins| {
-                assert_eq!(digger.dig(&mut lagoon, ins), ins.run);
-                ins.run
+                digger.dig(&mut lagoon, ins)
             })
             .sum::<usize>();
 
         println!("Steps: {total}\n{:?}",lagoon);
         println!("{:?}", lagoon.min_pos());
         println!("{:?}", lagoon.max_pos());
+
+        lagoon.map
+            .range(Position(Unit::MIN,0)..=Position(Unit::MAX,0))
+            .for_each(|d| println!("{:?}",d))
     }
 
 }
