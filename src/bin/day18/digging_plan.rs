@@ -2,7 +2,7 @@ use std::str::FromStr;
 use crate::instruction::{Instruction, InstructionErr};
 
 pub(crate) struct DigPlan {
-    set: std::rc::Rc<[Instruction]>
+    pub(crate) set: std::rc::Rc<[Instruction]>
 }
 
 impl DigPlan {

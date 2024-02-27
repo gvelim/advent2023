@@ -1,20 +1,21 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
-
+use std::rc::Rc;
 
 #[derive(Debug,PartialEq, Copy, Clone)]
 pub(crate) enum Direction { U, R, D, L }
 
-#[derive(PartialEq, Copy, Clone)]
-pub struct RGB(u8,u8,u8);
+#[derive(PartialEq, Eq, Copy, Clone)]
+pub struct Rgb(u8,u8,u8);
 
-impl Debug for RGB {
+impl Debug for Rgb {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "#{:x}{:x}{:x}", self.0,self.1,self.2)
+        write!(f, "#{:02x}{:02x}{:02x}", self.0,self.1,self.2)
     }
 }
-impl Display for RGB {
+
+impl Display for Rgb {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         <Self as Debug>::fmt(self,f)
     }
@@ -24,7 +25,7 @@ impl Display for RGB {
 pub(crate) struct Instruction {
     pub dir: Direction,
     pub run: usize,
-    pub rgb: RGB
+    pub rgb: Rgb
 }
 
 impl FromStr for Instruction {
@@ -32,12 +33,12 @@ impl FromStr for Instruction {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut split = s.split_whitespace();
-        if split.clone().count() != 3 { return Err(InstructionErr::InvalidFormat(format!("{}",s)))}
+        if split.clone().count() != 3 { return Err(InstructionErr::InvalidFormat(s.into()))}
 
-        let dir = split.next().ok_or(InstructionErr::InvalidDirection(format!("{}",s)))?;
-        let run = split.next().ok_or(InstructionErr::InvalidRunLength(format!("{}",s)))?;
-        let rgb = split.next().ok_or(InstructionErr::InvalidRGB(format!("{}",s)))?.trim_matches(['(',')','#']);
-        if rgb.len() != 6 { return Err(InstructionErr::InvalidRGB(format!("{}",s)));}
+        let dir = split.next().ok_or(InstructionErr::InvalidDirection(s.into()))?;
+        let run = split.next().ok_or(InstructionErr::InvalidRunLength(s.into()))?;
+        let rgb = split.next().ok_or(InstructionErr::InvalidRGB(s.into()))?.trim_matches(['(',')','#']);
+        if rgb.len() != 6 { return Err(InstructionErr::InvalidRGB(s.into()));}
 
         Ok(Instruction {
             dir: match dir {
@@ -46,12 +47,12 @@ impl FromStr for Instruction {
                 "R" => Some(Direction::R),
                 "U" => Some(Direction::U),
                 _ => None
-            }.ok_or(InstructionErr::InvalidDirection(format!("{}",s)))?,
-            run: usize::from_str(run).or(Err(InstructionErr::InvalidRunLength(format!("{}",s))))?,
-            rgb: RGB(
-                u8::from_str_radix(&rgb[..=1],16).or(Err(InstructionErr::InvalidRGB(format!("{}",s))))?,
-                u8::from_str_radix(&rgb[2..=3],16).or(Err(InstructionErr::InvalidRGB(format!("{}",s))))?,
-                u8::from_str_radix(&rgb[4..=5],16).or(Err(InstructionErr::InvalidRGB(format!("{}",s))))?
+            }.ok_or(InstructionErr::InvalidDirection(s.into()))?,
+            run: usize::from_str(run).or(Err(InstructionErr::InvalidRunLength(s.into())))?,
+            rgb: Rgb(
+                u8::from_str_radix(&rgb[..=1],16).or(Err(InstructionErr::InvalidRGB(s.into())))?,
+                u8::from_str_radix(&rgb[2..=3],16).or(Err(InstructionErr::InvalidRGB(s.into())))?,
+                u8::from_str_radix(&rgb[4..=5],16).or(Err(InstructionErr::InvalidRGB(s.into())))?
             )
         })
     }
@@ -59,30 +60,30 @@ impl FromStr for Instruction {
 
 impl Debug for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {} (#{:02x}{:02x}{:02x})",self.dir,self.run,self.rgb.0,self.rgb.1,self.rgb.2)?;
+        write!(f, "{:?} {} ({:?})",self.dir,self.run,self.rgb)?;
         Ok(())
     }
 }
 
 impl Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Debug>::fmt(&self, f)
+        <Self as Debug>::fmt(self, f)
     }
 }
 
 #[derive(PartialEq)]
 pub(crate) enum InstructionErr {
-    InvalidDirection(String),
-    InvalidRunLength(String),
-    InvalidRGB(String),
-    InvalidFormat(String)
+    InvalidDirection(Rc<str>),
+    InvalidRunLength(Rc<str>),
+    InvalidRGB(Rc<str>),
+    InvalidFormat(Rc<str>)
 }
 
 impl Error for InstructionErr {}
 
 impl Display for InstructionErr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Debug>::fmt(&self, f)
+        <Self as Debug>::fmt(self, f)
     }
 }
 
@@ -100,21 +101,22 @@ impl Debug for InstructionErr {
 #[cfg(test)]
 mod test {
     use super::*;
+
     #[test]
     fn test_instruction_parse() {
         let data = [
-            ("R 6 (#4d17d2)", Ok(Instruction { dir: Direction::R, run: 6, rgb: RGB(0x4d, 0x17, 0xD2)})),
-            ("U 10 (4d17d2)", Ok(Instruction { dir: Direction::U, run: 10, rgb: RGB(0x4d, 0x17, 0xD2)})),
-            ("U 10 #4d17d2", Ok(Instruction { dir: Direction::U, run: 10, rgb: RGB(0x4d, 0x17, 0xD2)})),
-            ("U 10 4d17d2", Ok(Instruction { dir: Direction::U, run: 10, rgb: RGB(0x4d, 0x17, 0xD2)})),
-            ("K 5 (#af8603)", Err(InstructionErr::InvalidDirection("K 5 (#af8603)".to_string()))),
-            ("L a (#1a3700)", Err(InstructionErr::InvalidRunLength("L a (#1a3700)".to_string()))),
-            ("U 10 (#6534071)", Err(InstructionErr::InvalidRGB("U 10 (#6534071)".to_string()))),
-            ("U 10 (#65L071)", Err(InstructionErr::InvalidRGB("U 10 (#65L071)".to_string()))),
-            ("U 10 (#G071)", Err(InstructionErr::InvalidRGB("U 10 (#G071)".to_string()))),
-            ("U 10 [#4d17d2]", Err(InstructionErr::InvalidRGB("U 10 [#4d17d2]".to_string()))),
-            ("U 10 (*4d17d2)", Err(InstructionErr::InvalidRGB("U 10 (*4d17d2)".to_string()))),
-            ("U10 (#534071)", Err(InstructionErr::InvalidFormat("U10 (#534071)".to_string()))),
+            ("R 6 (#4d17d2)", Ok(Instruction { dir: Direction::R, run: 6, rgb: Rgb(0x4d, 0x17, 0xD2)})),
+            ("U 10 (4d17d2)", Ok(Instruction { dir: Direction::U, run: 10, rgb: Rgb(0x4d, 0x17, 0xD2)})),
+            ("U 10 #4d17d2", Ok(Instruction { dir: Direction::U, run: 10, rgb: Rgb(0x4d, 0x17, 0xD2)})),
+            ("U 10 4d17d2", Ok(Instruction { dir: Direction::U, run: 10, rgb: Rgb(0x4d, 0x17, 0xD2)})),
+            ("K 5 (#af8603)", Err(InstructionErr::InvalidDirection("K 5 (#af8603)".into()))),
+            ("L a (#1a3700)", Err(InstructionErr::InvalidRunLength("L a (#1a3700)".into()))),
+            ("U 10 (#6534071)", Err(InstructionErr::InvalidRGB("U 10 (#6534071)".into()))),
+            ("U 10 (#65L071)", Err(InstructionErr::InvalidRGB("U 10 (#65L071)".into()))),
+            ("U 10 (#G071)", Err(InstructionErr::InvalidRGB("U 10 (#G071)".into()))),
+            ("U 10 [#4d17d2]", Err(InstructionErr::InvalidRGB("U 10 [#4d17d2]".into()))),
+            ("U 10 (*4d17d2)", Err(InstructionErr::InvalidRGB("U 10 (*4d17d2)".into()))),
+            ("U10 (#534071)", Err(InstructionErr::InvalidFormat("U10 (#534071)".into()))),
         ];
 
         for (inp,out) in data {
