@@ -93,13 +93,20 @@ impl Lagoon {
 }
 
 impl Debug for Lagoon {
+
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        use colored::*;
+
         writeln!(f, "Lagoon")?;
         for y in self.min.1..=self.max.1 {
             for x in self.min.0..=self.max.0 {
                 write!(f, "{:2}",
-                    if self.map.get(&Position(x, y)).is_some() {'#'} else {'.'}
-                )?;
+                    &self.map
+                        .get(&Position(x, y))
+                        .map(|t| "#".truecolor(t.1.0,t.1.1,t.1.2) )
+                        .or(Some(".".into()))
+                        .unwrap()
+                )?
             }
             writeln!(f)?;
         }
@@ -114,7 +121,7 @@ mod test {
 
     #[test]
     fn test_lagoon_area() {
-        let plan = std::fs::read_to_string("./src/bin/day18/sample.txt")
+        let plan = std::fs::read_to_string("./src/bin/day18/sample2.txt")
             .expect("ops")
             .parse::<DigPlan>()
             .expect("failed to load Dig Plan");

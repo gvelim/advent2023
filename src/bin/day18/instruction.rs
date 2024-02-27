@@ -7,7 +7,7 @@ use std::rc::Rc;
 pub(crate) enum Direction { U, R, D, L }
 
 #[derive(PartialEq, Eq, Copy, Clone, PartialOrd, Ord)]
-pub struct Rgb(u8,u8,u8);
+pub struct Rgb(pub u8,pub u8,pub u8);
 
 impl Debug for Rgb {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

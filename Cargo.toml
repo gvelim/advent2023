@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 rayon = "1.8.0"
 num = "0.4.1"
+colored = "2.1.0"
