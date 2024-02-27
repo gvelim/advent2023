@@ -6,7 +6,7 @@ use std::rc::Rc;
 #[derive(Debug,PartialEq, Copy, Clone)]
 pub(crate) enum Direction { U, R, D, L }
 
-#[derive(PartialEq, Eq, Copy, Clone)]
+#[derive(PartialEq, Eq, Copy, Clone, PartialOrd, Ord)]
 pub struct Rgb(u8,u8,u8);
 
 impl Debug for Rgb {

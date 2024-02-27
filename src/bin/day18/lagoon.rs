@@ -46,12 +46,15 @@ impl Default for Lagoon {
 }
 
 impl Lagoon {
+
     fn min_pos(&self) -> Position {
         self.min
     }
+
     fn max_pos(&self) -> Position {
         self.max
     }
+
     fn dig_trench(&mut self, pos: Position, trench: Trench) -> Option<Trench> {
         self.min.0 = std::cmp::min(self.min.0, pos.0);
         self.min.1 = std::cmp::min(self.min.1, pos.1);
@@ -59,14 +62,33 @@ impl Lagoon {
         self.max.1 = std::cmp::max(self.max.1, pos.1);
         self.map.insert(pos, trench)
     }
+
     fn calculate_area(&self) -> usize {
-        (self.min.1..=self.max.1).for_each(|y| {
+        let mut last: Option<(Position, Trench)> = None;
+
+        (self.min.1..=self.max.1).map(|y| {
             println!("Line {y}");
             self.map
                 .range(Position(Unit::MIN, y)..=Position(Unit::MAX, y))
-                .for_each(|(p, t)| println!("\t{:?} -> {:?}", p, t))
-        });
-        0
+                .filter_map(|(p, t)| {
+                    if let Some((lp, lt)) = last {
+                        last = Some((*p,*t));
+                        if p.0 - lp.0 > 1 {
+                            Some((lp, p))
+                        } else {
+                            None
+                        }
+                    } else {
+                        last = Some((*p,*t));
+                        None
+                    }
+                })
+                .inspect(|(p,t)| print!("Out\t{:?} -> {:?} = ", p, t))
+                .map(|(a,b)| (b.0 - a.0 - 1) as usize)
+                .inspect(|n| println!("{n}"))
+                .sum::<usize>()
+        })
+        .sum::<usize>()
     }
 }
 
@@ -106,7 +128,7 @@ mod test {
             .sum::<usize>();
 
         println!("{:?}\nTrench {total}", lagoon);
-        lagoon.calculate_area();
+        println!("Lagoon area {}", lagoon.calculate_area() + total);
     }
 
     #[test]
