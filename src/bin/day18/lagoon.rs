@@ -29,6 +29,14 @@ impl Digger {
 #[derive(Debug, Copy, Clone)]
 struct Trench(Depth, Rgb);
 
+impl Trench {
+    fn r(&self) -> u8 { self.1.0 }
+    fn g(&self) -> u8 { self.1.1 }
+    fn b(&self) -> u8 { self.1.2 }
+    fn rgb(&self) -> usize { (self.r()<<16 + self.b()<<8 + self.g()) as usize }
+    fn depth(&self) -> Depth { self.0 }
+}
+
 pub(crate) struct Lagoon {
     min: Position,
     max: Position,
@@ -63,32 +71,37 @@ impl Lagoon {
         self.map.insert(pos, trench)
     }
 
-    fn calculate_area(&self) -> usize {
+    fn get_line_intersections(&self, line: Unit) -> impl Iterator<Item = &Position> +'_ {
         let mut last: Option<(Position, Trench)> = None;
 
-        (self.min.1..=self.max.1).map(|y| {
-            println!("Line {y}");
-            self.map
-                .range(Position(Unit::MIN, y)..=Position(Unit::MAX, y))
-                .filter_map(|(p, t)| {
-                    if let Some((lp, lt)) = last {
+        self.map
+            .range(Position(Unit::MIN, line)..=Position(Unit::MAX, line))
+            .filter_map(move |(p, t)| {
+                if let Some((lp, lt)) = last {
+                    if lt.1 == t.1 { None } else {
                         last = Some((*p,*t));
-                        if p.0 - lp.0 > 1 {
-                            Some((lp, p))
-                        } else {
-                            None
-                        }
-                    } else {
-                        last = Some((*p,*t));
-                        None
+                        Some(p)
                     }
-                })
-                .inspect(|(p,t)| print!("Out\t{:?} -> {:?} = ", p, t))
-                .map(|(a,b)| (b.0 - a.0 - 1) as usize)
-                .inspect(|n| println!("{n}"))
-                .sum::<usize>()
-        })
-        .sum::<usize>()
+                } else {
+                    last = Some((*p,*t));
+                    Some(p)
+                }
+            })
+    }
+
+    fn calculate_area(&self) -> usize {
+        (self.min.1..=self.max.1)
+            .map(|y| {
+                println!("Line {y}");
+                self.get_line_intersections(y)
+                    .array_chunks::<2>()
+                    .inspect(|p| print!("{:?}, ", p))
+                    .map(|pair| (pair[1].0 - pair[0].0 - 1) as usize)
+                    .sum::<usize>()
+
+            })
+            .inspect(|s| println!(" = {s}"))
+            .sum::<usize>()
     }
 }
 
@@ -103,7 +116,7 @@ impl Debug for Lagoon {
                 write!(f, "{:2}",
                     &self.map
                         .get(&Position(x, y))
-                        .map(|t| "#".truecolor(t.1.0,t.1.1,t.1.2) )
+                        .map(|t| "#".truecolor(t.r(),t.g(),t.b()) )
                         .or(Some(".".into()))
                         .unwrap()
                 )?

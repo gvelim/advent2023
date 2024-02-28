@@ -1,3 +1,5 @@
+#![feature(iter_array_chunks)]
+
 mod instruction;
 mod digging_plan;
 mod position;
