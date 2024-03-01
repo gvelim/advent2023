@@ -2,6 +2,7 @@ use crate::instruction::{Direction, Instruction, Rgb};
 use crate::position::{Position, Unit};
 use std::collections::BTreeMap;
 use std::fmt::{Debug, Formatter};
+use std::ops::RangeInclusive;
 
 type Depth = u8;
 
@@ -80,26 +81,25 @@ impl Lagoon {
         self.map.insert(pos, trench)
     }
 
-    fn get_line_intersections(&self, line: Unit) -> impl Iterator<Item = &Position> + '_ {
-        let mut last: Option<(Position, Trench)> = None;
+    fn get_line_intersections(&self, line: Unit) -> impl Iterator<Item = RangeInclusive<Unit>> + '_ {
+        let mut last: Option<Position> = None;
 
         self.map
             .range(Position(Unit::MIN, line)..=Position(Unit::MAX, line))
-            .filter_map(move |(p, t)| {
-                let mut out = Some(p);
+            .filter_map(move |(p, _)| {
                 let next = self.map.get(&p.next(Direction::R));
-                if let Some((lp, lt)) = last {
-                    out = match (lt.1 == t.1, next) {
-                        (true, None) => Some(p),
-                        (true, Some(nt)) if nt.1 != t.1 => None,
-                        (true, Some(_)) => None,
-                        (false, None) => Some(p),
-                        (false, Some(nt)) if nt.1 != t.1 => Some(p),
-                        (false, Some(_)) if p.0 - lp.0 > 1 => Some(p),
-                        (false, Some(_)) => None,
-                    };
-                }
-                last = Some((*p, *t));
+                let out = match (last, next) {
+                    (None,None) => Some(p.0..=p.0),
+                    (None, Some(_)) => {
+                        last = Some(*p);
+                        None
+                    },
+                    (Some(lp), None) => {
+                        last = None;
+                        Some(lp.0..=p.0)
+                    },
+                    _ => None,
+                };
                 out
             })
     }
@@ -110,9 +110,9 @@ impl Lagoon {
                 print!("Line {y}\n\t");
                 self.get_line_intersections(y)
                     // .array_chunks::<2>()
-                    .inspect(|p| print!("{:?}, ", p.0))
-                    // .map(|pair| (pair[1].0 - pair[0].0 - 1) as usize)
-                    .map(|p| p.0 as usize)
+                    .inspect(|p| print!("{:?}, ", p))
+                    // .map(|pair| (pair[1].start() - pair[0].end()) as usize)
+                    .map(|p| *p.start() as usize)
                     .sum::<usize>()
             })
             .inspect(|s| println!(" = {s}"))
@@ -150,7 +150,7 @@ mod test {
 
     #[test]
     fn test_lagoon_area() {
-        let plan = std::fs::read_to_string("./src/bin/day18/sample2.txt")
+        let plan = std::fs::read_to_string("./src/bin/day18/sample.txt")
             .expect("ops")
             .parse::<DigPlan>()
             .expect("failed to load Dig Plan");
