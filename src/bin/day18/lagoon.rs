@@ -1,4 +1,4 @@
-use crate::instruction::{Instruction, Rgb};
+use crate::instruction::{Direction, Instruction, Rgb};
 use crate::position::{Position, Unit};
 use std::collections::BTreeMap;
 use std::fmt::{Debug, Formatter};
@@ -19,7 +19,7 @@ impl Digger {
         (0..instr.run)
             .take_while(|_| {
                 lagoon
-                    .dig_trench(*self.pos.next(instr.dir), Trench(self.depth, instr.rgb))
+                    .dig_trench(*self.pos.next_mut(instr.dir), Trench(self.depth, instr.rgb))
                     .is_none()
             })
             .count()
@@ -30,11 +30,21 @@ impl Digger {
 struct Trench(Depth, Rgb);
 
 impl Trench {
-    fn r(&self) -> u8 { self.1.0 }
-    fn g(&self) -> u8 { self.1.1 }
-    fn b(&self) -> u8 { self.1.2 }
-    fn rgb(&self) -> usize { (self.r()<<16 + self.b()<<8 + self.g()) as usize }
-    fn depth(&self) -> Depth { self.0 }
+    fn r(&self) -> u8 {
+        self.1 .0
+    }
+    fn g(&self) -> u8 {
+        self.1 .1
+    }
+    fn b(&self) -> u8 {
+        self.1 .2
+    }
+    fn rgb(&self) -> usize {
+        (self.r() << 16 + self.b() << 8 + self.g()) as usize
+    }
+    fn depth(&self) -> Depth {
+        self.0
+    }
 }
 
 pub(crate) struct Lagoon {
@@ -54,7 +64,6 @@ impl Default for Lagoon {
 }
 
 impl Lagoon {
-
     fn min_pos(&self) -> Position {
         self.min
     }
@@ -71,34 +80,40 @@ impl Lagoon {
         self.map.insert(pos, trench)
     }
 
-    fn get_line_intersections(&self, line: Unit) -> impl Iterator<Item = &Position> +'_ {
+    fn get_line_intersections(&self, line: Unit) -> impl Iterator<Item = &Position> + '_ {
         let mut last: Option<(Position, Trench)> = None;
 
         self.map
             .range(Position(Unit::MIN, line)..=Position(Unit::MAX, line))
             .filter_map(move |(p, t)| {
+                let mut out = Some(p);
+                let next = self.map.get(&p.next(Direction::R));
                 if let Some((lp, lt)) = last {
-                    if lt.1 == t.1 { None } else {
-                        last = Some((*p,*t));
-                        Some(p)
-                    }
-                } else {
-                    last = Some((*p,*t));
-                    Some(p)
+                    out = match (lt.1 == t.1, next) {
+                        (true, None) => Some(p),
+                        (true, Some(nt)) if nt.1 != t.1 => None,
+                        (true, Some(_)) => None,
+                        (false, None) => Some(p),
+                        (false, Some(nt)) if nt.1 != t.1 => Some(p),
+                        (false, Some(_)) if p.0 - lp.0 > 1 => Some(p),
+                        (false, Some(_)) => None,
+                    };
                 }
+                last = Some((*p, *t));
+                out
             })
     }
 
     fn calculate_area(&self) -> usize {
         (self.min.1..=self.max.1)
             .map(|y| {
-                println!("Line {y}");
+                print!("Line {y}\n\t");
                 self.get_line_intersections(y)
-                    .array_chunks::<2>()
-                    .inspect(|p| print!("{:?}, ", p))
-                    .map(|pair| (pair[1].0 - pair[0].0 - 1) as usize)
+                    // .array_chunks::<2>()
+                    .inspect(|p| print!("{:?}, ", p.0))
+                    // .map(|pair| (pair[1].0 - pair[0].0 - 1) as usize)
+                    .map(|p| p.0 as usize)
                     .sum::<usize>()
-
             })
             .inspect(|s| println!(" = {s}"))
             .sum::<usize>()
@@ -106,19 +121,20 @@ impl Lagoon {
 }
 
 impl Debug for Lagoon {
-
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         use colored::*;
 
         writeln!(f, "Lagoon")?;
         for y in self.min.1..=self.max.1 {
             for x in self.min.0..=self.max.0 {
-                write!(f, "{:2}",
-                    &self.map
+                write!(
+                    f,
+                    "{:2}",
+                    &self
+                        .map
                         .get(&Position(x, y))
-                        .map(|t| "#".truecolor(t.r(),t.g(),t.b()) )
-                        .or(Some(".".into()))
-                        .unwrap()
+                        .map(|t| "#".truecolor(t.r(), t.g(), t.b()))
+                        .unwrap_or(".".into())
                 )?
             }
             writeln!(f)?;

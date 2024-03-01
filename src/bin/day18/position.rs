@@ -1,5 +1,8 @@
-use std::{cmp::Ordering, fmt::{Debug, Formatter}};
 use crate::instruction::Direction;
+use std::{
+    cmp::Ordering,
+    fmt::{Debug, Formatter},
+};
 
 pub(crate) type Unit = i16;
 
@@ -8,7 +11,7 @@ pub(crate) struct Position(pub Unit, pub Unit);
 
 impl Debug for Position {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f,"({},{})",self.0,self.1)
+        write!(f, "({},{})", self.0, self.1)
     }
 }
 
@@ -25,7 +28,7 @@ impl Ord for Position {
 }
 
 impl Position {
-    pub(crate) fn next(&mut self, dir: Direction) -> &mut Self {
+    pub(crate) fn next_mut(&mut self, dir: Direction) -> &mut Self {
         match dir {
             Direction::U => self.1 -= 1,
             Direction::R => self.0 += 1,
@@ -33,5 +36,15 @@ impl Position {
             Direction::L => self.0 -= 1,
         };
         self
+    }
+    pub(crate) fn next(&self, dir: Direction) -> Self {
+        let mut out = *self;
+        match dir {
+            Direction::U => out.1 -= 1,
+            Direction::R => out.0 += 1,
+            Direction::D => out.1 += 1,
+            Direction::L => out.0 -= 1,
+        };
+        out
     }
 }
