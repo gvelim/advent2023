@@ -37,14 +37,4 @@ impl Position {
         };
         self
     }
-    pub(crate) fn next(&self, dir: Direction) -> Self {
-        let mut out = *self;
-        match dir {
-            Direction::U => out.1 -= 1,
-            Direction::R => out.0 += 1,
-            Direction::D => out.1 += 1,
-            Direction::L => out.0 -= 1,
-        };
-        out
-    }
 }

@@ -1,8 +1,8 @@
-use crate::instruction::{Direction, Instruction, Rgb};
+use crate::instruction::{Instruction, Rgb};
 use crate::position::{Position, Unit};
 use std::collections::BTreeMap;
 use std::fmt::{Debug, Formatter};
-use std::ops::RangeInclusive;
+use std::usize;
 
 type Depth = u8;
 
@@ -81,39 +81,39 @@ impl Lagoon {
         self.map.insert(pos, trench)
     }
 
-    fn get_line_intersections(&self, line: Unit) -> impl Iterator<Item = RangeInclusive<Unit>> + '_ {
-        let mut last: Option<Position> = None;
+    fn get_line_area(&self, line: Unit) -> usize {
+        let mut last: Option<(&Position,&Trench)> = None;
+        let mut area = 0;
 
         self.map
-            .range(Position(Unit::MIN, line)..=Position(Unit::MAX, line))
-            .filter_map(move |(p, _)| {
-                let next = self.map.get(&p.next(Direction::R));
-                let out = match (last, next) {
-                    (None,None) => Some(p.0..=p.0),
-                    (None, Some(_)) => {
-                        last = Some(*p);
+            .range(Position(Unit::MIN, line) ..= Position(Unit::MAX, line))
+            .filter_map(move |(p, t)| {
+                match last {
+                    None => {
+                        last = Some((p,t));
                         None
                     },
-                    (Some(lp), None) => {
+                    Some((lp,lt)) if p.0 - lp.0 == 1 => {
+                        last = Some((p,t));
+                        None
+                    },
+                    Some((lp,lt)) if p.0 - lp.0 > 1 => {
+                        print!(" {:?},",(lp.0,p.0));
                         last = None;
-                        Some(lp.0..=p.0)
+                        area += (p.0 - lp.0  - 1 ) as usize;
+                        Some(area)
                     },
                     _ => None,
-                };
-                out
+                }
             })
+            .sum::<usize>()
     }
 
     fn calculate_area(&self) -> usize {
         (self.min.1..=self.max.1)
             .map(|y| {
-                print!("Line {y}\n\t");
-                self.get_line_intersections(y)
-                    // .array_chunks::<2>()
-                    .inspect(|p| print!("{:?}, ", p))
-                    // .map(|pair| (pair[1].start() - pair[0].end()) as usize)
-                    .map(|p| *p.start() as usize)
-                    .sum::<usize>()
+                print!("Line {y}");
+                self.get_line_area(y)
             })
             .inspect(|s| println!(" = {s}"))
             .sum::<usize>()
