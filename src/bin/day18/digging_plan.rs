@@ -1,13 +1,31 @@
 use std::str::FromStr;
-use crate::instruction::{Instruction, InstructionErr};
+use crate::instruction::{Direction, Instruction, InstructionErr};
 
 pub(crate) struct DigPlan {
-    pub(crate) set: std::rc::Rc<[Instruction]>
+    pub(crate) set: std::rc::Rc<[Instruction]>,
 }
 
 impl DigPlan {
     pub(crate) fn iter(&self) -> impl Iterator<Item = &Instruction> + '_ {
         self.set.iter()
+    }
+
+    pub fn is_clockwise(&self) -> bool {
+        use Direction as D;
+
+        let mut last: Option<Direction> = None;
+        self.set.iter()
+            .map(|i| {
+                let out = last
+                    .map(|ld|
+                        if [D::L, D::U, D::R, D::D, D::L, D::U][i.dir as usize] == ld { 1 } else { -1 }
+                    )
+                    .unwrap_or(0);
+                last = Some(i.dir);
+                out
+            })
+            .sum::<isize>()
+            .is_positive()
     }
 }
 
@@ -28,6 +46,7 @@ impl FromStr for DigPlan {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::lagoon::test::load_plan;
 
     #[test]
     fn test_digplan_parse()  {
@@ -45,4 +64,19 @@ mod test {
                 assert_eq!(line,out);
             });
     }
+
+    #[test]
+    fn test_digplan_is_clockwise() {
+        let plan: DigPlan = match load_plan(None) {
+            Ok(p) => p,
+            Err(e) => panic!("{}", e),
+        };
+
+        match plan.is_clockwise() {
+            true => println!("Clockwise"),
+            false => println!("Counter Clockwise"),
+        }
+    }
+
+
 }

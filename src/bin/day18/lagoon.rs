@@ -11,14 +11,13 @@ struct Trench(Depth, Rgb, Direction);
 
 pub(crate) struct Digger {
     pos: Position,
-    depth: Depth,
+    depth: Depth
 }
 
 impl Digger {
     pub fn new(pos: Position, depth: Depth) -> Digger {
         Digger { pos, depth }
     }
-
     pub fn dig(&mut self, lagoon: &mut Lagoon, instr: &Instruction) -> usize {
         (0..instr.run)
             .take_while(|_| {
@@ -35,13 +34,13 @@ impl Digger {
 
 impl Trench {
     fn r(&self) -> u8 {
-        self.1 .0
+        self.1.0
     }
     fn g(&self) -> u8 {
-        self.1 .1
+        self.1.1
     }
     fn b(&self) -> u8 {
-        self.1 .2
+        self.1.2
     }
 }
 
@@ -70,34 +69,34 @@ impl Lagoon {
         self.map.insert(pos, trench)
     }
 
-    pub(crate) fn calc_line_area(&self, line: Unit) -> usize {
+    fn floodfill_intersections(&self, line: Unit) -> impl Iterator<Item=(Unit,Unit)> + '_ {
         use Direction as D;
-        let mut last: Option<(&Position, &Direction)> = None;
+        let mut last: Option<(&Unit, &Direction)> = None;
 
         self.map
             .range(Position(Unit::MIN, line)..=Position(Unit::MAX, line))
-            .filter_map(|(p, Trench(depth, _, d))| -> Option<usize> {
+            .filter_map(move |(Position(x,_), Trench(.., d))| {
                 let mut out = None;
-                if let Some((lp, ld)) = last {
+                if let Some((lx,ld)) = last {
                     out = match (ld, d) {
-                        (D::U, D::D) | (D::U, D::L) | (D::R, D::D) | (D::R, D::L) => {
-                            print!(", ({:?},{:?},{})", ld, d, p.0 - lp.0 - 1);
-                            Some(*depth as usize * (p.0 - lp.0 - 1) as usize)
-                        }
+                        (D::U, D::D) |
+                        (D::U, D::L) |
+                        (D::R, D::D) |
+                        (D::R, D::L) => Some((*lx,*x)),
                         _ => None,
                     }
                 }
-                last = Some((p, d));
+                last = Some((x,d));
                 out
             })
-            .sum::<usize>()
     }
 
     pub(crate) fn calculate_area(&self) -> usize {
         (self.min.1..=self.max.1)
-            .inspect(|y| print!("Line: {y}"))
-            .map(|y| self.calc_line_area(y))
-            .inspect(|p| println!(", Sum: {p}"))
+            .flat_map(|y|
+                self.floodfill_intersections(y)
+                    .map(|(x1, x2)| (x2 - x1 - 1) as usize)
+            )
             .sum::<usize>()
     }
 }
@@ -105,17 +104,19 @@ impl Lagoon {
 impl Debug for Lagoon {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         use colored::*;
+        use Direction as D;
 
         writeln!(f, "Lagoon")?;
         for y in self.min.1..=self.max.1 {
             for x in self.min.0..=self.max.0 {
-                write!(
-                    f,
-                    "{:2}",
-                    &self
-                        .map
+                write!(f, "{:2}", &self.map
                         .get(&Position(x, y))
-                        .map(|t| "#".truecolor(t.r(), t.g(), t.b()))
+                        .map(|t| match t.2 {
+                            D::U => "↑",
+                            D::R => "→",
+                            D::D => "↓",
+                            D::L => "←",
+                        }.truecolor(t.r(), t.g(), t.b()))
                         .unwrap_or(".".into())
                 )?
             }
@@ -126,7 +127,7 @@ impl Debug for Lagoon {
 }
 
 #[cfg(test)]
-mod test {
+pub mod test {
     use std::rc::Rc;
 
     use super::*;
@@ -134,29 +135,32 @@ mod test {
 
     #[test]
     fn test_lagoon_area() {
-        let plan = match load_plan() {
-            Ok(p) => p,
-            Err(e) => panic!("{}", e),
-        };
+        let test_data = [
+            ("sample.txt",62),
+            ("sample1.txt",87),
+            ("sample2.txt",119),
+            ("sample3.txt",157),
+        ];
 
-        let lagoon = dig_lagoon(&plan);
-        let area = lagoon.calculate_area();
+        for (f,out) in test_data {
+            let plan = match load_plan(Some(f.into())) {
+                Ok(p) => p,
+                Err(e) => panic!("{}", e),
+            };
 
-        println!(
-            "{:?}\n\
-            Trench     : {}\n\
-            Lagoon area: {area}\n\
-            Total      : {}",
-            lagoon,
-            lagoon.map.len(),
-            lagoon.map.len() + area
-        );
-        assert_eq!(lagoon.map.len() + area, 62)
+            let lagoon = dig_lagoon(&plan);
+            let area = lagoon.calculate_area();
+
+            println!("{:?}\nTrench     : {}\nLagoon area: {area}\nTotal      : {}",
+                lagoon, lagoon.map.len(),lagoon.map.len() + area
+            );
+            assert_eq!(lagoon.map.len() + area, out)
+        }
     }
 
     #[test]
     fn test_dig_lagoon() {
-        let plan = match load_plan() {
+        let plan = match load_plan(None) {
             Ok(p) => p,
             Err(e) => panic!("{}", e),
         };
@@ -165,6 +169,40 @@ mod test {
 
         println!("Steps: {}\n{:?}", lagoon.map.len(), lagoon);
         assert_eq!(lagoon.map.len(), 38)
+    }
+
+    #[test]
+    fn test_lagoon_floodfill_intersections() {
+        let test_data = [
+            ("sample.txt",vec![(0i16, 6i16),(2, 6),(2, 6),(2, 6),(2, 4),(0, 4),(1, 4),(1, 6)]),
+            ("sample1.txt",vec![(0, 4),(6, 10),(0, 2),(8, 10),(0, 2),(8, 10),(0, 2),(8, 10),(0, 2),(4, 6),(8, 10),(0, 2),(4, 6),(8, 10),(0, 10)]),
+            ("sample2.txt",vec![(0, 4),(8, 12),(0, 4),(8, 12),(0, 4),(8, 12),(0, 4),(8, 12),(0, 12),(0, 4),(8, 12),(0, 4),(8, 12),(0, 4),(8, 12),(0, 4),(8, 12)]),
+            ("sample3.txt",vec![(-2, 4),(0, 4),(0, 4),(6, 8),(0, 4),(6, 8),(-9, -5),(0, 8),(-6, -2),(0, 4),(6, 8),(-6, -2),(0, 4),(6, 8),(-4, -2),(0, 4),(-4, 4),(-4, 6),(-6, 6)]),
+        ];
+
+        for (f,out) in test_data {
+            let plan = std::fs::read_to_string(
+                format!("./src/bin/day18/{}",f)
+            )
+            .expect("Cannot load file")
+            .parse::<DigPlan>()
+            .expect("Failed to parse Plan");
+
+            let lagoon = dig_lagoon(&plan);
+            let mut res = out.iter();
+
+            println!("{:?}",lagoon);
+
+            (lagoon.min.1..=lagoon.max.1)
+                .inspect(|y| print!("\nLine {y:2}: "))
+                .flat_map(|y| {
+                    lagoon.floodfill_intersections(y)
+                })
+                .inspect(|p| print!("{:?},",p))
+                .for_each(|p|{
+                    assert_eq!(Some(&p),res.next());
+                })
+        }
     }
 
     fn dig_lagoon(plan: &DigPlan) -> Lagoon {
@@ -177,13 +215,13 @@ mod test {
         lagoon
     }
 
-    fn load_plan() -> Result<DigPlan, Rc<str>> {
+    pub fn load_plan(file: Option<String>) -> Result<DigPlan, Rc<str>> {
         let p = std::fs::read_to_string(format!(
             "./src/bin/day18/{}",
             std::env::args()
                 .skip(3)
                 .next()
-                .unwrap_or("sample.txt".into())
+                .unwrap_or(file.unwrap_or("sample.txt".into()))
         ))
         .map_err(|e| format!("Cannot load file: Reason \"{:?}\"", e))?
         .parse::<DigPlan>()

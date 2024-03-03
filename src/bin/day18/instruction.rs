@@ -4,7 +4,7 @@ use std::str::FromStr;
 use std::rc::Rc;
 
 #[derive(Debug,PartialEq, Copy, Clone)]
-pub(crate) enum Direction { U, R, D, L }
+pub(crate) enum Direction { U = 0, R, D, L }
 
 #[derive(PartialEq, Eq, Copy, Clone, PartialOrd, Ord)]
 pub struct Rgb(pub u8, pub u8, pub u8);
