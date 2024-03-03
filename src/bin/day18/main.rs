@@ -1,12 +1,11 @@
-mod instruction;
 mod digging_plan;
-mod position;
+mod instruction;
 mod lagoon;
+mod position;
 
 use digging_plan::DigPlan;
 use lagoon::{Digger, Lagoon};
 use position::Position;
-
 
 fn main() {
     let plan = std::fs::read_to_string("./src/bin/day18/input.txt")
@@ -22,6 +21,9 @@ fn main() {
         .map(|ins| digger.dig(&mut lagoon, ins))
         .sum::<usize>();
 
-    println!("Tranch = {total}");
-    println!("{:?}",lagoon);
+    println!(
+        "Part 1:\n\tLagoon Periphery {}\n\tLagoon area = {}",
+        total,
+        lagoon.calculate_area()
+    );
 }

@@ -1,10 +1,13 @@
-use crate::instruction::{Instruction, Rgb};
+use crate::instruction::{Direction, Instruction, Rgb};
 use crate::position::{Position, Unit};
 use std::collections::BTreeMap;
 use std::fmt::{Debug, Formatter};
 use std::usize;
 
 type Depth = u8;
+
+#[derive(Debug, Copy, Clone)]
+struct Trench(Depth, Rgb, Direction);
 
 pub(crate) struct Digger {
     pos: Position,
@@ -20,15 +23,15 @@ impl Digger {
         (0..instr.run)
             .take_while(|_| {
                 lagoon
-                    .dig_trench(*self.pos.next_mut(instr.dir), Trench(self.depth, instr.rgb))
+                    .dig_trench(
+                        *self.pos.next_mut(instr.dir),
+                        Trench(self.depth, instr.rgb, instr.dir),
+                    )
                     .is_none()
             })
             .count()
     }
 }
-
-#[derive(Debug, Copy, Clone)]
-struct Trench(Depth, Rgb);
 
 impl Trench {
     fn r(&self) -> u8 {
@@ -39,12 +42,6 @@ impl Trench {
     }
     fn b(&self) -> u8 {
         self.1 .2
-    }
-    fn rgb(&self) -> usize {
-        (self.r() << 16 + self.b() << 8 + self.g()) as usize
-    }
-    fn depth(&self) -> Depth {
-        self.0
     }
 }
 
@@ -81,35 +78,38 @@ impl Lagoon {
         self.map.insert(pos, trench)
     }
 
-    fn get_line_area(&self, line: Unit) -> usize {
-        let mut last: Option<(&Position,&Trench)> = None;
-        let mut area = 0;
+    pub(crate) fn get_line_area(&self, line: Unit) -> usize {
+        use Direction as D;
+        let mut last: Option<(&Position, &Direction)> = None;
 
         self.map
-            .range(Position(Unit::MIN, line) ..= Position(Unit::MAX, line))
-            .filter_map(move |(p, t)| {
-                match last {
-                    None => {
-                        last = Some((p,t));
-                        None
-                    },
-                    Some((lp,lt)) if p.0 - lp.0 == 1 => {
-                        last = Some((p,t));
-                        None
-                    },
-                    Some((lp,lt)) if p.0 - lp.0 > 1 => {
-                        print!(" {:?},",(lp.0,p.0));
-                        last = None;
-                        area += (p.0 - lp.0  - 1 ) as usize;
-                        Some(area)
-                    },
-                    _ => None,
+            .range(Position(Unit::MIN, line)..=Position(Unit::MAX, line))
+            .filter_map(|(p, Trench(depth, _, d))| -> Option<usize> {
+                let mut out = None;
+                if let Some((lp, ld)) = last {
+                    out = match (ld, d) {
+                        (D::U, D::D)
+                        | (D::U, D::L)
+                        | (D::D, D::R)
+                        | (D::R, D::D)
+                        | (D::R, D::L)
+                        | (D::R, D::D)
+                        | (D::L, D::D)
+                            if p.0 - lp.0 > 1 =>
+                        {
+                            print!("{:?}", ((ld, d), p.0 - lp.0 - 1));
+                            Some(num::abs(p.0 - lp.0 - 1) as usize)
+                        }
+                        _ => None,
+                    }
                 }
+                last = Some((p, d));
+                out
             })
             .sum::<usize>()
     }
 
-    fn calculate_area(&self) -> usize {
+    pub(crate) fn calculate_area(&self) -> usize {
         (self.min.1..=self.max.1)
             .map(|y| {
                 print!("Line {y}");
@@ -150,10 +150,16 @@ mod test {
 
     #[test]
     fn test_lagoon_area() {
-        let plan = std::fs::read_to_string("./src/bin/day18/sample.txt")
-            .expect("ops")
-            .parse::<DigPlan>()
-            .expect("failed to load Dig Plan");
+        let plan = std::fs::read_to_string(format!(
+            "./src/bin/day18/{}",
+            std::env::args()
+                .skip(3)
+                .next()
+                .unwrap_or("sample.txt".into())
+        ))
+        .expect("ops")
+        .parse::<DigPlan>()
+        .expect("failed to load Dig Plan");
 
         let mut lagoon = Lagoon::default();
         let mut digger = Digger::new(Position(0, 0), 1);
