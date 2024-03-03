@@ -20,10 +20,11 @@ fn main() {
         .iter()
         .map(|ins| digger.dig(&mut lagoon, ins))
         .sum::<usize>();
-
+    let area = lagoon.calculate_area();
     println!(
-        "Part 1:\n\tLagoon Periphery {}\n\tLagoon area = {}",
+        "Part 1:\n\tLagoon Periphery {}\n\tLagoon area = {}\nTotal: {}",
         total,
-        lagoon.calculate_area()
+        area,
+        total + area
     );
 }

@@ -62,14 +62,6 @@ impl Default for Lagoon {
 }
 
 impl Lagoon {
-    fn min_pos(&self) -> Position {
-        self.min
-    }
-
-    fn max_pos(&self) -> Position {
-        self.max
-    }
-
     fn dig_trench(&mut self, pos: Position, trench: Trench) -> Option<Trench> {
         self.min.0 = std::cmp::min(self.min.0, pos.0);
         self.min.1 = std::cmp::min(self.min.1, pos.1);
@@ -78,7 +70,7 @@ impl Lagoon {
         self.map.insert(pos, trench)
     }
 
-    pub(crate) fn get_line_area(&self, line: Unit) -> usize {
+    pub(crate) fn calc_line_area(&self, line: Unit) -> usize {
         use Direction as D;
         let mut last: Option<(&Position, &Direction)> = None;
 
@@ -88,17 +80,9 @@ impl Lagoon {
                 let mut out = None;
                 if let Some((lp, ld)) = last {
                     out = match (ld, d) {
-                        (D::U, D::D)
-                        | (D::U, D::L)
-                        | (D::D, D::R)
-                        | (D::R, D::D)
-                        | (D::R, D::L)
-                        | (D::R, D::D)
-                        | (D::L, D::D)
-                            if p.0 - lp.0 > 1 =>
-                        {
-                            print!("{:?}", ((ld, d), p.0 - lp.0 - 1));
-                            Some(num::abs(p.0 - lp.0 - 1) as usize)
+                        (D::U, D::D) | (D::U, D::L) | (D::R, D::D) | (D::R, D::L) => {
+                            print!(", ({:?},{:?},{})", ld, d, p.0 - lp.0 - 1);
+                            Some(*depth as usize * (p.0 - lp.0 - 1) as usize)
                         }
                         _ => None,
                     }
@@ -111,11 +95,9 @@ impl Lagoon {
 
     pub(crate) fn calculate_area(&self) -> usize {
         (self.min.1..=self.max.1)
-            .map(|y| {
-                print!("Line {y}");
-                self.get_line_area(y)
-            })
-            .inspect(|s| println!(" = {s}"))
+            .inspect(|y| print!("Line: {y}"))
+            .map(|y| self.calc_line_area(y))
+            .inspect(|p| println!(", Sum: {p}"))
             .sum::<usize>()
     }
 }
@@ -145,49 +127,67 @@ impl Debug for Lagoon {
 
 #[cfg(test)]
 mod test {
+    use std::rc::Rc;
+
     use super::*;
     use crate::digging_plan::DigPlan;
 
     #[test]
     fn test_lagoon_area() {
-        let plan = std::fs::read_to_string(format!(
+        let plan = match load_plan() {
+            Ok(p) => p,
+            Err(e) => panic!("{}", e),
+        };
+
+        let lagoon = dig_lagoon(&plan);
+        let area = lagoon.calculate_area();
+
+        println!(
+            "{:?}\n\
+            Trench     : {}\n\
+            Lagoon area: {area}\n\
+            Total      : {}",
+            lagoon,
+            lagoon.map.len(),
+            lagoon.map.len() + area
+        );
+        assert_eq!(lagoon.map.len() + area, 62)
+    }
+
+    #[test]
+    fn test_dig_lagoon() {
+        let plan = match load_plan() {
+            Ok(p) => p,
+            Err(e) => panic!("{}", e),
+        };
+
+        let lagoon = dig_lagoon(&plan);
+
+        println!("Steps: {}\n{:?}", lagoon.map.len(), lagoon);
+        assert_eq!(lagoon.map.len(), 38)
+    }
+
+    fn dig_lagoon(plan: &DigPlan) -> Lagoon {
+        let mut lagoon = Lagoon::default();
+        let mut digger = Digger::new(Position(0, 0), 1);
+
+        plan.iter()
+            .map(|ins| digger.dig(&mut lagoon, ins))
+            .sum::<usize>();
+        lagoon
+    }
+
+    fn load_plan() -> Result<DigPlan, Rc<str>> {
+        let p = std::fs::read_to_string(format!(
             "./src/bin/day18/{}",
             std::env::args()
                 .skip(3)
                 .next()
                 .unwrap_or("sample.txt".into())
         ))
-        .expect("ops")
+        .map_err(|e| format!("Cannot load file: Reason \"{:?}\"", e))?
         .parse::<DigPlan>()
-        .expect("failed to load Dig Plan");
-
-        let mut lagoon = Lagoon::default();
-        let mut digger = Digger::new(Position(0, 0), 1);
-
-        let total = plan
-            .iter()
-            .map(|ins| digger.dig(&mut lagoon, ins))
-            .sum::<usize>();
-
-        println!("{:?}\nTrench {total}", lagoon);
-        println!("Lagoon area {}", lagoon.calculate_area() + total);
-    }
-
-    #[test]
-    fn test_dig() {
-        let inp = std::fs::read_to_string("./src/bin/day18/sample.txt").expect("ops");
-        let plan = inp.parse::<DigPlan>().expect("failed to load Dig Plan");
-
-        let mut lagoon = Lagoon::default();
-        let mut digger = Digger::new(Position(0, 0), 1);
-
-        let total = plan
-            .iter()
-            .map(|ins| digger.dig(&mut lagoon, ins))
-            .sum::<usize>();
-
-        println!("Steps: {total}\n{:?}", lagoon);
-        println!("{:?}", lagoon.min_pos());
-        println!("{:?}", lagoon.max_pos());
+        .map_err(|e| format!("Failed to parse Plan: Reason \"{:?}\"", e))?;
+        Ok(p)
     }
 }
