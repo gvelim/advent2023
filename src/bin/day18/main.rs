@@ -22,7 +22,8 @@ fn main() {
         .sum::<usize>();
     let area = lagoon.calculate_area();
     println!(
-        "Part 1:\n\tLagoon Periphery {}\n\tLagoon area = {}\nTotal: {}",
+        "{:?}\nPart 1:\n\tLagoon Periphery {}\n\tLagoon area = {}\nTotal: {}",
+        lagoon,
         total,
         area,
         total + area

@@ -2,6 +2,7 @@ use crate::instruction::{Direction, Instruction, Rgb};
 use crate::position::{Position, Unit};
 use std::collections::BTreeMap;
 use std::fmt::{Debug, Formatter};
+use std::ops::Range;
 use std::usize;
 
 type Depth = u8;
@@ -69,7 +70,7 @@ impl Lagoon {
         self.map.insert(pos, trench)
     }
 
-    fn floodfill_intersections(&self, line: Unit) -> impl Iterator<Item=(Unit,Unit)> + '_ {
+    fn floodfill_intersections(&self, line: Unit) -> impl Iterator<Item=Range<Unit>> + '_ {
         use Direction as D;
         let mut last: Option<(&Unit, &Direction)> = None;
 
@@ -82,7 +83,7 @@ impl Lagoon {
                         (D::U, D::D) |
                         (D::U, D::L) |
                         (D::R, D::D) |
-                        (D::R, D::L) => Some((*lx,*x)),
+                        (D::R, D::L) => Some(*lx..*x),
                         _ => None,
                     }
                 }
@@ -95,7 +96,7 @@ impl Lagoon {
         (self.min.1..=self.max.1)
             .flat_map(|y|
                 self.floodfill_intersections(y)
-                    .map(|(x1, x2)| (x2 - x1 - 1) as usize)
+                    .map(|rng| (rng.len() - 1) as usize)
             )
             .sum::<usize>()
     }
@@ -108,6 +109,8 @@ impl Debug for Lagoon {
 
         writeln!(f, "Lagoon")?;
         for y in self.min.1..=self.max.1 {
+            let mut filler = self.floodfill_intersections(y);
+            let mut fill = filler.next();
             for x in self.min.0..=self.max.0 {
                 write!(f, "{:2}", &self.map
                         .get(&Position(x, y))
@@ -117,7 +120,20 @@ impl Debug for Lagoon {
                             D::D => "↓",
                             D::L => "←",
                         }.truecolor(t.r(), t.g(), t.b()))
-                        .unwrap_or(".".into())
+                        .unwrap_or(
+                            if let Some(rng) = &fill {
+                                if rng.contains(&x) {
+                                    "◼".truecolor(96,96,96)
+                                } else {
+                                    if x == rng.end {
+                                        fill = filler.next();
+                                    }
+                                    ".".into()
+                                }
+                            } else {
+                                ".".into()
+                            }
+                        )
                 )?
             }
             writeln!(f)?;
@@ -139,7 +155,7 @@ pub mod test {
             ("sample.txt",62),
             ("sample1.txt",87),
             ("sample2.txt",119),
-            ("sample3.txt",157),
+            ("sample3.txt",170),
         ];
 
         for (f,out) in test_data {
@@ -174,10 +190,10 @@ pub mod test {
     #[test]
     fn test_lagoon_floodfill_intersections() {
         let test_data = [
-            ("sample.txt",vec![(0i16, 6i16),(2, 6),(2, 6),(2, 6),(2, 4),(0, 4),(1, 4),(1, 6)]),
-            ("sample1.txt",vec![(0, 4),(6, 10),(0, 2),(8, 10),(0, 2),(8, 10),(0, 2),(8, 10),(0, 2),(4, 6),(8, 10),(0, 2),(4, 6),(8, 10),(0, 10)]),
-            ("sample2.txt",vec![(0, 4),(8, 12),(0, 4),(8, 12),(0, 4),(8, 12),(0, 4),(8, 12),(0, 12),(0, 4),(8, 12),(0, 4),(8, 12),(0, 4),(8, 12),(0, 4),(8, 12)]),
-            ("sample3.txt",vec![(-2, 4),(0, 4),(0, 4),(6, 8),(0, 4),(6, 8),(-9, -5),(0, 8),(-6, -2),(0, 4),(6, 8),(-6, -2),(0, 4),(6, 8),(-4, -2),(0, 4),(-4, 4),(-4, 6),(-6, 6)]),
+            ("sample.txt",vec![(0i16..6i16),(2..6),(2..6),(2..6),(2..4),(0..4),(1..4),(1..6)]),
+            ("sample1.txt",vec![(0..4),(6..10),(0..2),(8..10),(0..2),(8..10),(0..2),(8..10),(0..2),(4..6),(8..10),(0..2),(4..6),(8..10),(0..10)]),
+            ("sample2.txt",vec![(0..4),(8..12),(0..4),(8..12),(0..4),(8..12),(0..4),(8..12),(0..12),(0..4),(8..12),(0..4),(8..12),(0..4),(8..12),(0..4),(8..12)]),
+            ("sample3.txt",vec![(-2..4),(0..4),(0..4),(6..8),(0..4),(6..8),(-9..-5),(0..8),(-6..-2),(0..4),(6..8),(-6..-2),(0..4),(6..8),(-4..-2),(0..4),(-4..4),(-4..6),(-6..6)]),
         ];
 
         for (f,out) in test_data {
