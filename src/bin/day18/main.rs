@@ -22,11 +22,25 @@ fn main() {
         .map(|ins| digger.dig(&mut lagoon, ins))
         .sum::<usize>();
     let area = lagoon.calculate_area();
-    println!(
-        "\nPart 1:\n\tLagoon Periphery {}\n\tLagoon area = {}\nTotal: {} - {:?}",
-        total,
-        area,
-        total + area,
-        t.elapsed()
+    println!("\nPart 1:\n\tLagoon Periphery {}\n\tLagoon area = {}\nTotal: {} - {:?}",
+        total, area, total + area,t.elapsed()
+    );
+
+    let mut lagoon = Lagoon::default();
+    let mut digger = Digger::new(Position(0, 0));
+
+    let t = std::time::Instant::now();
+    let total = plan
+        .iter()
+        .map(|ins|
+            digger.dig(
+                &mut lagoon,
+                &ins.decode_rgb().expect("ops")
+            )
+        )
+        .sum::<usize>();
+    let area = lagoon.calculate_area();
+    println!("\nPart 2:\n\tLagoon Periphery {}\n\tLagoon area = {}\nTotal: {} - {:?}",
+        total, area, total + area,t.elapsed()
     );
 }

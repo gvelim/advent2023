@@ -76,7 +76,6 @@ impl Lagoon {
 
         self.map
             .range(Position(Unit::MIN, line)..=Position(Unit::MAX, line))
-            // .inspect(|d| println!("{:?}",d))
             .filter_map(move |(Position(x,_), Trench(_,d, pd))| {
                 let mut out = None;
                 if let Some((lx,ld)) = last {
@@ -122,14 +121,12 @@ impl Debug for Lagoon {
                         )
                         .unwrap_or(
                             if let Some(rng) = &fill {
-                                if rng.contains(&x) {
-                                    "◼".truecolor(96,96,96)
-                                } else {
-                                    if x == rng.end {
-                                        fill = filler.next();
-                                    }
-                                    ".".into()
-                                }
+                                rng.contains(&x)
+                                    .then_some("◼".truecolor(96,96,96))
+                                    .or({
+                                        x.eq(&rng.end).then(|| fill = filler.next());
+                                        Some(".".into())
+                                    }).unwrap()
                             } else {
                                 ".".into()
                             }
@@ -148,6 +145,32 @@ pub mod test {
 
     use super::*;
     use crate::digging_plan::DigPlan;
+
+    #[test]
+    #[ignore]
+    fn test_lagoon_area_rgb() {
+        let plan = load_plan(None).expect("Ops");
+
+        let mut lagoon = Lagoon::default();
+        let mut digger = Digger::new(Position(0, 0));
+
+        let t = std::time::Instant::now();
+        let total = plan
+            .iter()
+            .map(|ins|
+                digger.dig(
+                    &mut lagoon,
+                    &ins.decode_rgb().expect("Ops")
+                )
+            )
+            .sum::<usize>();
+
+        let area = lagoon.calculate_area();
+        println!("\nPart 2:\n\tLagoon Periphery {}\n\tLagoon area = {}\nTotal: {} - {:?}",
+            total, area, total + area,t.elapsed()
+        );
+        assert_eq!(952408144115, total+area);
+    }
 
     #[test]
     fn test_lagoon_area() {
@@ -189,8 +212,8 @@ pub mod test {
 
     #[test]
     fn test_lagoon_floodfill_intersections() {
-        let test_data = [
-            ("sample.txt",vec![(0i16..6i16),(2..6),(2..6),(2..6),(2..4),(0..4),(1..4),(1..6)]),
+        let test_data: [(&str, Vec<Range<Unit>>);4] = [
+            ("sample.txt",vec![(0..6),(2..6),(2..6),(2..6),(2..4),(0..4),(1..4),(1..6)]),
             ("sample1.txt",vec![(0..4),(6..10),(0..2),(8..10),(0..2),(8..10),(0..2),(8..10),(0..2),(4..6),(8..10),(0..2),(4..6),(8..10),(0..10)]),
             ("sample2.txt",vec![(0..4),(8..12),(0..4),(8..12),(0..4),(8..12),(0..4),(8..12),(0..12),(0..4),(8..12),(0..4),(8..12),(0..4),(8..12),(0..4),(8..12)]),
             ("sample3.txt",vec![(-2..4),(0..4),(-9..-5),(0..4),(6..8),(-9..-5),(0..4),(6..8),(-9..-2),(0..8),(-6..-2),(0..4),(6..8),(-6..-2),(0..4),(6..8),(-4..-2),(0..4),(-4..4),(-4..6),(-6..6)]),

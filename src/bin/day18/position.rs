@@ -4,7 +4,7 @@ use std::{
     fmt::{Debug, Formatter},
 };
 
-pub(crate) type Unit = i16;
+pub(crate) type Unit = isize;
 
 #[derive(Eq, PartialEq, Clone, Copy)]
 pub(crate) struct Position(pub Unit, pub Unit);

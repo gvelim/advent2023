@@ -1,10 +1,13 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
+use std::num::ParseIntError;
 use std::str::FromStr;
 use std::rc::Rc;
 
 #[derive(Debug,PartialEq, Copy, Clone)]
 pub(crate) enum Direction { U = 0, R, D, L }
+
+pub const TURNS:[Direction;6] = [Direction::L, Direction::U, Direction::R, Direction::D, Direction::L, Direction::U];
 
 #[derive(PartialEq, Eq, Copy, Clone, PartialOrd, Ord)]
 pub struct Rgb(pub u8, pub u8, pub u8);
@@ -26,6 +29,17 @@ pub(crate) struct Instruction {
     pub dir: Direction,
     pub run: usize,
     pub rgb: Rgb
+}
+
+impl Instruction {
+    pub(crate) fn decode_rgb(&self) -> Result<Instruction, ParseIntError> {
+        let s = format!("{}",self.rgb);
+        Ok(Instruction {
+            dir: TURNS[ usize::from_str(&s[6..=6])? +2 ],
+            run: usize::from_str_radix(&s[1..=5], 16)?,
+            rgb: Rgb(0,0,0)
+        })
+    }
 }
 
 impl FromStr for Instruction {
@@ -101,6 +115,36 @@ impl Debug for InstructionErr {
 #[cfg(test)]
 mod test {
     use super::*;
+    #[test]
+    fn test_instruction_decode_rgb() {
+        let test_data = [
+            ("D 1 #70c710","R 461937"),
+            ("D 1 #0dc571","D 56407"),
+            ("D 1 #5713f0","R 356671"),
+            ("D 1 #d2c081","D 863240"),
+            ("D 1 #59c680","R 367720"),
+            ("D 1 #411b91","D 266681"),
+            ("D 1 #8ceee2","L 577262"),
+            ("D 1 #caa173","U 829975"),
+            ("D 1 #1b58a2","L 112010"),
+            ("D 1 #caa171","D 829975"),
+            ("D 1 #7807d2","L 491645"),
+            ("D 1 #a77fa3","U 686074"),
+            ("D 1 #015232","L 5411"),
+            ("D 1 #7a21e3","U 500254")
+        ];
+
+        for (i,o) in test_data {
+            let d = i.parse::<Instruction>()
+                .expect("Cannot Parse Instructions")
+                .decode_rgb()
+                .expect("failed to decode RGB");
+            assert_eq!(
+                o,
+                &format!("{:?} {}",d.dir,d.run)
+            );
+        }
+    }
 
     #[test]
     fn test_instruction_parse() {
