@@ -77,21 +77,29 @@ So, in the above example, the hexadecimal codes can be converted into the true i
 #015232 = L 5411
 #7a21e3 = U 500254
 ```
-Digging out this loop and its interior produces a lagoon that can hold an impressive `952408144115` cubic meters of lava.
+Digging out this loop and its interior produces a lagoon that can hold an impressive `952408144115` cubic meters of lava. 
 
 Convert the hexadecimal color codes into the correct instructions; if the Elves follow this new dig plan, **how many cubic meters of lava could the lagoon hold**?
 # Approach
+## Digging a trench
+A trench is defined by its RGB Colour and Direction it was dug
 
+We store each trench point in a BTreeMap ordered first by Y coordinate first and then by X coordinate. This will allow us later on to retrieve all X coordinates given a specific line Y.
+
+Digging the trench is as simple as capturing all the points given a starting position and instruction and having played back all instructions.
+
+## Calculating lagoon's area
+We use a form of **polygon fill algorithm** and particularly we use the **trench direction** in order to figure out which part of the space evaluated falls inside or outside the lagoon's enclosed area 
 ```
-↑ → → → → . . . ↑ → → → →
-↑ . . . ↓ . . . ↑ . . . ↓
-↑ . . . ↓ . . . ↑ . . . ↓
-↑ . . . ↓ . . . ↑ . . . ↓
-↑ . . . ↓ → → → → . . . ↓
-↑ . . . . . . . . . . . ↓
-↑ . . . ← ← ← ← ↑ . . . ↓
-↑ . . . ↓ . . . ↑ . . . ↓
-↑ . . . ↓ . . . ↑ . . . ↓
-↑ . . . ↓ . . . ↑ . . . ↓
-← ← ← ← ↓ . . . ← ← ← ← ↓
+↑ → → → → . . . ↑ → → → →   
+↑ . . . ↓ . . . ↑ . . . ↓   
+↑ . . . ↓ . . . ↑ . . . ↓   
+↑ . . . ↓ . . . ↑ . . . ↓   
+↑ . . . ↓ → → → → . . . ↓   
+↑ . . . . . . . . . . . ↓   
+↑ . . . ← ← ← ← ↑ . . . ↓   
+↑ . . . ↓ . . . ↑ . . . ↓   
+↑ . . . ↓ . . . ↑ . . . ↓   
+↑ . . . ↓ . . . ↑ . . . ↓   
+← ← ← ← ↓ . . . ← ← ← ← ↓   
 ```

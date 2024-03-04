@@ -5,43 +5,43 @@ use std::fmt::{Debug, Formatter};
 use std::ops::Range;
 use std::usize;
 
-type Depth = u8;
-
 #[derive(Debug, Copy, Clone)]
-struct Trench(Depth, Rgb, Direction);
+struct Trench(Rgb, Direction, Option<Direction>);
+
+impl Trench {
+    fn r(&self) -> u8 {
+        self.0.0
+    }
+    fn g(&self) -> u8 {
+        self.0.1
+    }
+    fn b(&self) -> u8 {
+        self.0.2
+    }
+}
 
 pub(crate) struct Digger {
     pos: Position,
-    depth: Depth
+    last: Option<Direction>
 }
 
 impl Digger {
-    pub fn new(pos: Position, depth: Depth) -> Digger {
-        Digger { pos, depth }
+    pub fn new(pos: Position) -> Digger {
+        Digger { pos, last: None }
     }
     pub fn dig(&mut self, lagoon: &mut Lagoon, instr: &Instruction) -> usize {
-        (0..instr.run)
+        let ret = (0..instr.run)
             .take_while(|_| {
                 lagoon
                     .dig_trench(
                         *self.pos.next_mut(instr.dir),
-                        Trench(self.depth, instr.rgb, instr.dir),
+                        Trench(instr.rgb, instr.dir, self.last)
                     )
                     .is_none()
             })
-            .count()
-    }
-}
-
-impl Trench {
-    fn r(&self) -> u8 {
-        self.1.0
-    }
-    fn g(&self) -> u8 {
-        self.1.1
-    }
-    fn b(&self) -> u8 {
-        self.1.2
+            .count();
+        self.last = Some(instr.dir);
+        ret
     }
 }
 
@@ -76,14 +76,15 @@ impl Lagoon {
 
         self.map
             .range(Position(Unit::MIN, line)..=Position(Unit::MAX, line))
-            .filter_map(move |(Position(x,_), Trench(.., d))| {
+            // .inspect(|d| println!("{:?}",d))
+            .filter_map(move |(Position(x,_), Trench(_,d, pd))| {
                 let mut out = None;
                 if let Some((lx,ld)) = last {
                     out = match (ld, d) {
                         (D::U, D::D) |
                         (D::U, D::L) |
-                        (D::R, D::D) |
-                        (D::R, D::L) => Some(*lx..*x),
+                        (D::R, D::D) => Some(*lx..*x),
+                        (D::R, D::L) if pd != &Some(D::U) => Some(*lx..*x),
                         _ => None,
                     }
                 }
@@ -114,12 +115,11 @@ impl Debug for Lagoon {
             for x in self.min.0..=self.max.0 {
                 write!(f, "{:2}", &self.map
                         .get(&Position(x, y))
-                        .map(|t| match t.2 {
-                            D::U => "↑",
-                            D::R => "→",
-                            D::D => "↓",
-                            D::L => "←",
-                        }.truecolor(t.r(), t.g(), t.b()))
+                        .map(|t|
+                            match t.1 {
+                                D::U => "↑", D::R => "→", D::D => "↓", D::L => "←",
+                            }.truecolor(t.r(), t.g(), t.b())
+                        )
                         .unwrap_or(
                             if let Some(rng) = &fill {
                                 if rng.contains(&x) {
@@ -193,7 +193,7 @@ pub mod test {
             ("sample.txt",vec![(0i16..6i16),(2..6),(2..6),(2..6),(2..4),(0..4),(1..4),(1..6)]),
             ("sample1.txt",vec![(0..4),(6..10),(0..2),(8..10),(0..2),(8..10),(0..2),(8..10),(0..2),(4..6),(8..10),(0..2),(4..6),(8..10),(0..10)]),
             ("sample2.txt",vec![(0..4),(8..12),(0..4),(8..12),(0..4),(8..12),(0..4),(8..12),(0..12),(0..4),(8..12),(0..4),(8..12),(0..4),(8..12),(0..4),(8..12)]),
-            ("sample3.txt",vec![(-2..4),(0..4),(0..4),(6..8),(0..4),(6..8),(-9..-5),(0..8),(-6..-2),(0..4),(6..8),(-6..-2),(0..4),(6..8),(-4..-2),(0..4),(-4..4),(-4..6),(-6..6)]),
+            ("sample3.txt",vec![(-2..4),(0..4),(-9..-5),(0..4),(6..8),(-9..-5),(0..4),(6..8),(-9..-2),(0..8),(-6..-2),(0..4),(6..8),(-6..-2),(0..4),(6..8),(-4..-2),(0..4),(-4..4),(-4..6),(-6..6)]),
         ];
 
         for (f,out) in test_data {
@@ -217,13 +217,14 @@ pub mod test {
                 .inspect(|p| print!("{:?},",p))
                 .for_each(|p|{
                     assert_eq!(Some(&p),res.next());
-                })
+                });
+            println!();
         }
     }
 
     fn dig_lagoon(plan: &DigPlan) -> Lagoon {
         let mut lagoon = Lagoon::default();
-        let mut digger = Digger::new(Position(0, 0), 1);
+        let mut digger = Digger::new(Position(0, 0));
 
         plan.iter()
             .map(|ins| digger.dig(&mut lagoon, ins))
