@@ -7,7 +7,13 @@ use std::rc::Rc;
 #[derive(Debug,PartialEq, Copy, Clone)]
 pub(crate) enum Direction { U = 0, R, D, L }
 
-pub const TURNS:[Direction;6] = [Direction::L, Direction::U, Direction::R, Direction::D, Direction::L, Direction::U];
+const TURNS:[Direction;6] = [Direction::L, Direction::U, Direction::R, Direction::D, Direction::L, Direction::U];
+
+impl Direction {
+    pub fn clockwise(&self, last: Direction) -> bool {
+        TURNS[*self as usize] == last
+    }
+}
 
 #[derive(PartialEq, Eq, Copy, Clone, PartialOrd, Ord)]
 pub struct Rgb(pub u8, pub u8, pub u8);

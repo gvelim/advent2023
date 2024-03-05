@@ -83,7 +83,9 @@ impl Lagoon {
                         (D::U, D::D) |
                         (D::U, D::L) |
                         (D::R, D::D) => Some(*lx..*x),
-                        (D::R, D::L) if pd != &Some(D::U) => Some(*lx..*x),
+                        (D::R, D::L)
+                            if pd.map(|pd| d.clockwise(pd)).unwrap_or(false)
+                                => Some(*lx..*x),
                         _ => None,
                     }
                 }
@@ -123,10 +125,10 @@ impl Debug for Lagoon {
                             if let Some(rng) = &fill {
                                 rng.contains(&x)
                                     .then_some("◼".truecolor(96,96,96))
-                                    .or({
+                                    .unwrap_or({
                                         x.eq(&rng.end).then(|| fill = filler.next());
-                                        Some(".".into())
-                                    }).unwrap()
+                                        ".".into()
+                                    })
                             } else {
                                 ".".into()
                             }
@@ -256,16 +258,18 @@ pub mod test {
     }
 
     pub fn load_plan(file: Option<String>) -> Result<DigPlan, Rc<str>> {
-        let p = std::fs::read_to_string(format!(
+        let f = format!(
             "./src/bin/day18/{}",
             std::env::args()
                 .skip(3)
                 .next()
                 .unwrap_or(file.unwrap_or("sample.txt".into()))
-        ))
-        .map_err(|e| format!("Cannot load file: Reason \"{:?}\"", e))?
-        .parse::<DigPlan>()
-        .map_err(|e| format!("Failed to parse Plan: Reason \"{:?}\"", e))?;
+        );
+        println!("{:?}",f);
+        let p = std::fs::read_to_string(f)
+            .map_err(|e| format!("Cannot load file: Reason \"{:?}\"", e))?
+            .parse::<DigPlan>()
+            .map_err(|e| format!("Failed to parse Plan: Reason \"{:?}\"", e))?;
         Ok(p)
     }
 }

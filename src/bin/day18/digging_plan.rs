@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use crate::instruction::{Direction, Instruction, InstructionErr, TURNS};
+use crate::instruction::{Direction, Instruction, InstructionErr};
 
 pub(crate) struct DigPlan {
     pub(crate) set: std::rc::Rc<[Instruction]>,
@@ -16,7 +16,7 @@ impl DigPlan {
             .map(|i| {
                 let out = last
                     .map(|ld|
-                        if TURNS[i.dir as usize] == ld { 1 } else { -1 }
+                        if i.dir.clockwise(ld) { 1 } else { -1 }
                     )
                     .unwrap_or(0);
                 last = Some(i.dir);
