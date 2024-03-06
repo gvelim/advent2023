@@ -3,7 +3,6 @@ use crate::position::{Position, Unit};
 use std::collections::BTreeMap;
 use std::fmt::{Debug, Formatter};
 use std::ops::Range;
-use std::usize;
 
 #[derive(Debug, Copy, Clone)]
 struct Trench(Rgb, Direction, Option<Direction>);
@@ -22,7 +21,7 @@ impl Trench {
 
 pub(crate) struct Digger {
     pos: Position,
-    last: Option<Direction>
+    last: Option<Direction>,
 }
 
 impl Digger {
@@ -35,7 +34,7 @@ impl Digger {
                 lagoon
                     .dig_trench(
                         *self.pos.next_mut(instr.dir),
-                        Trench(instr.rgb, instr.dir, self.last)
+                        Trench(instr.rgb, instr.dir, self.last),
                     )
                     .is_none()
             })
@@ -48,7 +47,7 @@ impl Digger {
 pub(crate) struct Lagoon {
     min: Position,
     max: Position,
-    map: BTreeMap<Position, Trench>,
+    map: BTreeMap<Position, Trench>
 }
 
 impl Default for Lagoon {
@@ -76,30 +75,30 @@ impl Lagoon {
 
         self.map
             .range(Position(Unit::MIN, line)..=Position(Unit::MAX, line))
-            .filter_map(move |(Position(x,_), Trench(_,d, pd))| {
+            .filter_map(move |(Position(x, _), Trench(_, d, pd))| {
                 let mut out = None;
-                if let Some((lx,ld)) = last {
+                if let Some((lx, ld)) = last {
                     out = match (ld, d) {
                         (D::U, D::D) |
                         (D::U, D::L) |
                         (D::R, D::D) => Some(*lx..*x),
                         (D::R, D::L)
-                            if pd.map(|pd| d.clockwise(pd)).unwrap_or(false)
+                            if pd.map(|pd| d.is_clockwise(pd)).unwrap_or(false)
                                 => Some(*lx..*x),
                         _ => None,
                     }
                 }
-                last = Some((x,d));
+                last = Some((x, d));
                 out
             })
     }
 
     pub(crate) fn calculate_area(&self) -> usize {
         (self.min.1..=self.max.1)
-            .flat_map(|y|
+            .flat_map(|y| {
                 self.floodfill_intersections(y)
                     .map(|rng| (rng.len() - 1) as usize)
-            )
+            })
             .sum::<usize>()
     }
 }
@@ -116,23 +115,23 @@ impl Debug for Lagoon {
             for x in self.min.0..=self.max.0 {
                 write!(f, "{:2}", &self.map
                         .get(&Position(x, y))
-                        .map(|t|
-                            match t.1 {
-                                D::U => "↑", D::R => "→", D::D => "↓", D::L => "←",
-                            }.truecolor(t.r(), t.g(), t.b())
-                        )
-                        .unwrap_or(
-                            if let Some(rng) = &fill {
-                                rng.contains(&x)
-                                    .then_some("◼".truecolor(96,96,96))
-                                    .unwrap_or({
-                                        x.eq(&rng.end).then(|| fill = filler.next());
-                                        ".".into()
-                                    })
-                            } else {
-                                ".".into()
-                            }
-                        )
+                        .map(|t| match t.1 {
+                            D::U => "↑",
+                            D::R => "→",
+                            D::D => "↓",
+                            D::L => "←",
+                        }
+                        .truecolor(t.r(), t.g(), t.b()))
+                        .unwrap_or(if let Some(rng) = &fill {
+                            rng.contains(&x)
+                                .then_some("◼".truecolor(96, 96, 96))
+                                .unwrap_or({
+                                    x.eq(&rng.end).then(|| fill = filler.next());
+                                    ".".into()
+                                })
+                        } else {
+                            ".".into()
+                        })
                 )?
             }
             writeln!(f)?;
@@ -149,9 +148,8 @@ pub mod test {
     use crate::digging_plan::DigPlan;
 
     #[test]
-    #[ignore]
     fn test_lagoon_area_rgb() {
-        let plan = load_plan(None).expect("Ops");
+        let plan = load_plan(Some("sample.txt".to_string())).expect("Ops");
 
         let mut lagoon = Lagoon::default();
         let mut digger = Digger::new(Position(0, 0));
@@ -168,22 +166,26 @@ pub mod test {
             .sum::<usize>();
 
         let area = lagoon.calculate_area();
-        println!("\nPart 2:\n\tLagoon Periphery {}\n\tLagoon area = {}\nTotal: {} - {:?}",
-            total, area, total + area,t.elapsed()
+        println!(
+            "\nPart 2:\n\tLagoon Periphery {}\n\tLagoon area = {}\nTotal: {} - {:?}",
+            total,
+            area,
+            total + area,
+            t.elapsed()
         );
-        assert_eq!(952408144115, total+area);
+        assert_eq!(952408144115, total + area);
     }
 
     #[test]
     fn test_lagoon_area() {
         let test_data = [
-            ("sample.txt",62),
-            ("sample1.txt",87),
-            ("sample2.txt",119),
-            ("sample3.txt",170),
+            ("sample.txt", 62),
+            ("sample1.txt", 87),
+            ("sample2.txt", 119),
+            ("sample3.txt", 170),
         ];
 
-        for (f,out) in test_data {
+        for (f, out) in test_data {
             let plan = match load_plan(Some(f.into())) {
                 Ok(p) => p,
                 Err(e) => panic!("{}", e),
@@ -192,8 +194,11 @@ pub mod test {
             let lagoon = dig_lagoon(&plan);
             let area = lagoon.calculate_area();
 
-            println!("{:?}\nTrench     : {}\nLagoon area: {area}\nTotal      : {}",
-                lagoon, lagoon.map.len(),lagoon.map.len() + area
+            println!(
+                "{:?}\nTrench     : {}\nLagoon area: {area}\nTotal      : {}",
+                lagoon,
+                lagoon.map.len(),
+                lagoon.map.len() + area
             );
             assert_eq!(lagoon.map.len() + area, out)
         }
@@ -201,7 +206,7 @@ pub mod test {
 
     #[test]
     fn test_dig_lagoon() {
-        let plan = match load_plan(None) {
+        let plan = match load_plan(Some("sample.txt".to_string())) {
             Ok(p) => p,
             Err(e) => panic!("{}", e),
         };
@@ -221,27 +226,23 @@ pub mod test {
             ("sample3.txt",vec![(-2..4),(0..4),(-9..-5),(0..4),(6..8),(-9..-5),(0..4),(6..8),(-9..-2),(0..8),(-6..-2),(0..4),(6..8),(-6..-2),(0..4),(6..8),(-4..-2),(0..4),(-4..4),(-4..6),(-6..6)]),
         ];
 
-        for (f,out) in test_data {
-            let plan = std::fs::read_to_string(
-                format!("./src/bin/day18/{}",f)
-            )
-            .expect("Cannot load file")
-            .parse::<DigPlan>()
-            .expect("Failed to parse Plan");
+        for (f, out) in test_data {
+            let plan = match load_plan(Some(f.into())) {
+                Ok(p) => p,
+                Err(e) => panic!("{}", e),
+            };
 
             let lagoon = dig_lagoon(&plan);
             let mut res = out.iter();
 
-            println!("{:?}",lagoon);
+            println!("{:?}", lagoon);
 
             (lagoon.min.1..=lagoon.max.1)
                 .inspect(|y| print!("\nLine {y:2}: "))
-                .flat_map(|y| {
-                    lagoon.floodfill_intersections(y)
-                })
-                .inspect(|p| print!("{:?},",p))
-                .for_each(|p|{
-                    assert_eq!(Some(&p),res.next());
+                .flat_map(|y| lagoon.floodfill_intersections(y))
+                .inspect(|p| print!("{:?},", p))
+                .for_each(|p| {
+                    assert_eq!(Some(&p), res.next());
                 });
             println!();
         }
@@ -260,12 +261,13 @@ pub mod test {
     pub fn load_plan(file: Option<String>) -> Result<DigPlan, Rc<str>> {
         let f = format!(
             "./src/bin/day18/{}",
-            std::env::args()
-                .skip(3)
-                .next()
-                .unwrap_or(file.unwrap_or("sample.txt".into()))
+            file.unwrap_or(
+                std::env::args()
+                    .skip(3)
+                    .next()
+                    .unwrap_or("sample.txt".into())
+            )
         );
-        println!("{:?}",f);
         let p = std::fs::read_to_string(f)
             .map_err(|e| format!("Cannot load file: Reason \"{:?}\"", e))?
             .parse::<DigPlan>()

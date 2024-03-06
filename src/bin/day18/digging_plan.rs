@@ -1,5 +1,5 @@
-use std::str::FromStr;
 use crate::instruction::{Direction, Instruction, InstructionErr};
+use std::str::FromStr;
 
 pub(crate) struct DigPlan {
     pub(crate) set: std::rc::Rc<[Instruction]>,
@@ -12,12 +12,11 @@ impl DigPlan {
 
     pub fn is_clockwise(&self) -> bool {
         let mut last: Option<Direction> = None;
-        self.set.iter()
+        self.set
+            .iter()
             .map(|i| {
                 let out = last
-                    .map(|ld|
-                        if i.dir.clockwise(ld) { 1 } else { -1 }
-                    )
+                    .map(|ld| if i.dir.is_clockwise(ld) { 1 } else { -1 })
                     .unwrap_or(0);
                 last = Some(i.dir);
                 out
@@ -33,11 +32,9 @@ impl FromStr for DigPlan {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut set = vec![];
         for line in s.lines() {
-            set.push( line.parse::<Instruction>()? );
+            set.push(line.parse::<Instruction>()?);
         }
-        Ok(DigPlan {
-            set: set.into()
-        })
+        Ok(DigPlan { set: set.into() })
     }
 }
 
@@ -47,11 +44,11 @@ mod test {
     use crate::lagoon::test::load_plan;
 
     #[test]
-    fn test_digplan_parse()  {
+    fn test_digplan_parse() {
         let inp = std::fs::read_to_string("./src/bin/day18/sample.txt").expect("Ops!");
         let plan = match inp.parse::<DigPlan>() {
             Ok(set) => set,
-            Err(e) => panic!("{}",e),
+            Err(e) => panic!("{}", e),
         };
 
         let mut iter = plan.iter();
@@ -65,7 +62,7 @@ mod test {
 
     #[test]
     fn test_digplan_is_clockwise() {
-        let plan: DigPlan = match load_plan(None) {
+        let plan: DigPlan = match load_plan(Some("sample.txt".into())) {
             Ok(p) => p,
             Err(e) => panic!("{}", e),
         };
@@ -75,6 +72,4 @@ mod test {
             false => println!("Counter Clockwise"),
         }
     }
-
-
 }
