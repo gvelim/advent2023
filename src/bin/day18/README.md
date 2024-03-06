@@ -82,14 +82,17 @@ Digging out this loop and its interior produces a lagoon that can hold an impres
 Convert the hexadecimal color codes into the correct instructions; if the Elves follow this new dig plan, **how many cubic meters of lava could the lagoon hold**?
 # Approach
 ## Digging a trench
-A trench is defined by its RGB Colour and Direction it was dug, therefore we use the below data structures to capture the data relationship
+A trench is defined by its `RGB` color and `Direction` was dug,
+therefore, we capture the data relationship with the below data structures. 
 ```rust
 enum Direction { U, R, D, L }
 
 struct Trench(Rgb, Direction);
 ```
-We store each trench point in a `BTreeMap` ordered first by `Y` coordinate first and then by `X` coordinate. This will allow us later on to retrieve all `X` coordinates given a specific line `Y`. Since a `Lagoon` contains one or more `Trench` we use the below data structure that holds the trench points, but also the **top-left**, **bottom-right** positions of the 2D grid; this is important so we know the scan boundaries of the grid.
-
+We store each trench point in a `BTreeMap` ordered by `Y` coordinate first and followed by `X` coordinate. 
+This will enable us later on, to retrieve all `X` coordinates for a specific line `Y`. 
+Since a `Lagoon` contains one or more `Trench` we use the below data structure to hold the trench points, 
+including the **top-left**, **bottom-right** positions of the 2D grid, hence tracking grid boundaries.
 ```rust
 struct Lagoon {
     min: Position,
@@ -97,7 +100,8 @@ struct Lagoon {
     map: BTreeMap<Position, Trench>,
 }
 ```
-In terms of instruction plan, we use the following data structure that represents a single instruction.
+In terms of instruction plan, we use a simple collection of instructions;
+hence we use the following data structure to represent a single instruction.
 ```rust
 struct Instruction {
     pub dir: Direction,
@@ -105,24 +109,26 @@ struct Instruction {
     pub rgb: Rgb
 }
 ```
-Therefore, digging the trench is as simple as capturing all the points given a starting position and instruction and having completed the digging once we have played back all instructions given. The `Digger` structure undertakes the role of digging a `lagoon` given an `instruction` returning the length of the trench that was dug.
+Therefore, digging the lagoon perimeter is as simple as capturing all the points for every trench dug. 
+The `Digger` structure undertakes the role of digging a `lagoon` and is tracking its current position. 
+The below function `dig()` takes both a `lagoon` and an `instruction`, mutates `lagoon` and returns the trench length dug.
 ```rust
 pub(crate) struct Digger {
+    // track latest position
     pos: Position
 }
 
 impl Digger {
 ...
     fn dig(&mut self, lagoon: &mut Lagoon, instr: &Instruction) -> usize {
-        let ret = (0..instr.run)
+        (0..instr.run)
             .take_while(|_| { 
                 lagoon.dig_trench(                     
                     *self.pos.next_mut(instr.dir),                     
                     Trench(instr.rgb, instr.dir), 
                 ).is_none()
             })
-            .count();
-        ret
+            .count()
 }
 ```
 Therefore, the sum of instruction lengths executed will give us the perimeter of the `lagoon`, as it is captured by the `total` variable below.
@@ -143,13 +149,15 @@ Now that we have dug the `lagoon` perimeter and also know its full length it is 
 To calculate the area covered in a 2D grid, we use a form of **polygon fill algorithm** and particularly we use the **trench direction** in order to figure out which part of the space evaluated falls inside or outside the lagoon's enclosed area.
 
 To understand the area enclosed by the lagoon trench, by observing  how trenches are lining up next to each other, we find out that enclosed area is denoted by the following direction pairs
-* `↑ ↓` : always falls inside lagoon's area
+* `↑ ↓` : always falls inside lagoon's perimeter
 * `→ ←` : given direction before `←` was `↓`, otherwise area falls outside the lagoon's perimeter
-* `↑ ←` : always falls inside lagoon's area
-* `→ ↓` : always falls inside lagoon's area
+* `↑ ←` : always falls inside lagoon's perimeter
+* `→ ↓` : always falls inside lagoon's perimeter
 
 Hence, by scanning each line for **"direction pairs"** that match the above combinations we can extract the enclosed areas
 ```
+Lagoon Grid                             Scan line range evaluation
+-----------------------------------     -------------------------------------------------
 . . . . . . . ↑ → → → → → → . . . .   =  0 : ↑ →, → →, → →, → →, → →, → →,
                                               x    x    x    x    x    x
 . . . . . . . ↑ ◼ ◼ ◼ ◼ ◼ ↓ . . . .   =  1 : ↑ ↓, 
@@ -169,7 +177,41 @@ Hence, by scanning each line for **"direction pairs"** that match the above comb
 . . . ↑ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ↓ . .   =  ...
 . . . ← ← ← ← ← ← ← ← ← ← ← ← ↓ . .   =  ...
 ```
-With the above understanding we can produce a function that given a line position `y` we can product the `x` pairs that **cut/intersect** the lagoon's enclosed areas. It is here where the `BTreeMap` can efficiently give us the a list of `x` points falling on a line `y`.
+With the above understanding we need to adjust `Trench` structure to hold the Direction of the previous trench so we can evaluate the condition for the `→ ←` pair.
+```rust
+struct Trench(Rgb, Direction, Option<Direction>);
+
+pub(crate) struct Digger {
+    pos: Position,
+    // Track direction of previous instruction
+    last: Option<Direction>,
+}
+
+impl Digger {
+...
+    pub fn dig(&mut self, lagoon: &mut Lagoon, instr: &Instruction) -> usize {
+        let ret = (0..instr.run)
+            .take_while(|_| {
+                lagoon
+                    .dig_trench(
+                        *self.pos.next_mut(instr.dir),
+                        // store in trench previous direction
+                        Trench(instr.rgb, instr.dir, self.last),
+                    )
+                    .is_none()
+            })
+            .count();
+        // store instruction direction
+        self.last = Some(instr.dir);
+        ret
+    }
+...
+}
+```
+With the `Trench` adjustment completed we can now implement a function
+that takes a line position `y` and returns the list of line ranges,
+in the form of `(start..end)`, which **cut/intersect** the lagoon's enclosed areas.
+It is here where the `BTreeMap` can efficiently give us the list of `x` points falling onto the line `y`.
 ```rust
 impl Lagoon {
     ...
@@ -204,7 +246,7 @@ impl Lagoon {
 ...
 }
 ```
-Therefore, finding the total area we need to sum-up all lines that intersect the lagoon, starting from minimum to maximum `y`. 
+With the above function at hand, finding the lagoon's area becomes the sum of all line intersections between the minimum and maximum points in the `Y` axis; We implement this logic in the following function. 
 ```rust
 impl Lagoon {
 ...
@@ -219,3 +261,4 @@ impl Lagoon {
 ...
 }
 ```
+
