@@ -143,10 +143,10 @@ Now that we have dug the `lagoon` perimeter and also know its full length it is 
 To calculate the area covered in a 2D grid, we use a form of **polygon fill algorithm** and particularly we use the **trench direction** in order to figure out which part of the space evaluated falls inside or outside the lagoon's enclosed area.
 
 To understand the area enclosed by the lagoon trench, by observing  how trenches are lining up next to each other, we find out that enclosed area is denoted by the following direction pairs
-* `↑ ↓` : always falls inside lagoon's area
+* `↑ ↓` : always falls inside lagoon's perimeter
 * `→ ←` : given direction before `←` was `↓`, otherwise area falls outside the lagoon's perimeter
-* `↑ ←` : always falls inside lagoon's area
-* `→ ↓` : always falls inside lagoon's area
+* `↑ ←` : always falls inside lagoon's perimeter
+* `→ ↓` : always falls inside lagoon's perimeter
 
 Hence, by scanning each line for **"direction pairs"** that match the above combinations we can extract the enclosed areas
 ```
@@ -204,7 +204,7 @@ impl Lagoon {
 ...
 }
 ```
-Therefore, finding the total area we need to sum-up all lines that intersect the lagoon, starting from minimum to maximum `y`. 
+Therefore, finding the total area we need to sum-up all lines that intersect the lagoon, between the minimum and maximum `y` grid coordinates.
 ```rust
 impl Lagoon {
 ...
