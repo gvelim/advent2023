@@ -3,6 +3,7 @@ use crate::position::{Position, Unit};
 use std::collections::BTreeMap;
 use std::fmt::{Debug, Formatter};
 use std::ops::Range;
+use rayon::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
 struct Trench(Rgb, Direction, Option<Direction>);
@@ -95,9 +96,11 @@ impl Lagoon {
 
     pub(crate) fn calculate_area(&self) -> usize {
         (self.min.1..=self.max.1)
-            .flat_map(|y| {
+            .into_par_iter()
+            .map(|y| {
                 self.floodfill_intersections(y)
                     .map(|rng| (rng.len() - 1) as usize)
+                    .sum::<usize>()
             })
             .sum::<usize>()
     }
