@@ -37,16 +37,16 @@ When viewed from above, the above example dig plan would result in the following
 ## Part 1
 At this point, the trench could contain `38` cubic meters of lava. However, this is just the edge of the lagoon; the next step is to **dig out the interior** so that it is one meter deep as well:
 ```
-↑ → → → → → →
-↑ ◼ ◼ ◼ ◼ ◼ ↓
-← ← ↑ ◼ ◼ ◼ ↓
-. . ↑ ◼ ◼ ◼ ↓
-. . ↑ ◼ ◼ ◼ ↓
-↑ → → ◼ ← ← ↓
-↑ ◼ ◼ ◼ ↓ . .
-← ↑ ◼ ◼ ↓ → →
-. ↑ ◼ ◼ ◼ ◼ ↓
-. ← ← ← ← ← ↓
+↑ → → → → → → 
+↑ ◼ ◼ ◼ ◼ ◼ ↓ 
+← ← ↑ ◼ ◼ ◼ ↓ 
+. . ↑ ◼ ◼ ◼ ↓ 
+. . ↑ ◼ ◼ ◼ ↓ 
+↑ → → ◼ ← ← ↓ 
+↑ ◼ ◼ ◼ ↓ . . 
+← ↑ ◼ ◼ ↓ → → 
+. ↑ ◼ ◼ ◼ ◼ ↓ 
+. ← ← ← ← ← ↓ 
 ```
 Now, the lagoon can contain a much more respectable `62` cubic meters of lava. While the interior is dug out, the edges are also painted according to the color codes in the dig plan.
 
@@ -82,24 +82,140 @@ Digging out this loop and its interior produces a lagoon that can hold an impres
 Convert the hexadecimal color codes into the correct instructions; if the Elves follow this new dig plan, **how many cubic meters of lava could the lagoon hold**?
 # Approach
 ## Digging a trench
-A trench is defined by its RGB Colour and Direction it was dug
+A trench is defined by its RGB Colour and Direction it was dug, therefore we use the below data structures to capture the data relationship
+```rust
+enum Direction { U, R, D, L }
 
-We store each trench point in a BTreeMap ordered first by Y coordinate first and then by X coordinate. This will allow us later on to retrieve all X coordinates given a specific line Y.
-
-Digging the trench is as simple as capturing all the points given a starting position and instruction and having played back all instructions.
-
-## Calculating lagoon's area
-We use a form of **polygon fill algorithm** and particularly we use the **trench direction** in order to figure out which part of the space evaluated falls inside or outside the lagoon's enclosed area 
+struct Trench(Rgb, Direction);
 ```
-↑ → → → → . . . ↑ → → → →   
-↑ . . . ↓ . . . ↑ . . . ↓   
-↑ . . . ↓ . . . ↑ . . . ↓   
-↑ . . . ↓ . . . ↑ . . . ↓   
-↑ . . . ↓ → → → → . . . ↓   
-↑ . . . . . . . . . . . ↓   
-↑ . . . ← ← ← ← ↑ . . . ↓   
-↑ . . . ↓ . . . ↑ . . . ↓   
-↑ . . . ↓ . . . ↑ . . . ↓   
-↑ . . . ↓ . . . ↑ . . . ↓   
-← ← ← ← ↓ . . . ← ← ← ← ↓   
+We store each trench point in a `BTreeMap` ordered first by `Y` coordinate first and then by `X` coordinate. This will allow us later on to retrieve all `X` coordinates given a specific line `Y`. Since a `Lagoon` contains one or more `Trench` we use the below data structure that holds the trench points, but also the **top-left**, **bottom-right** positions of the 2D grid; this is important so we know the scan boundaries of the grid.
+
+```rust
+struct Lagoon {
+    min: Position,
+    max: Position,
+    map: BTreeMap<Position, Trench>,
+}
+```
+In terms of instruction plan, we use the following data structure that represents a single instruction.
+```rust
+struct Instruction {
+    pub dir: Direction,
+    pub run: usize,
+    pub rgb: Rgb
+}
+```
+Therefore, digging the trench is as simple as capturing all the points given a starting position and instruction and having completed the digging once we have played back all instructions given. The `Digger` structure undertakes the role of digging a `lagoon` given an `instruction` returning the length of the trench that was dug.
+```rust
+pub(crate) struct Digger {
+    pos: Position
+}
+
+impl Digger {
+...
+    fn dig(&mut self, lagoon: &mut Lagoon, instr: &Instruction) -> usize {
+        let ret = (0..instr.run)
+            .take_while(|_| { 
+                lagoon.dig_trench(                     
+                    *self.pos.next_mut(instr.dir),                     
+                    Trench(instr.rgb, instr.dir), 
+                ).is_none()
+            })
+            .count();
+        ret
+}
+```
+Therefore, the sum of instruction lengths executed will give us the perimeter of the `lagoon`, as it is captured by the `total` variable below.
+```rust
+...
+    let mut lagoon = Lagoon::default();
+    let mut digger = Digger::new(Position(0, 0));
+ 
+    let total = plan
+        .iter()
+        .map(|ins| digger.dig(&mut lagoon, ins))
+        .sum::<usize>();
+...
+```
+## Calculating lagoon's area
+Now that we have dug the `lagoon` perimeter and also know its full length it is time to calculate the `laggon` area covered.
+
+To calculate the area covered in a 2D grid, we use a form of **polygon fill algorithm** and particularly we use the **trench direction** in order to figure out which part of the space evaluated falls inside or outside the lagoon's enclosed area.
+
+To understand the area enclosed by the lagoon trench, by observing  how trenches are lining up next to each other, we find out that enclosed area is denoted by the following direction pairs
+* `↑ ↓` : always falls inside lagoon's area
+* `→ ←` : given direction before `←` was `↓`, otherwise area falls outside the lagoon's perimeter
+* `↑ ←` : always falls inside lagoon's area
+* `→ ↓` : always falls inside lagoon's area
+
+Hence, by scanning each line for **"direction pairs"** that match the above combinations we can extract the enclosed areas
+```
+. . . . . . . ↑ → → → → → → . . . .   =  0 : ↑ →, → →, → →, → →, → →, → →,
+                                              x    x    x    x    x    x
+. . . . . . . ↑ ◼ ◼ ◼ ◼ ◼ ↓ . . . .   =  1 : ↑ ↓, 
+                                              ✓
+↑ → → → → . . ← ← ↑ ◼ ◼ ◼ ↓ . ↑ → →   =  1 : ↑ → ,→ →, → ←, ← ↑, ↑ ↓, ↓ ↑, ↑ →, → →
+                                              x    x    x    x    ✓    x    ✓    x
+↑ ◼ ◼ ◼ ↓ . . . . ↑ ◼ ◼ ◼ ↓ . ↑ ◼ ↓   =  3 : ↑ ↓, ↓ ↑, ↑ ↓, ↓ ↑, ↑ ↓
+                                              ✓    x    ✓    x    ✓
+↑ ◼ ◼ ◼ ↓ → → → . ↑ ◼ ◼ ◼ ↓ → → ◼ ↓   =  3 : ↑ ↓, ↓ →, → →, → →, → ↑, ↑ ↓, ↓ →, → →, → ↓
+                                              ✓    x    x    x    x    ✓    x    x    ✓ 
+↑ ◼ ◼ ◼ ◼ ◼ ◼ ↓ . ↑ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ↓   =  ...
+← ← ← ↑ ◼ ◼ ◼ ↓ . ↑ ◼ ◼ ◼ ← ← ↑ ◼ ↓   =  ...
+. . . ↑ ◼ ◼ ◼ ↓ . ↑ ◼ ◼ ◼ ↓ . ↑ ◼ ↓   =  ...
+. . . ← ← ↑ ◼ ↓ → → ◼ ◼ ◼ ↓ . ← ← ↓   =  ...
+. . . . . ↑ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ↓ → → . .   =  ...
+. . . ↑ → → ◼ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ↓ . .   =  ...
+. . . ↑ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ◼ ↓ . .   =  ...
+. . . ← ← ← ← ← ← ← ← ← ← ← ← ↓ . .   =  ...
+```
+With the above understanding we can produce a function that given a line position `y` we can product the `x` pairs that **cut/intersect** the lagoon's enclosed areas. It is here where the `BTreeMap` can efficiently give us the a list of `x` points falling on a line `y`.
+```rust
+impl Lagoon {
+    ...
+    fn floodfill_intersections(&self, line: Unit) -> impl Iterator<Item=Range<Unit>> + '_ {
+        use Direction as D;
+        let mut last: Option<(&Unit, &Direction)> = None;
+
+        self.map
+            // get a sorted list of all 'x' given a line at 'y'
+            .range(Position(Unit::MIN, line)..=Position(Unit::MAX, line))
+            // filter out the non-enclosed areas
+            .filter_map(move |(Position(x, _), Trench(_, d, pd))| {
+                let mut out = None;
+                if let Some((lx, ld)) = last {
+                    out = match (ld, d) {
+                        (D::U, D::D) |
+                        (D::U, D::L) |
+                        (D::R, D::D) => Some(*lx..*x),
+                        // gray case, needs condition check
+                        (D::R, D::L)
+                        // have we made a clockwise turn to reach D::L ? 
+                        if pd.map(|pd| d.is_clockwise(pd)).unwrap_or(false)
+                        // if yes, we found another enclosed area
+                        => Some(*lx..*x),
+                        _ => None,
+                    }
+                }
+                last = Some((x, d));
+                out
+            })
+    }
+...
+}
+```
+Therefore, finding the total area we need to sum-up all lines that intersect the lagoon, starting from minimum to maximum `y`. 
+```rust
+impl Lagoon {
+...
+    fn calculate_area(&self) -> usize { 
+        (self.min.1..=self.max.1)
+            .flat_map(|y| {
+                self.floodfill_intersections(y)
+                    .map(|rng| (rng.len() - 1) as usize)
+            })
+            .sum::<usize>()
+    }
+...
+}
 ```
