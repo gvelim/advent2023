@@ -1,9 +1,9 @@
 use crate::instruction::{Direction, Instruction, Rgb};
 use crate::position::{Position, Unit};
+use rayon::prelude::*;
 use std::collections::BTreeMap;
 use std::fmt::{Debug, Formatter};
 use std::ops::Range;
-use rayon::prelude::*;
 
 #[derive(Debug, Copy, Clone)]
 struct Trench(Rgb, Direction, Option<Direction>);
@@ -70,7 +70,7 @@ impl Lagoon {
         self.map.insert(pos, trench)
     }
 
-    fn floodfill_intersections(&self, line: Unit) -> impl Iterator<Item=Range<Unit>> + '_ {
+    fn floodfill_intersections(&self, line: Unit) -> impl Iterator<Item = Range<Unit>> + '_ {
         use Direction as D;
         let mut last: Option<(&Unit, &Direction)> = None;
 
@@ -152,7 +152,7 @@ pub mod test {
 
     #[test]
     fn test_lagoon_area_rgb() {
-        let plan = load_plan(Some("sample.txt".to_string())).expect("Ops");
+        let plan = load_plan(None).expect("Ops");
 
         let mut lagoon = Lagoon::default();
         let mut digger = Digger::new(Position(0, 0));
@@ -209,7 +209,7 @@ pub mod test {
 
     #[test]
     fn test_dig_lagoon() {
-        let plan = match load_plan(Some("sample.txt".to_string())) {
+        let plan = match load_plan(None) {
             Ok(p) => p,
             Err(e) => panic!("{}", e),
         };
@@ -266,8 +266,7 @@ pub mod test {
             "./src/bin/day18/{}",
             file.unwrap_or(
                 std::env::args()
-                    .skip(3)
-                    .next()
+                    .find(|s| s.starts_with("sample"))
                     .unwrap_or("sample.txt".into())
             )
         );

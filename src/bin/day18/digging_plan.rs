@@ -62,7 +62,7 @@ mod test {
 
     #[test]
     fn test_digplan_is_clockwise() {
-        let plan: DigPlan = match load_plan(Some("sample.txt".into())) {
+        let plan: DigPlan = match load_plan(None) {
             Ok(p) => p,
             Err(e) => panic!("{}", e),
         };
