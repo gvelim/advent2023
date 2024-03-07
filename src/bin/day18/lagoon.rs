@@ -155,10 +155,7 @@ pub mod test {
         let total = plan
             .iter()
             .map(|ins|
-                digger.dig(
-                    &mut lagoon,
-                    &ins.decode_rgb().expect("Ops")
-                )
+                digger.dig(&mut lagoon,&ins.decode_rgb())
             )
             .sum::<usize>();
 
