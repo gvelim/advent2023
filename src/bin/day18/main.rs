@@ -6,10 +6,11 @@ mod position;
 use digging_plan::DigPlan;
 use lagoon::{Digger, Lagoon};
 use position::Position;
-
 use crate::instruction::Instruction;
 
 fn main() {
+    type FnEncode = fn(&Instruction) -> Instruction;
+
     let plan = match std::fs::read_to_string("./src/bin/day18/input.txt")
         .expect("Cannot Find File")
         .parse::<DigPlan>() {
@@ -18,7 +19,7 @@ fn main() {
         };
 
     let dig_lagoon =
-        |enc: fn(&Instruction) -> Instruction| -> usize {
+        |enc: FnEncode| -> usize {
             let mut lagoon = Lagoon::default();
             let mut digger = Digger::new(Position(0, 0));
 
@@ -36,6 +37,9 @@ fn main() {
             total + area
     };
 
-    assert_eq!(40714, dig_lagoon(|i| i.clone()));
-    assert_eq!(129849166997110, dig_lagoon(|i| i.decode_rgb().expect("Ops")));
+    let pass_through: FnEncode = |i| { i.clone() };
+    let encode_rgb: FnEncode =  |i| { i.decode_rgb() };
+
+    assert_eq!(40714, dig_lagoon(pass_through));
+    assert_eq!(129849166997110, dig_lagoon(encode_rgb));
 }

@@ -1,6 +1,5 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
-use std::num::ParseIntError;
 use std::rc::Rc;
 use std::str::FromStr;
 
@@ -45,13 +44,13 @@ pub(crate) struct Instruction {
 }
 
 impl Instruction {
-    pub(crate) fn decode_rgb(&self) -> Result<Instruction, ParseIntError> {
+    pub(crate) fn decode_rgb(&self) -> Instruction {
         let s = format!("{}", self.rgb);
-        Ok(Instruction {
-            dir: TURNS[usize::from_str(&s[6..=6])? + 2],
-            run: usize::from_str_radix(&s[1..=5], 16)?,
+        Instruction {
+            dir: TURNS[usize::from_str(&s[6..=6]).unwrap() + 2],
+            run: usize::from_str_radix(&s[1..=5], 16).unwrap(),
             rgb: Rgb(0,0,0)
-        })
+        }
     }
 }
 
@@ -130,6 +129,7 @@ impl Debug for InstructionErr {
 #[cfg(test)]
 mod test {
     use super::*;
+
     #[test]
     fn test_instruction_decode_rgb() {
         let test_data = [
@@ -153,8 +153,7 @@ mod test {
             let d = i
                 .parse::<Instruction>()
                 .expect("Cannot Parse Instructions")
-                .decode_rgb()
-                .expect("failed to decode RGB");
+                .decode_rgb();
             assert_eq!(o, &format!("{:?} {}", d.dir, d.run));
         }
     }
