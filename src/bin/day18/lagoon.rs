@@ -9,15 +9,9 @@ use std::ops::Range;
 struct Trench(Rgb, Direction, Option<Direction>);
 
 impl Trench {
-    fn r(&self) -> u8 {
-        self.0.0
-    }
-    fn g(&self) -> u8 {
-        self.0.1
-    }
-    fn b(&self) -> u8 {
-        self.0.2
-    }
+    fn r(&self) -> u8 { self.0.0 }
+    fn g(&self) -> u8 { self.0.1 }
+    fn b(&self) -> u8 { self.0.2 }
 }
 
 pub(crate) struct Digger {
@@ -266,7 +260,7 @@ pub mod test {
             "./src/bin/day18/{}",
             file.unwrap_or(
                 std::env::args()
-                    .find(|s| s.starts_with("sample"))
+                    .find(|s| s.ends_with(".txt"))
                     .unwrap_or("sample.txt".into())
             )
         );

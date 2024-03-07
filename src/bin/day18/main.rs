@@ -7,42 +7,35 @@ use digging_plan::DigPlan;
 use lagoon::{Digger, Lagoon};
 use position::Position;
 
+use crate::instruction::Instruction;
+
 fn main() {
-    let plan = std::fs::read_to_string("./src/bin/day18/input.txt")
-        .expect("ops")
-        .parse::<DigPlan>()
-        .expect("Ops");
+    let plan = match std::fs::read_to_string("./src/bin/day18/input.txt")
+        .expect("Cannot Find File")
+        .parse::<DigPlan>() {
+            Ok(plan) => plan,
+            Err(e) => panic!("{}",e),
+        };
 
-    let mut lagoon = Lagoon::default();
-    let mut digger = Digger::new(Position(0, 0));
+    let dig_lagoon =
+        |enc: fn(&Instruction) -> Instruction| -> usize {
+            let mut lagoon = Lagoon::default();
+            let mut digger = Digger::new(Position(0, 0));
 
-    let t = std::time::Instant::now();
-    let total = plan
-        .iter()
-        .map(|ins| digger.dig(&mut lagoon, ins))
-        .sum::<usize>();
-    let area = lagoon.calculate_area();
-    println!("\nPart 1:\n\tLagoon Periphery {}\n\tLagoon area = {}\nTotal: {} - {:?}",
-        total, area, total + area,t.elapsed()
-    );
-    assert_eq!(40714,total + area);
+            let t = std::time::Instant::now();
+            let total = plan
+                .iter()
+                .map(|ins| digger.dig(&mut lagoon, &enc(ins)))
+                .sum::<usize>();
 
-    let mut lagoon = Lagoon::default();
-    let mut digger = Digger::new(Position(0, 0));
+            let area = lagoon.calculate_area();
+            println!("\nPart 1:\n\tLagoon Periphery {}\n\tLagoon area = {}\nTotal: {} - {:?}",
+                total, area, total + area,t.elapsed()
+            );
 
-    let t = std::time::Instant::now();
-    let total = plan
-        .iter()
-        .map(|ins|
-            digger.dig(
-                &mut lagoon,
-                &ins.decode_rgb().expect("ops")
-            )
-        )
-        .sum::<usize>();
-    let area = lagoon.calculate_area();
-    println!("\nPart 2:\n\tLagoon Periphery {}\n\tLagoon area = {}\nTotal: {} - {:?}",
-        total, area, total + area,t.elapsed()
-    );
-    assert_eq!(129849166997110,total + area);
+            total + area
+    };
+
+    assert_eq!(40714, dig_lagoon(|i| i.clone()));
+    assert_eq!(129849166997110, dig_lagoon(|i| i.decode_rgb().expect("Ops")));
 }
