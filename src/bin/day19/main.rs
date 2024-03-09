@@ -6,12 +6,19 @@ fn main() {
 
 type Unit = u16;
 
+#[derive(Clone, Copy)]
 struct Part {
     // each part is rated in each of four categories
     x: Unit, // x: Extremely cool looking
     m: Unit, // m: Musical (it makes a noise when you hit it)
     a: Unit, // a: Aerodynamic
     s: Unit  // s: Shiny
+}
+impl Debug for Part {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Part{x,m,a,s} = self;
+        write!(f,"[x:{x},m:{m},a:{a},s:{s}]")
+    }
 }
 impl Part {
     fn sum(&self) -> Unit {
@@ -38,6 +45,21 @@ struct Condition {
     operant: Operant,
     value: Unit
 }
+impl Condition {
+    fn validate(&self, part: Part) -> bool {
+        match self.operant {
+            Operant::XGT => part.x > self.value,
+            Operant::XLT => part.x < self.value,
+            Operant::MGT => part.m > self.value,
+            Operant::MLT => part.m < self.value,
+            Operant::SGT => part.s > self.value,
+            Operant::SLT => part.s < self.value,
+            Operant::AGT => part.a > self.value,
+            Operant::ALT => part.a < self.value,
+        }
+    }
+}
+
 impl FromStr for Condition {
     type Err = ParseIntError;
 
@@ -63,6 +85,8 @@ impl Debug for Condition {
         write!(f, "{:?}{:?}",self.operant,self.value)
     }
 }
+
+#[derive(Clone)]
 enum Action {
     WorkFlow(Rc<str>),
     Accept,
@@ -94,6 +118,18 @@ enum Rule {
     ConAct(Condition, Action),
     Act(Action)
 }
+
+impl Rule {
+    fn validate(&self, part: Part) -> Option<Action> {
+        match self {
+            Rule::ConAct(c, a) if c.validate(part) => Some(a.clone()),
+            Rule::Act(a) => Some(a.clone()),
+            _ => None
+        }
+    }
+
+}
+
 impl FromStr for Rule {
     type Err = ();
 
@@ -114,6 +150,7 @@ impl FromStr for Rule {
         Ok(o)
     }
 }
+
 impl Debug for Rule {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -122,16 +159,21 @@ impl Debug for Rule {
         }
     }
 }
+
 struct Workflow {
     name: Rc<str>,
     // Each workflow has a name and contains a list of rules
     rules: Rc<[Rule]>
 }
 impl Workflow {
-    fn sort(part: Part) -> Action {
+    fn validate(&self, part: Part) -> Option<Action> {
         // The first rule that matches the part being considered is applied immediately,
         // and the part moves on to the destination described by the rule
-        Action::Reject
+        self.rules
+            .iter()
+            .skip_while(|rule| rule.validate(part).is_none())
+            .map(|rule| rule.validate(part).unwrap() )
+            .next()
     }
 }
 impl FromStr for Workflow {
@@ -181,11 +223,43 @@ impl SortingSystem {
 }
 
 
-
-
 #[cfg(test)]
 mod test {
-    use crate::{Rule, Workflow};
+    use super::*;
+
+    #[test]
+    fn test_workflow_validate() {
+        let wf = "ex{x>10:one,m<20:two,a>30:R,A}".parse::<Workflow>().expect("Ops");
+        let part = Part{ x: 10, m: 20, a: 20, s: 0 };
+
+        println!("{:?}", wf.validate(part));
+    }
+
+    #[test]
+    fn test_rule_validate() {
+        let mut res = [
+            Some(Action::WorkFlow("one".into())),
+            None,
+            Some(Action::WorkFlow("two".into())),
+            None,
+            Some(Action::Reject),
+            None,
+            Some(Action::Accept)
+        ]
+        .into_iter();
+        let wf = "ex{x>10:one,x<10:one,m<20:two,m>20:two,a<30:R,a>30:R,A}".parse::<Workflow>().expect("Ops");
+        let part = Part{ x: 11, m: 0, a: 20, s: 0 };
+
+        wf.rules
+            .iter()
+            .for_each(|rule|{
+               println!("{:?} => {:?} = {:?}", rule, part, rule.validate(part));
+               assert_eq!(
+                   format!("{:?}", res.next().unwrap()),
+                   format!("{:?}", rule.validate(part))
+               );
+            });
+    }
 
     #[test]
     fn test_rule_parse() {
