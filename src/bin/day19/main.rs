@@ -1,7 +1,38 @@
+
+
 use std::{collections::HashMap, fmt::Debug, num::ParseIntError, rc::Rc, str::FromStr};
 
 fn main() {
+    let (parts, system) = parse_puzzle_data("src/bin/day19/sample.txt");
 
+    let sum = parts.iter()
+        .filter(|&&part|
+            system.process(part, "in") == Some(Action::Accept)
+        )
+        .map(|part| part.sum())
+        .sum::<Unit>();
+
+    println!("Part 1: Sum of approved parts: {sum}");
+}
+
+fn parse_puzzle_data(file: &str) -> (Rc<[Part]>, SortingSystem) {
+    let inp = std::fs::read_to_string(file)
+        .expect("cannot load data file");
+    let mut split = inp.split("\n\n");
+    let wfs = split
+        .next()
+        .unwrap()
+        .parse::<SortingSystem>()
+        .expect("Failed to parse workflows");
+
+    let parts = split
+        .next()
+        .unwrap()
+        .lines()
+        .map(|line| line.parse::<Part>().expect("msg") )
+        .collect::<Rc<[Part]>>();
+
+    (parts,wfs)
 }
 
 type Unit = u16;
@@ -16,17 +47,37 @@ struct Part {
 }
 impl Debug for Part {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // x=787,m=2655,a=1222,s=2876
         let Part{x,m,a,s} = self;
-        write!(f,"[x:{x},m:{m},a:{a},s:{s}]")
+        write!(f,"{{x={x},m={m},a={a},s={s}}}")
     }
 }
+
 impl Part {
     fn sum(&self) -> Unit {
         self.x + self.m + self.a + self.s
     }
 }
 
+impl FromStr for Part {
+    type Err = ParseIntError;
+
+    fn from_str(inp: &str) -> Result<Self, Self::Err> {
+        // {x=787,m=2655,a=1222,s=2876}
+        let mut s = inp
+            .trim_matches(&['{','}'])
+            .split_terminator(',');
+        let x = Unit::from_str( &s.next().unwrap()[2..] )?;
+        let m = Unit::from_str( &s.next().unwrap()[2..] )?;
+        let a = Unit::from_str( &s.next().unwrap()[2..] )?;
+        let s = Unit::from_str( &s.next().unwrap()[2..] )?;
+
+        Ok(Part { x, m, a, s })
+    }
+}
+
 enum Operant { XGT, XLT, MGT, MLT, SGT, SLT, AGT, ALT }
+
 impl Debug for Operant {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -86,7 +137,7 @@ impl Debug for Condition {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 enum Action {
     WorkFlow(Rc<str>),
     Accept,
@@ -161,8 +212,8 @@ impl Debug for Rule {
 }
 
 struct Workflow {
-    name: Rc<str>,
     // Each workflow has a name and contains a list of rules
+    name: Rc<str>,
     rules: Rc<[Rule]>
 }
 impl Workflow {
@@ -205,20 +256,40 @@ impl Debug for Workflow {
         Ok(())
     }
 }
-enum SortingSystemResult {
-    Accept(Part),
-    Reject,
-}
 
 struct SortingSystem {
     map: HashMap<Rc<str>, Workflow>
 }
 
 impl SortingSystem {
-    fn sort(part: Part) -> SortingSystemResult {
+    fn process(&self, part: Part, workflow: &str) -> Option<Action> {
         // If a part is sent to another workflow, it immediately switches to the start of that workflow instead and never returns.
         // If a part is accepted (sent to A) or rejected (sent to R), the part immediately stops any further processing.
-        SortingSystemResult::Accept(part)
+        let mut wf = self.map
+            .get(workflow.into())
+            .expect("SortingSystem::process() - Starting workflow unknown!!");
+
+        while let Some(Action::WorkFlow(next)) = wf.validate(part) {
+            wf = self.map
+                .get(&next)
+                .expect("SortingSystem::process() - redirected to non-existent Workflow");
+        }
+
+        wf.validate(part)
+    }
+}
+
+impl FromStr for SortingSystem {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut map: HashMap<Rc<str>,Workflow> = HashMap::new();
+
+        for line in s.lines() {
+            let wf = line.parse::<Workflow>()?;
+            map.insert(wf.name.clone(), wf);
+        }
+        Ok(SortingSystem { map })
     }
 }
 
@@ -228,11 +299,53 @@ mod test {
     use super::*;
 
     #[test]
+    fn test_sortingsystem_process() {
+        let inp = std::fs::read_to_string("src/bin/day19/sample.txt")
+            .expect("cannot load sample.txt");
+        let mut split = inp.split("\n\n");
+        let wfs = split
+            .next()
+            .unwrap()
+            .parse::<SortingSystem>()
+            .expect("Failed to parse workflow");
+        let part = "{x=787,m=2655,a=1222,s=2876}".parse::<Part>().expect("msg");
+
+        println!("{:?}", wfs.process(part, "in"));
+        assert_eq!(
+            format!("{:?}", wfs.process(part, "in")),
+            format!("{:?}", Some(Action::Accept))
+        );
+    }
+    #[test]
+    fn test_sortingsystem_parse() {
+        let inp = std::fs::read_to_string("src/bin/day19/sample.txt")
+            .expect("cannot load sample.txt");
+        let wfs = inp.split("\n\n").next().unwrap();
+        let sorting = wfs.parse::<SortingSystem>()
+            .expect("Failed to parse workflow");
+
+        wfs.lines()
+            .for_each(|line|{
+                let wf = line.parse::<Workflow>().expect("msg");
+                let found = sorting.map.get(&wf.name);
+                println!("{:?}",found);
+                assert_eq!(
+                    format!("{:?}", found),
+                    format!("{:?}", Some(wf))
+                );
+            });
+    }
+
+    #[test]
     fn test_workflow_validate() {
         let wf = "ex{x>10:one,m<20:two,a>30:R,A}".parse::<Workflow>().expect("Ops");
         let part = Part{ x: 10, m: 20, a: 20, s: 0 };
 
         println!("{:?}", wf.validate(part));
+        assert_eq!(
+            format!("{:?}", Some(Action::Accept)),
+            format!("{:?}", wf.validate(part))
+        );
     }
 
     #[test]
@@ -262,6 +375,19 @@ mod test {
     }
 
     #[test]
+    fn test_part_parse() {
+        let inp = std::fs::read_to_string("src/bin/day19/sample.txt")
+            .expect("cannot load sample.txt");
+        let data = inp.split("\n\n").skip(1).next().unwrap().lines();
+
+        for inp in data {
+            let part = inp.parse::<Part>().expect("Part parsing error!");
+            println!("{:?}",part);
+            assert_eq!(format!("{:?}",part),inp)
+        }
+    }
+
+    #[test]
     fn test_rule_parse() {
         let inp = "x>10:one\nm<20:two\na>30:R\nA";
         inp.lines()
@@ -271,6 +397,7 @@ mod test {
                 assert_eq!(&format!("{:?}",r),&s)
             })
     }
+
     #[test]
     fn test_worflow_parse() {
         let inp = std::fs::read_to_string("src/bin/day19/sample.txt")
