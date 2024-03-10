@@ -1,6 +1,6 @@
 use std::{fmt::Debug, num::ParseIntError, str::FromStr};
 
-pub(crate) type Unit = u16;
+pub(crate) type Unit = u32;
 
 #[derive(Clone, Copy)]
 pub(crate) struct Part {

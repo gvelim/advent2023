@@ -17,8 +17,7 @@ impl Workflow {
     pub(crate) fn validate(&self, part: Part) -> Option<Action> {
         // The first rule that matches the part being considered is applied immediately,
         // and the part moves on to the destination described by the rule
-        self.rules
-            .iter()
+        self.iter()
             .skip_while(|rule| rule.validate(part).is_none())
             .map(|rule| rule.validate(part).unwrap() )
             .next()

@@ -7,11 +7,11 @@ use std::rc::Rc;
 use crate::{system::SortingSystem, part::{Part,Unit}, rule::Action};
 
 fn main() {
-    let (parts, system) = parse_puzzle_data("src/bin/day19/sample.txt");
+    let (parts, system) = parse_puzzle_data("src/bin/day19/input.txt");
 
     let sum = parts.iter()
         .filter(|&&part|
-            system.process(part, "in") == Some(Action::Accept)
+            system.process_part(part, "in") == Some(Action::Accept)
         )
         .map(|part| part.sum())
         .sum::<Unit>();

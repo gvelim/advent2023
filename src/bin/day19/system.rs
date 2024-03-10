@@ -7,7 +7,7 @@ pub(crate) struct SortingSystem {
 }
 
 impl SortingSystem {
-    pub(crate) fn process(&self, part: Part, workflow: &str) -> Option<Action> {
+    pub(crate) fn process_part(&self, part: Part, workflow: &str) -> Option<Action> {
         // If a part is sent to another workflow, it immediately switches to the start of that workflow instead and never returns.
         // If a part is accepted (sent to A) or rejected (sent to R), the part immediately stops any further processing.
         let mut wf = self.map
@@ -38,7 +38,6 @@ impl FromStr for SortingSystem {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -55,9 +54,9 @@ mod test {
             .expect("Failed to parse workflow");
         let part = "{x=787,m=2655,a=1222,s=2876}".parse::<Part>().expect("msg");
 
-        println!("{:?}", wfs.process(part, "in"));
+        println!("{:?}", wfs.process_part(part, "in"));
         assert_eq!(
-            format!("{:?}", wfs.process(part, "in")),
+            format!("{:?}", wfs.process_part(part, "in")),
             format!("{:?}", Some(Action::Accept))
         );
     }
