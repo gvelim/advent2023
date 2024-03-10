@@ -60,11 +60,11 @@ Ultimately, three parts are **accepted**. Adding up the x, m, a, and s rating fo
 Sort through all of the parts you've been given; **what do you get if you add together all of the rating numbers for all of the parts that ultimately get accepted**?
 
 ## Part 2
-Even with your help, the sorting process `still` isn't fast enough.
+Even with your help, the sorting process **still** isn't fast enough.
 
 One of the Elves comes up with a new plan: rather than sort parts individually through all of these workflows, maybe you can figure out in advance which combinations of ratings will be accepted or rejected.
 
-Each of the four ratings (x, m, a, s) can have an integer value ranging from a minimum of 1 to a maximum of 4000. Of **all possible distinct combinations of ratings**, your job is to figure out which ones will be **accepted**.
+Each of the four ratings (x, m, a, s) can have an integer value ranging from a minimum of `1` to a maximum of `4000`. Of **all possible distinct combinations of ratings**, your job is to figure out which ones will be **accepted**.
 
 In the above example, there are `167409079868000` distinct combinations of ratings that will be accepted.
 
