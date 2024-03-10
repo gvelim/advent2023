@@ -19,3 +19,4 @@ Coding challenges in Rust
 * [Day 16](./src/bin/day16) - The Floor Will Be Lava
 * [Day 17](./src/bin/day17) - Clumsy 
 * [Day 18](./src/bin/day18) - Lavaduct Lagoon
+* [Day 19](./src/bin/day19) - Aplenty

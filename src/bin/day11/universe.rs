@@ -43,7 +43,7 @@ impl Universe {
                     );
                 i += len;
             });
-        
+
         self
     }
 
