@@ -10,16 +10,21 @@ impl SortingSystem {
     pub(crate) fn process_part(&self, part: Part, workflow: &str) -> Option<Action> {
         // If a part is sent to another workflow, it immediately switches to the start of that workflow instead and never returns.
         // If a part is accepted (sent to A) or rejected (sent to R), the part immediately stops any further processing.
-        let mut wf = self.map
+        let mut wf = self
+            .map
             .get(workflow.into())
             .expect("SortingSystem::process() - Starting workflow unknown!!");
 
+        print!("{:?}: {} -> ", part, wf.name);
         while let Some(Action::WorkFlow(next)) = wf.validate(part) {
-            wf = self.map
+            wf = self
+                .map
                 .get(&next)
                 .expect("SortingSystem::process() - redirected to non-existent Workflow");
+            print!("{:?} -> ", wf.name);
         }
 
+        println!("{:?}", &wf.validate(part));
         wf.validate(part)
     }
 }
@@ -41,24 +46,19 @@ impl FromStr for SortingSystem {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::{parse_puzzle_data, part::Unit};
 
     #[test]
     fn test_sortingsystem_process() {
-        let inp = std::fs::read_to_string("src/bin/day19/sample.txt")
-            .expect("cannot load sample.txt");
-        let mut split = inp.split("\n\n");
-        let wfs = split
-            .next()
-            .unwrap()
-            .parse::<SortingSystem>()
-            .expect("Failed to parse workflow");
-        let part = "{x=787,m=2655,a=1222,s=2876}".parse::<Part>().expect("msg");
+        let (part, wfs) = parse_puzzle_data("src/bin/day19/sample.txt");
 
-        println!("{:?}", wfs.process_part(part, "in"));
-        assert_eq!(
-            format!("{:?}", wfs.process_part(part, "in")),
-            format!("{:?}", Some(Action::Accept))
-        );
+        let sum = part
+            .iter()
+            .filter(|&&part| wfs.process_part(part, "in") == Some(Action::Accept))
+            .map(|p| p.sum())
+            .sum::<Unit>();
+
+        assert_eq!(sum, 19114);
     }
 
     #[test]

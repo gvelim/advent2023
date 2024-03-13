@@ -3,8 +3,8 @@ use crate::{part::Part, rule::{Action, Rule}};
 
 pub(crate) struct Workflow {
     // Each workflow has a name and contains a list of rules
-    name: Rc<str>,
-    rules: Rc<[Rule]>
+    rules: Rc<[Rule]>,
+    pub name: Rc<str>,
 }
 
 impl Workflow {
