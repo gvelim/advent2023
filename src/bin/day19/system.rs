@@ -4,11 +4,12 @@ use crate::{
     part::Part,
     rule::{Action, Rule},
 };
+use std::collections::VecDeque;
 use std::ops::Range;
 use std::{collections::HashMap, rc::Rc, str::FromStr};
 
 pub(crate) struct SortingSystem {
-    map: HashMap<Rc<str>, Workflow>,
+    map: HashMap<Rc<str>, Workflow>
 }
 
 impl SortingSystem {
@@ -33,30 +34,54 @@ impl SortingSystem {
         out
     }
 
-    pub(crate) fn rating_combinations(&self, wf: &str, rngs: &[Range<Unit>; 4]) -> Option<[Range<Unit>; 4]> {
+    pub(crate) fn total_combinations(&self, wf: &str, rngs: &[Range<Unit>; 4], tab:usize) -> Unit {
+        let mut queue: VecDeque<_> = VecDeque::new();
+
+        print!("\n{:->tab$}:{:?} -> ",wf,rngs);
         self.map
             .get(wf.into())
             .unwrap()
             .iter()
-            // .inspect(|arr| println!("{:?} -> ", arr))
-            .filter_map(|rule| match rule {
+            .collect_into(&mut queue);
+
+        let mut prng = rngs.clone();
+        let mut sum = 0;
+        while let Some(rule) = queue.pop_front() {
+            print!("\n{0:->tab$} ",rule);
+            sum += match rule {
                 Rule::ConAct(c, a) => {
-                    let mut nrng = rngs.clone();
-                    if let Some((drng, _)) = rule.validate_range(&rngs[c.part() as usize]) {
-                        nrng[c.part() as usize] = drng;
-                    }
+                    let part = c.part() as usize;
+                    let Some((result,remainder)) = c.partition(&prng[part]) else { panic!("Ops") };
+                    prng[part] = remainder;
+                    let mut tmp = prng.clone();
+                    tmp[part] = result;
                     match a {
-                        Action::WorkFlow(wf) => self.rating_combinations(wf, &nrng),
-                        Action::Accept => Some(nrng),
-                        Action::Reject => Some(nrng),
+                        Action::WorkFlow(next_wf) => self
+                            .total_combinations(next_wf, &tmp, tab+4),
+                        Action::Accept => tmp
+                            .iter()
+                            .map(|r| r.len() as Unit)
+                            .inspect(|d| print!("{d},"))
+                            .product(),
+                        Action::Reject => 0,
+                    }
+                },
+                Rule::Act(a) => {
+                    match a {
+                        Action::WorkFlow(next_wf) => self
+                            .total_combinations(next_wf, &prng, tab+4),
+                        Action::Accept => prng
+                            .iter()
+                            .map(|r| r.len() as Unit)
+                            .inspect(|d| print!("{d},"))
+                            .product(),
+                        Action::Reject => 0,
                     }
                 }
-                Rule::Act(Action::WorkFlow(wf)) => self.rating_combinations(wf, rngs),
-                Rule::Act(Action::Accept) => Some(rngs.clone()),
-                Rule::Act(Action::Reject) => None,
-            })
-            .inspect(|arr| println!(" = {:?}", arr))
-            .last()
+            };
+        }
+        println!(" = {sum} ({wf})");
+        sum
     }
 }
 
@@ -81,8 +106,9 @@ mod test {
 
     #[test]
     fn test_sortingsystem_combinations() {
-        let (_, wfs) = parse_puzzle_data("src/bin/day19/sample.txt");
-        wfs.rating_combinations("in", &[0..4000, 0..4000, 0..4000, 0..4000]);
+        let (_, wfs) = parse_puzzle_data("src/bin/day19/sample1.txt");
+        wfs.total_combinations("in", &[1..4001, 1..4001, 1..4001, 1..4001], 0);
+        // 132_753_196_000_000
     }
 
     #[test]

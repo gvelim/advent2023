@@ -1,5 +1,5 @@
 use crate::part::{Part, Unit};
-use std::{fmt::Debug, num::ParseIntError, ops::Range, rc::Rc, str::FromStr};
+use std::{fmt::{Debug, Display}, num::ParseIntError, ops::Range, rc::Rc, str::FromStr};
 
 #[derive(Clone, Copy)]
 pub(crate) enum PartVar {
@@ -56,6 +56,16 @@ impl Condition {
             (PartVar::A, Operant::LT) => part.a < self.value,
         }
     }
+    pub(crate) fn partition(&self, rng: &Range<Unit>) -> Option<(Range<Unit>,Range<Unit>)> {
+        if rng.contains(&self.value) {
+            match self.operant {
+                Operant::GT => Some((self.value..rng.end, rng.start..self.value )),
+                Operant::LT => Some((rng.start..self.value, self.value..rng.end )),
+            }
+        } else {
+            None
+        }
+    }
 }
 
 impl FromStr for Condition {
@@ -83,6 +93,11 @@ impl FromStr for Condition {
 impl Debug for Condition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}{:?}{:?}", self.var, self.operant, self.value)
+    }
+}
+impl Display for Condition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Debug>::fmt(&self, f)
     }
 }
 
@@ -130,47 +145,6 @@ impl Rule {
             _ => None
         }
     }
-
-    pub(crate) fn validate_range(
-        &self,
-        rng: &Range<Unit>,
-    ) -> Option<(Range<Unit>, Option<Rc<str>>)> {
-        match self {
-            Rule::ConAct(c, a) => {
-                if rng.contains(&c.value) {
-                    let r = match c.operant {
-                        Operant::GT => {
-                            if a == &Action::Reject {
-                                rng.start..c.value
-                            } else {
-                                c.value..rng.end
-                            }
-                        }
-                        Operant::LT => {
-                            if a == &Action::Reject {
-                                c.value..rng.end
-                            } else {
-                                rng.start..c.value
-                            }
-                        }
-                    };
-                    Some((
-                        r,
-                        if let Action::WorkFlow(w) = a {
-                            Some(w.clone())
-                        } else {
-                            None
-                        },
-                    ))
-                } else {
-                    None
-                }
-            }
-            Rule::Act(Action::WorkFlow(wf)) => Some((rng.clone(), Some(wf.clone()))),
-            Rule::Act(Action::Accept) => Some((rng.clone(), None)),
-            Rule::Act(Action::Reject) => None,
-        }
-    }
 }
 
 impl FromStr for Rule {
@@ -205,46 +179,16 @@ impl Debug for Rule {
     }
 }
 
+impl Display for Rule {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Debug>::fmt(&self, f)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::workflow::Workflow;
-
-    #[test]
-    fn test_rule_check_range() {
-        let data = [
-            // accept cases / in-bound / conditional
-            "x>5:A".parse::<Rule>().unwrap(),
-            "m<35:A".parse::<Rule>().unwrap(),
-            // reject cases / in-bound / conditional
-            "a>30:R".parse::<Rule>().unwrap(),
-            "a<10:R".parse::<Rule>().unwrap(),
-            // accept cases / off-bound / conditional
-            "a<5:A".parse::<Rule>().unwrap(),
-            "m>35:A".parse::<Rule>().unwrap(),
-            // wf cases / in-bound / conditional
-            "m>15:qzz".parse::<Rule>().unwrap(),
-            "m<25:hjg".parse::<Rule>().unwrap(),
-            // wf cases / off-bound / conditional
-            "m<10:qzz".parse::<Rule>().unwrap(),
-            "m>30:hjg".parse::<Rule>().unwrap(),
-            // non-conditional cases
-            "qzz".parse::<Rule>().unwrap(),
-            "A".parse::<Rule>().unwrap(),
-            "R".parse::<Rule>().unwrap(),
-        ];
-        let mut rng = 0..40;
-        for r in data {
-            print!("rule: {:?}, range:{:?} ==> ", r, rng);
-            match r.validate_range(&rng) {
-                Some((r, wf)) => {
-                    rng = r;
-                    println!("{:?}", (&rng, wf));
-                }
-                None => println!("Rejected"),
-            }
-        }
-    }
 
     #[test]
     fn test_rule_validate() {

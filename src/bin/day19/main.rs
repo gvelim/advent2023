@@ -1,3 +1,5 @@
+#![feature(iter_collect_into)]
+
 mod workflow;
 mod rule;
 mod part;
