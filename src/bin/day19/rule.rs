@@ -56,14 +56,14 @@ impl Condition {
             (PartVar::A, Operant::LT) => part.a < self.value,
         }
     }
-    pub(crate) fn partition(&self, rng: &Range<Unit>) -> Option<(Range<Unit>,Range<Unit>)> {
+    pub(crate) fn partition(&self, rng: &Range<Unit>) -> (Range<Unit>,Range<Unit>) {
         if rng.contains(&self.value) {
             match self.operant {
-                Operant::GT => Some((self.value..rng.end, rng.start..self.value )),
-                Operant::LT => Some((rng.start..self.value, self.value..rng.end )),
+                Operant::GT => (self.value..rng.end, rng.start..self.value ),
+                Operant::LT => (rng.start..self.value, self.value..rng.end ),
             }
         } else {
-            None
+            panic!("Condition::partition - value out of input range")
         }
     }
 }

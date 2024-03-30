@@ -19,6 +19,11 @@ fn main() {
         .sum::<Unit>();
 
     println!("Part 1: Sum of approved parts: {sum}");
+    assert_eq!(sum,287_054);
+
+    let sum = system.total_combinations("in", &[1..4001, 1..4001, 1..4001, 1..4001], 0);
+    println!("Part 2: Total combinations: {sum}");
+    assert_eq!(sum,167_409_079_868_000);
 }
 
 fn parse_puzzle_data(file: &str) -> (Rc<[Part]>, SortingSystem) {
