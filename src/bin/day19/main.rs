@@ -23,7 +23,7 @@ fn main() {
     assert_eq!(sum,287_054);
 
     let t = std::time::Instant::now();
-    let sum = system.total_combinations("in", &[1..4001, 1..4001, 1..4001, 1..4001], 0);
+    let sum = system.total_combinations("in", &[1..4001, 1..4001, 1..4001, 1..4001]);
     println!("Part 2: Total combinations: {sum}, ({:?})", t.elapsed());
     assert_eq!(sum,131_619_440_296_497);
 }
