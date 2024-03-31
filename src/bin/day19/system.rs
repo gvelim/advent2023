@@ -4,7 +4,6 @@ use crate::{
     part::Part,
     rule::{Action, Rule},
 };
-use std::collections::VecDeque;
 use std::ops::Range;
 use std::{collections::HashMap, rc::Rc, str::FromStr};
 
@@ -21,29 +20,29 @@ impl SortingSystem {
             .get(workflow.into())
             .expect("SortingSystem::process() - Starting workflow unknown!!");
 
-        print!("{:?}: {} -> ", part, wf.name);
+        // print!("{:?}: {} -> ", part, wf.name);
         while let Some(Action::WorkFlow(next)) = wf.validate(part) {
             wf = self
                 .map
                 .get(&next)
                 .expect("SortingSystem::process() - redirected to non-existent Workflow");
-            print!("{:?} -> ", wf.name);
+            // print!("{:?} -> ", wf.name);
         }
         let out = wf.validate(part);
-        println!("{:?}", out.as_ref().unwrap());
+        // println!("{:?}", out.as_ref().unwrap());
         out
     }
 
     pub(crate) fn total_combinations(&self, wf: &str, rngs: &[Range<Unit>; 4], tab:usize) -> Unit {
         let mut remain = rngs.clone();
-        print!("\n{:->tab$}:{:?} -> ",wf,rngs);
+        // print!("\n{:->tab$}:{:?} -> ",wf,rngs);
 
         self.map
             .get(wf.into())
             .unwrap()
             .iter()
             .map(|rule| {
-                print!("{rule}, ");
+                // print!("\n{:tab$}{rule}","");
                 match rule {
                     Rule::ConAct(c, a) => {
                         let part = c.part() as usize;
@@ -55,7 +54,7 @@ impl SortingSystem {
                             Action::Accept => result
                                 .iter()
                                 .map(|r| r.len() as Unit)
-                                .inspect(|d| print!("{d},"))
+                                // .inspect(|d| print!("{d},"))
                                 .product(),
                             Action::Reject => 0,
                         }
@@ -67,14 +66,14 @@ impl SortingSystem {
                             Action::Accept => remain
                                 .iter()
                                 .map(|r| r.len() as Unit)
-                                .inspect(|d| print!("{d},"))
+                                // .inspect(|d| print!("{d},"))
                                 .product(),
                             Action::Reject => 0,
                         }
                     }
                 }
             })
-            .inspect(|sum| println!("= {sum} ({wf})"))
+            // .inspect(|sum| println!("{:tab$}= {sum} ({wf})",""))
             .sum::<Unit>()
     }
 }

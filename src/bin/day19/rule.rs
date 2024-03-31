@@ -2,12 +2,7 @@ use crate::part::{Part, Unit};
 use std::{fmt::{Debug, Display}, num::ParseIntError, ops::Range, rc::Rc, str::FromStr};
 
 #[derive(Clone, Copy)]
-pub(crate) enum PartVar {
-    X = 0,
-    M,
-    A,
-    S,
-}
+pub(crate) enum PartVar { X = 0, M, A, S }
 
 impl Debug for PartVar {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -20,10 +15,7 @@ impl Debug for PartVar {
     }
 }
 
-enum Operant {
-    GT,
-    LT,
-}
+enum Operant { GT, LT }
 
 impl Debug for Operant {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -59,7 +51,7 @@ impl Condition {
     pub(crate) fn partition(&self, rng: &Range<Unit>) -> (Range<Unit>,Range<Unit>) {
         if rng.contains(&self.value) {
             match self.operant {
-                Operant::GT => (self.value..rng.end, rng.start..self.value ),
+                Operant::GT => (self.value+1..rng.end, rng.start..self.value+1 ),
                 Operant::LT => (rng.start..self.value, self.value..rng.end ),
             }
         } else {

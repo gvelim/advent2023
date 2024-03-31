@@ -11,6 +11,7 @@ use crate::{system::SortingSystem, part::{Part,Unit}, rule::Action};
 fn main() {
     let (parts, system) = parse_puzzle_data("src/bin/day19/input.txt");
 
+    let t = std::time::Instant::now();
     let sum = parts.iter()
         .filter(|&&part|
             system.process_part(part, "in") == Some(Action::Accept)
@@ -18,12 +19,13 @@ fn main() {
         .map(|part| part.sum())
         .sum::<Unit>();
 
-    println!("Part 1: Sum of approved parts: {sum}");
+    println!("Part 1: Sum of approved parts: {sum} ({:?})", t.elapsed());
     assert_eq!(sum,287_054);
 
+    let t = std::time::Instant::now();
     let sum = system.total_combinations("in", &[1..4001, 1..4001, 1..4001, 1..4001], 0);
-    println!("Part 2: Total combinations: {sum}");
-    assert_eq!(sum,167_409_079_868_000);
+    println!("Part 2: Total combinations: {sum}, ({:?})", t.elapsed());
+    assert_eq!(sum,131_619_440_296_497);
 }
 
 fn parse_puzzle_data(file: &str) -> (Rc<[Part]>, SortingSystem) {
