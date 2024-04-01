@@ -4,7 +4,7 @@ use crate::{part::Part, rule::{Action, Rule}};
 pub(crate) struct Workflow {
     // Each workflow has a name and contains a list of rules
     rules: Rc<[Rule]>,
-    pub name: Rc<str>,
+    name: Rc<str>,
 }
 
 impl Workflow {
@@ -18,8 +18,7 @@ impl Workflow {
         // The first rule that matches the part being considered is applied immediately,
         // and the part moves on to the destination described by the rule
         self.iter()
-            .skip_while(|rule| rule.validate(part).is_none())
-            .map(|rule| rule.validate(part).unwrap() )
+            .filter_map(|rule| rule.validate(part))
             .next()
     }
 }

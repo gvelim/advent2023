@@ -30,7 +30,7 @@ impl SortingSystem {
     }
 
     pub(crate) fn total_combinations(&self, wf: &str, rngs: &[Range<Unit>; 4]) -> Unit {
-        let mut remain = rngs.clone();
+        let mut residual = rngs.clone();
 
         self.map
             .get(wf)
@@ -38,14 +38,14 @@ impl SortingSystem {
             .iter()
             .map(|rule| {
                 // current ranges becomes the target
-                let mut target = remain.clone();
+                let mut target = residual.clone();
                 // Process rule into "Action" & "target" part ranges
                 match rule {
                     // Process Conditional rule into "target" and "remaining" ranges
                     Rule::ConAct(c, a) => {
                         let part = c.part() as usize;
                         // partition part range and update "target" and "remaining" accordingly
-                        (target[part], remain[part]) = c.partition(&remain[part]);
+                        (target[part], residual[part]) = c.partition(&residual[part]);
                         (a, target)
                     },
                     // Pass-through action and target part ranges
