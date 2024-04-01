@@ -269,7 +269,7 @@ impl SortingSystem {
                     Rule::ConAct(c, a) => {
                         let part = c.part() as usize;
                         // partition part range and update "target" and "remaining" accordingly
-                        (target[part], residual[part]) c.partition(&residual[part]);
+                        (target[part], residual[part]) = c.partition(&residual[part]);
                         (a, target)
                     },
                     // Pass-through action and target part ranges
