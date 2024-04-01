@@ -34,7 +34,7 @@ impl SortingSystem {
 
         self.map
             .get(wf)
-            .unwrap()
+            .expect("System::total_combinations - Workflow name doesn't exist")
             .iter()
             .map(|rule| {
                 // current ranges becomes the target
