@@ -73,10 +73,11 @@ Consider only your list of workflows; the list of part ratings that the Elves wa
 
 ## Approach
 ### Workflow and Rules
-We are told a `Workflow` is a collection of rules. A `Rule` is a (`Condition`,`Action`) pair. A `Condition` consists of 3 parts, and is followed by an `Action` that is triggered when the `Condition` evaluates to `true`. Applicable actions values are "Accept", "Reject" or "continue to another workflow". Also a rule can be **either conditional or not**.
+We are told a `Workflow` is a collection of rules. A `Rule` is a (`Condition`,`Action`) pair **or** just an `Action`. A `Condition` consists of 3 parts, and is followed by an `Action` that is triggered when the `Condition` evaluates to `true`. Action values are "Accept", "Reject" or "continue to another workflow".
 ```
-Rule:
-{ [part variable] [Operant] [Value] : [Action] } | { [Action] }
+Rule: {
+  ([part variable] [Operant] [Value] : [Action]) | ([Action])
+}
 e.g. m < 2000 : A, x > 100 : R , s > 100 : xyz, A, R, xyz
 ```
 We use the below enums and structs in order to capture the above `Rule` definition:
@@ -157,8 +158,7 @@ impl Workflow {
         // The first rule that matches the part being considered is applied immediately,
         // and the part moves on to the destination described by the rule
         self.iter()
-            .skip_while(|rule| rule.validate(part).is_none())
-            .map(|rule| rule.validate(part).unwrap() )
+            .filter_map(|rule| rule.validate(part))
             .next()
     }
 }
@@ -190,19 +190,19 @@ let sum = parts.iter()
 ```
 ### Part 2: Distinct Combinations
 To find the unique combinations, we make the following observations
-1. We apply a tree-like search
+1. We apply a **tree-like search**
 2. with `Actions` forming the main **nodes**
 3. and `Conditions` form the tree **branches**.
 4. **Terminal** nodes formed by the actions `Accept` and `Reject`
 5. **Transition** nodes formed by actions of type `Workflow`
 
 Therefore, when processing a
-1. **terminal node**, with value
-    1. `Accept` we return the `product()` of ranges arrising for that specific search path
-    2. `Reject` we return `0`
-2. **transition node**, 
+1. **terminal node**, with
+    1. `Accept`, we return the `product()` of ranges arrising for that specific search path
+    2. `Reject`, we return `0`
+2. **transition node**,
     1. we iterate over the workflow's rules and against the node's input ranges
-    2. process each rule sequencially, with each rule **reducing/consuming** the relevant range by the **conditional amount** 
+    2. process each rule sequencially, with each rule **reducing/consuming** the relevant range by the **conditional amount**
     For example, applying rule `x<100:R` on the range `1..4001` will result to (a) 1..99 range be rejected, (b) leaving range 100..4001 for processing by the next rule
 
 The below example explains the above observations
@@ -211,22 +211,24 @@ in{s<1000:R,s<2000:abc,A}
 abc{x<100:A,m<200:A,R}
                               in
                     [1..5,1..5,1..5,1..5]
-                       x    m    a    s 
+                       x    m    a    s
                               |
-                             104
+                             112
             +-----------------+-------------------+
             | s<2             | s<4               |
-            R                abc                  A                     
-                        [ , , ,2..4]        [ , , ,4..5] 
-            0                 40            4 * 4 * 4 * 1
-                +-------------+-------------+
-                | x<2         | m<2         |
-                A             A             R
-        [1..2, , ,2..4] [1..2,1..2, ,2..4]  
-         1 * 4 * 4 * 2    1 * 1 * 4 * 2     0  
+            R                abc                  A
+      [ , , ,1..2]       [ , , ,2..4]        [ , , ,4..5]
+            0                 48             4 * 4 * 4 * 1
+                              |
+            +-----------------+-------------------+
+            | x<2             | m<2               |
+            A                 A                   R
+    [1..2, , ,2..4]   [2..5,1..2, ,2..4]   [2..5,1..2, ,2..4]
+     1 * 4 * 4 * 2       2 * 1 * 4 * 2            0
+           32                 16                  0
 ```
 
-Therefore, we enhance `Condition` so that given an input `Range` to produce for us the pair of `(Target, Residual)` ranges as a consequence of its internal condition state.
+Therefore, we enhance `Condition` with a function `partition()` that, given (a) an input `Range` and (b) condition, it returns a pair of `(Target, Residual)` ranges.
 ```rust
 impl Condition {
 ...
@@ -242,11 +244,11 @@ impl Condition {
     }
 }
 ```
-The above function when called with input range `1..4001` and object has internal condition `m<2000:A`, the function will priduce a (target,residual) range pair, with values
-1. **target** range `1..1999`
-2. **residual** range `2000..4000`
+For example, when the above function is called with an input range `1..4001` and with curretn Rule `m<2000:A`, the `partition()` function will produce a (target,residual) range pair, with values
+1. **target** range `1..1999` that will be `Accepted`
+2. **residual** range `2000..4000` for use with the next workflow rule
 
-We can now implement a **tree-like search** function that (a) traverses the tree, (b) extracts and (c) sums up the accepted ranges' values.
+We can now implement a **tree-like search** function that (a) traverses the tree, (b) extracts and (c) sums up the products of the ranges accepted.
 ```rust
 impl SortingSystem {
 ...
@@ -267,7 +269,7 @@ impl SortingSystem {
                     Rule::ConAct(c, a) => {
                         let part = c.part() as usize;
                         // partition part range and update "target" and "remaining" accordingly
-                        (target[part], residual[part]) = c.partition(&residual[part]);
+                        (target[part], residual[part]) c.partition(&residual[part]);
                         (a, target)
                     },
                     // Pass-through action and target part ranges
