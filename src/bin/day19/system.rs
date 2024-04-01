@@ -39,24 +39,24 @@ impl SortingSystem {
             .map(|rule| {
                 // current ranges becomes the target
                 let mut target = remain.clone();
-
                 // Process rule into "Action" & "target" part ranges
-                // watch-out we are aliasing "target"
-                let (a, target) = match rule {
+                match rule {
                     // Process Conditional rule into "target" and "remaining" ranges
                     Rule::ConAct(c, a) => {
                         let part = c.part() as usize;
                         // partition part range and update "target" and "remaining" accordingly
                         (target[part], remain[part]) = c.partition(&remain[part]);
-                        (a, &target)
+                        (a, target)
                     },
                     // Pass-through action and target part ranges
-                    Rule::Act(a) => (a, &target),
-                };
+                    Rule::Act(a) => (a, target),
+                }
+            })
+            .map(|(a,target)|{
                 // Process Action given "target" part ranges
                 match a {
                     Action::WorkFlow(next_wf) => self
-                        .total_combinations(next_wf, target),
+                        .total_combinations(next_wf, &target),
                     Action::Accept => target
                         .iter()
                         .map(|r| r.len() as Unit)
