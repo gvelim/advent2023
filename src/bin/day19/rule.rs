@@ -51,7 +51,7 @@ impl Condition {
     pub(crate) fn partition(&self, rng: &Range<Unit>) -> (Range<Unit>,Range<Unit>) {
         if rng.contains(&self.value) {
             match self.operant {
-                Operant::GT => (self.value+1..rng.end, rng.start..self.value+1 ),
+                Operant::GT => (self.value+1..rng.end, rng.start..self.value+1),
                 Operant::LT => (rng.start..self.value, self.value..rng.end ),
             }
         } else {
@@ -89,7 +89,7 @@ impl Debug for Condition {
 }
 impl Display for Condition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Debug>::fmt(&self, f)
+        <Self as Debug>::fmt(self, f)
     }
 }
 
@@ -173,7 +173,7 @@ impl Debug for Rule {
 
 impl Display for Rule {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Debug>::fmt(&self, f)
+        <Self as Debug>::fmt(self, f)
     }
 }
 

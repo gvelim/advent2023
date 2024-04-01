@@ -51,7 +51,7 @@ mod test {
     fn test_part_parse() {
         let inp = std::fs::read_to_string("src/bin/day19/sample.txt")
             .expect("cannot load sample.txt");
-        let data = inp.split("\n\n").skip(1).next().unwrap().lines();
+        let data = inp.split("\n\n").nth(1).unwrap().lines();
 
         for inp in data {
             let part = inp.parse::<Part>().expect("Part parsing error!");

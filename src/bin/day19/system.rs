@@ -17,7 +17,7 @@ impl SortingSystem {
         // If a part is accepted (sent to A) or rejected (sent to R), the part immediately stops any further processing.
         let mut wf = self
             .map
-            .get(workflow.into())
+            .get(workflow)
             .expect("SortingSystem::process() - Starting workflow unknown!!");
 
         while let Some(Action::WorkFlow(next)) = wf.validate(part) {
@@ -26,44 +26,42 @@ impl SortingSystem {
                 .get(&next)
                 .expect("SortingSystem::process() - redirected to non-existent Workflow");
         }
-        let out = wf.validate(part);
-        out
+        wf.validate(part)
     }
 
     pub(crate) fn total_combinations(&self, wf: &str, rngs: &[Range<Unit>; 4]) -> Unit {
         let mut remain = rngs.clone();
 
         self.map
-            .get(wf.into())
+            .get(wf)
             .unwrap()
             .iter()
             .map(|rule| {
-                match rule {
+                // current ranges becomes the target
+                let mut target = remain.clone();
+
+                // Process rule into "Action" & "target" part ranges
+                // watch-out we are aliasing "target"
+                let (a, target) = match rule {
+                    // Process Conditional rule into "target" and "remaining" ranges
                     Rule::ConAct(c, a) => {
                         let part = c.part() as usize;
-                        let mut result = remain.clone();
-                        (result[part], remain[part]) = c.partition(&remain[part]);
-                        match a {
-                            Action::WorkFlow(next_wf) => self
-                                .total_combinations(next_wf, &result),
-                            Action::Accept => result
-                                .iter()
-                                .map(|r| r.len() as Unit)
-                                .product(),
-                            Action::Reject => 0,
-                        }
+                        // partition part range and update "target" and "remaining" accordingly
+                        (target[part], remain[part]) = c.partition(&remain[part]);
+                        (a, &target)
                     },
-                    Rule::Act(a) => {
-                        match a {
-                            Action::WorkFlow(next_wf) => self
-                                .total_combinations(next_wf, &remain),
-                            Action::Accept => remain
-                                .iter()
-                                .map(|r| r.len() as Unit)
-                                .product(),
-                            Action::Reject => 0,
-                        }
-                    }
+                    // Pass-through action and target part ranges
+                    Rule::Act(a) => (a, &target),
+                };
+                // Process Action given "target" part ranges
+                match a {
+                    Action::WorkFlow(next_wf) => self
+                        .total_combinations(next_wf, target),
+                    Action::Accept => target
+                        .iter()
+                        .map(|r| r.len() as Unit)
+                        .product(),
+                    Action::Reject => 0,
                 }
             })
             .sum::<Unit>()
