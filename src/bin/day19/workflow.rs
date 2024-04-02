@@ -72,7 +72,7 @@ mod test {
     }
 
     #[test]
-        fn test_worflow_parse() {
+        fn test_workflow_parse() {
             let inp = std::fs::read_to_string("src/bin/day19/sample.txt")
                 .expect("cannot load sample.txt");
             let data = inp.split("\n\n").next().unwrap().lines();

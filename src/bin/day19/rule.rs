@@ -15,20 +15,20 @@ impl Debug for PartVar {
     }
 }
 
-enum Operant { GT, LT }
+enum Operand { GT, LT }
 
-impl Debug for Operant {
+impl Debug for Operand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Operant::GT => write!(f, ">"),
-            Operant::LT => write!(f, "<"),
+            Operand::GT => write!(f, ">"),
+            Operand::LT => write!(f, "<"),
         }
     }
 }
 
 pub(crate) struct Condition {
     var: PartVar,
-    operant: Operant,
+    operand: Operand,
     value: Unit,
 }
 
@@ -37,22 +37,22 @@ impl Condition {
         self.var
     }
     fn validate(&self, part: Part) -> bool {
-        match (&self.var, &self.operant) {
-            (PartVar::X, Operant::GT) => part.x > self.value,
-            (PartVar::X, Operant::LT) => part.x < self.value,
-            (PartVar::M, Operant::GT) => part.m > self.value,
-            (PartVar::M, Operant::LT) => part.m < self.value,
-            (PartVar::S, Operant::GT) => part.s > self.value,
-            (PartVar::S, Operant::LT) => part.s < self.value,
-            (PartVar::A, Operant::GT) => part.a > self.value,
-            (PartVar::A, Operant::LT) => part.a < self.value,
+        match (&self.var, &self.operand) {
+            (PartVar::X, Operand::GT) => part.x > self.value,
+            (PartVar::X, Operand::LT) => part.x < self.value,
+            (PartVar::M, Operand::GT) => part.m > self.value,
+            (PartVar::M, Operand::LT) => part.m < self.value,
+            (PartVar::S, Operand::GT) => part.s > self.value,
+            (PartVar::S, Operand::LT) => part.s < self.value,
+            (PartVar::A, Operand::GT) => part.a > self.value,
+            (PartVar::A, Operand::LT) => part.a < self.value,
         }
     }
     pub(crate) fn partition(&self, rng: &Range<Unit>) -> (Range<Unit>,Range<Unit>) {
         if rng.contains(&self.value) {
-            match self.operant {
-                Operant::GT => (self.value+1..rng.end, rng.start..self.value+1),
-                Operant::LT => (rng.start..self.value, self.value..rng.end ),
+            match self.operand {
+                Operand::GT => (self.value+1..rng.end, rng.start..self.value+1),
+                Operand::LT => (rng.start..self.value, self.value..rng.end ),
             }
         } else {
             panic!("Condition::partition - value out of input range")
@@ -70,12 +70,12 @@ impl FromStr for Condition {
                 "m" => PartVar::M,
                 "a" => PartVar::A,
                 "s" => PartVar::S,
-                _ => panic!("Condition::operant::from_str(): invalid part variable"),
+                _ => panic!("Condition::operand::from_str(): invalid part variable"),
             },
-            operant: match &s[1..2] {
-                ">" => Operant::GT,
-                "<" => Operant::LT,
-                _ => panic!("Condition::operant::from_str(): invalid operand"),
+            operand: match &s[1..2] {
+                ">" => Operand::GT,
+                "<" => Operand::LT,
+                _ => panic!("Condition::operand::from_str(): invalid operand"),
             },
             value: Unit::from_str(&s[2..]).expect("Condition::value::from_str(): invalid number"),
         })
@@ -84,7 +84,7 @@ impl FromStr for Condition {
 
 impl Debug for Condition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}{:?}{:?}", self.var, self.operant, self.value)
+        write!(f, "{:?}{:?}{:?}", self.var, self.operand, self.value)
     }
 }
 impl Display for Condition {
