@@ -2,7 +2,6 @@ use std::fmt::{Debug, Formatter};
 use std::iter::repeat;
 use std::str::FromStr;
 use crate::direction::Direction;
-use std::boxed::Box;
 
 type Position = usize;
 type Energy = usize;

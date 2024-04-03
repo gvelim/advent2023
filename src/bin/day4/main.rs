@@ -58,7 +58,7 @@ mod test {
     fn test_parsing_of_numbers() {
         Rounds::parse_rounds(INPUT)
             .for_each(|card| {
-                print!("{:?}\n", card )
+                println!("{:?}", card )
             });
     }
     #[test]

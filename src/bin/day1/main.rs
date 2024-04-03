@@ -4,13 +4,13 @@ fn main() {
 
     let t = Instant::now();
     let sum = inp.lines()
-        .filter_map(|line| extract_first_last_part1(line))
+        .filter_map( extract_first_last_part1 )
         .sum::<u32>();
     println!("Part 1 -> Sum = {sum} - {:?}", t.elapsed());
 
     let t = Instant::now();
     let sum = inp.lines()
-        .filter_map(|line| extract_first_last_part2(line))
+        .filter_map( extract_first_last_part2 )
         // .inspect(|num| println!("Result: {num}"))
         .sum::<u32>();
     println!("Part 2 -> Sum = {sum} - {:?}", t.elapsed());

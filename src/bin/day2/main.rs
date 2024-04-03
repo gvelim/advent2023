@@ -71,7 +71,7 @@ mod test {
         let input = "Game 12: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green";
         let game = input.parse::<Game>().expect("Ops!");
         println!("{:?} = {}",game, game.power());
-        assert!(true);
+        assert_eq!(game.power(), 48);
     }
 
     #[test]

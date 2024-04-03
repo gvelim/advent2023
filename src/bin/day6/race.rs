@@ -17,7 +17,7 @@ pub(crate) struct Race {
     pub(crate) record: u64
 }
 
-impl  Race {
+impl Race {
     pub(crate) fn trial_charge_times(&self) -> impl Iterator<Item=(u64, u64)> + '_ {
         (0..=self.duration).map(|charge|
             ( charge, Boat::distance_travelled(charge,self.duration) )

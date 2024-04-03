@@ -102,10 +102,10 @@ mod test {
             let node = CityBlock(pos, dir, 1);
             let iter = crucible.neighbour_blocks(node, &(1..3usize));
             iter.enumerate()
-                .inspect(|d| println!("{:?} => {:?}", (pos, dir), d))
-                .for_each(|(i,p)|
+                .for_each(|(i,p)| {
+                    println!("{:?} => {:?}", (pos, dir), (i,p));
                     assert_eq!((p.1,p.0,p.2),out[i])
-                )
+                })
         }
     }
 }

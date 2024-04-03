@@ -83,7 +83,7 @@ mod test {
         let sum = arr.iter()
             .inspect(|(a,b)| print!("\"{a}\" <=> {:?}",b))
             .map(|(broken, record)| {
-                Combinator::default().get_combinations(&broken, &record)
+                Combinator::default().get_combinations(broken, record)
             } )
             .inspect(|combo| println!(" = {:?}",combo))
             .sum::<usize>();

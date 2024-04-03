@@ -23,7 +23,7 @@ fn main() {
 
     let t = Instant::now();
     let min = seeds
-        .into_ranges()
+        .get_ranges()
         .into_par_iter()
         .inspect(|range| print!("{:?} - ",range))
         .map(|range| {
@@ -42,7 +42,7 @@ fn main() {
 struct Seeds(Vec<u64>);
 
 impl Seeds {
-    fn into_ranges(&self) -> Vec<Range<u64>>{
+    fn get_ranges(&self) -> Vec<Range<u64>>{
         self.0.chunks(2)
             .map(|r| (r[0]..r[0]+r[1]))
             .collect::<Vec<_>>()
@@ -76,7 +76,7 @@ mod test {
         let pipeline = INPUT.parse::<Pipeline>().expect("Ops!");
 
         let min = seeds
-            .into_ranges()
+            .get_ranges()
             .into_iter()
             .inspect(|range| println!("{:?}",range))
             .map(|range| {
@@ -93,7 +93,7 @@ mod test {
     #[test]
     fn test_ranges() {
         let seeds = INPUT.parse::<Seeds>().expect("Ops!");
-        let ranges = seeds.into_ranges();
+        let ranges = seeds.get_ranges();
         assert_eq!(
             ranges,
             [79..93, 55..68]
@@ -145,7 +145,7 @@ mod test {
     }
     #[test]
     fn test_parse_map() {
-        let input = INPUT.split("\n\n").skip(1).next().unwrap();
+        let input = INPUT.split("\n\n").nth(1).unwrap();
 
         println!("{:?}",input.parse::<Map>().expect("Map::Ops!"));
 
@@ -160,7 +160,7 @@ mod test {
         )
     }
 
-    static INPUT: &str = 
+    static INPUT: &str =
             "seeds: 79 14 55 13\n\
             \n\
             seed-to-soil map:\n\

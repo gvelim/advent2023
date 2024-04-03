@@ -84,7 +84,6 @@ impl FromStr for Universe {
 
 #[cfg(test)]
 mod test {
-    use crate::galaxy::Galaxy;
     use super::*;
 
     #[test]

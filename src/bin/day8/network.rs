@@ -7,23 +7,8 @@ pub(crate) struct Network<'a> {
 
 impl Network<'_> {
 
-    pub(crate) fn iter<'a>(
-        &'a self,
-        start: &'a str,
-        turns: impl Iterator<Item=char>
-    ) -> NetworkIter<'a, impl Iterator<Item=char>> {
+    pub(crate) fn iter<'a>(&'a self, start: &'a str, turns: impl Iterator<Item=char>) -> NetworkIter<'a, impl Iterator<Item=char>> {
         NetworkIter { net: self, start, turns }
-    }
-
-    pub(crate) fn par_iter<'a>(
-        &'a self,
-        start: &'a [&'a str],
-        turns: impl Iterator<Item=char>
-    ) -> ParNetworkIter<'a, impl Iterator<Item=char>> {
-        ParNetworkIter {
-            net: self, turns,
-            start: start.to_vec()
-        }
     }
 
     pub(crate) fn parse(s: &str) -> Network<'_> {
@@ -57,28 +42,5 @@ impl<'a, I> Iterator for NetworkIter<'a, I> where I: Iterator<Item=char> {
             self.start = next;
             next
         })
-    }
-}
-
-pub(crate) struct ParNetworkIter<'a,I> where I: Iterator<Item=char> {
-    net: &'a Network<'a>,
-    start: Vec<&'a str>,
-    turns: I
-}
-
-impl<'a, I> Iterator for ParNetworkIter<'a, I> where I: Iterator<Item=char> {
-    type Item = Vec<&'a str>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let turn = self.turns.next();
-        self.start.iter_mut()
-            .for_each(|node|
-                *node = match turn {
-                    Some('L') => self.net.net.get(node).map(|(l,_)| *l).unwrap(),
-                    Some('R') => self.net.net.get(node).map(|(_,r)| *r).unwrap(),
-                    _ => unreachable!()
-                }
-            );
-        Some(self.start.clone())
     }
 }

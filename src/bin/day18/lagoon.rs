@@ -93,7 +93,7 @@ impl Lagoon {
             .into_par_iter()
             .map(|y| {
                 self.floodfill_intersections(y)
-                    .map(|rng| (rng.len() - 1) as usize)
+                    .map(|rng| rng.len() - 1)
                     .sum::<usize>()
             })
             .sum::<usize>()
@@ -120,12 +120,12 @@ impl Debug for Lagoon {
                         }
                         .truecolor(t.r(), t.g(), t.b()))
                         .unwrap_or(if let Some(rng) = &fill {
-                            rng.contains(&x)
-                                .then_some("◼".truecolor(96, 96, 96))
-                                .unwrap_or({
-                                    x.eq(&rng.end).then(|| fill = filler.next());
-                                    ".".into()
-                                })
+                            if rng.contains(&x) {
+                                "◼".truecolor(96, 96, 96)
+                            } else {
+                                x.eq(&rng.end).then(|| fill = filler.next());
+                                ".".into()
+                            }
                         } else {
                             ".".into()
                         })
@@ -234,8 +234,8 @@ pub mod test {
             (lagoon.min.1..=lagoon.max.1)
                 .inspect(|y| print!("\nLine {y:2}: "))
                 .flat_map(|y| lagoon.floodfill_intersections(y))
-                .inspect(|p| print!("{:?},", p))
                 .for_each(|p| {
+                    print!("{:?},", p);
                     assert_eq!(Some(&p), res.next());
                 });
             println!();

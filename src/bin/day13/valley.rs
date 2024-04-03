@@ -65,7 +65,7 @@ mod test {
         let input = std::fs::read_to_string("src/bin/day13/sample.txt").expect("Ops!");
         let valley = input.parse::<Valley>().expect("Ops!");
 
-        valley.patterns.into_iter().for_each(|pat| println!("{:?}\n",pat))
+        valley.patterns.iter().for_each(|pat| println!("{:?}\n",pat))
     }
 
 }

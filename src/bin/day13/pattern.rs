@@ -23,7 +23,7 @@ impl Pattern {
         let mut smudge_counter = vec![0; width];
 
         (1..width)
-            .filter_map(move |idx| {
+            .filter(move |&idx| {
                 let mut radius = usize::MIN;
                 smudge_counter.fill(0);
 
@@ -35,9 +35,7 @@ impl Pattern {
                         smudge_counter[0] < 2 && smudge_counter[..radius].iter().sum::<usize>() < 2
                     });
 
-                if line_found && smudge_counter[radius] == height-1 {
-                    Some(idx)
-                } else { None }
+                line_found && smudge_counter[radius] == height-1
             })
     }
 
@@ -45,11 +43,10 @@ impl Pattern {
         let width = pat[0].len();
 
         (1..width)
-            .filter_map(move |idx|
+            .filter(move |&idx|
                 pat.iter()
                     .map(|line| Pattern::reflections_at_index(line, idx))
                     .all(|r| idx == r || idx + r == width)
-                    .then(|| idx)
             )
     }
     fn transpose(p: &[String]) -> impl Iterator<Item=String> + '_ {
@@ -82,14 +79,14 @@ impl Debug for Pattern {
             for _ in 0..lines {
                 piter.next().map(|line| {
                     line.chars().for_each(|c| f.write_str(&format!("{:2}",c)).expect("ops"));
-                }).or_else(||{ 
+                }).or_else(||{
                     f.write_str(&format!("{:1$}",' ',self.p[0].len()*2)).expect("msg");
                     None
                 });
                 f.write_str("  -->  ")?;
-                titer.next().map(|line| {
+                if let Some(line) = titer.next() {
                     line.chars().for_each(|c| f.write_str(&format!("{:2}",c)).expect("ops"));
-                });
+                }
                 f.write_str("\n")?
             };
         Ok(())

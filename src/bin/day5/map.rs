@@ -43,8 +43,7 @@ impl Map {
             })
             .next()
             .map(|o| (o, self.dest))
-            .or( Some((input, self.dest)))
-            .unwrap()
+            .unwrap_or( (input, self.dest))
     }
 }
 
