@@ -20,6 +20,7 @@ fn main() {
         .min();
 
     println!("Part 1, min: {:?} - {:?}",min, t.elapsed());
+    assert_eq!(min, Some(388_071_289));
 
     let t = Instant::now();
     let min = seeds
@@ -37,6 +38,7 @@ fn main() {
         .min();
 
     println!("Part 2, min: {:?}",min);
+    assert_eq!(min, Some(84_206_669));
 }
 
 struct Seeds(Vec<u64>);
@@ -83,8 +85,8 @@ mod test {
                 range.map(|seed|
                     pipeline.run((seed,MapType::Seed))
                 )
-                    .min()
-                    .unwrap()
+                .min()
+                .unwrap_or(u64::MAX)
             })
             .min();
 
@@ -117,10 +119,7 @@ mod test {
         let seeds = INPUT.parse::<Seeds>().expect("Ops!");
         let pipeline = INPUT.parse::<Pipeline>().expect("Ops!");
 
-        assert_eq!(
-            82,
-            pipeline.run( (seeds.0[0], MapType::Seed)))
-        ;
+        assert_eq!(82, pipeline.run((seeds.0[0], MapType::Seed)));
     }
     #[test]
     fn test_map_transform() {
@@ -138,11 +137,13 @@ mod test {
             [(81, MapType::Soil), (14, MapType::Soil), (57, MapType::Soil),(13, MapType::Soil)]
         )
     }
+
     #[test]
     fn test_parse_seeds() {
         let seeds = INPUT.parse::<Seeds>().expect("Ops!");
         assert_eq!(seeds.0,[79_u64,14,55,13]);
     }
+
     #[test]
     fn test_parse_map() {
         let input = INPUT.split("\n\n").nth(1).unwrap();
