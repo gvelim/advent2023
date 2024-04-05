@@ -1,4 +1,4 @@
-use std::{ops::Range, str::FromStr};
+use std::{num::ParseIntError, ops::Range, str::FromStr};
 
 #[derive(Debug,PartialEq)]
 pub(crate) struct Mapping {
@@ -7,13 +7,13 @@ pub(crate) struct Mapping {
 }
 
 impl FromStr for Mapping {
-    type Err = ();
+    type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut nums = s.split_whitespace();
-        let dst_base = u64::from_str(nums.next().unwrap()).expect("dst_base::Ops!");
-        let src_base = u64::from_str(nums.next().unwrap()).expect("src_base::Ops!");
-        let len = u64::from_str(nums.next().unwrap()).expect("len::Ops!");
+        let dst_base = nums.next().expect("Mapping: Missing value").parse::<u64>()?;
+        let src_base = nums.next().expect("Mapping: Missing value").parse::<u64>()?;
+        let len = nums.next().expect("Mapping: Missing value").parse::<u64>()?;
 
         Ok( Mapping {
             dst_base,

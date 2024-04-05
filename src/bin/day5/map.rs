@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{sync::Arc, str::FromStr};
 use super::mapping::*;
 
 #[derive(Debug,Hash,Eq,PartialEq,Copy, Clone)]
@@ -28,7 +28,7 @@ impl FromStr for MapType {
 pub(crate) struct Map {
     pub(crate) map: MapType,
     pub(crate) dest: MapType,
-    pub(crate) mappings: Vec<Mapping>
+    pub(crate) mappings: Arc<[Mapping]>
 }
 
 impl Map {
@@ -36,13 +36,12 @@ impl Map {
         self.mappings.iter()
             .filter_map(|tx| {
                 if tx.src_base.contains(&input) {
-                    Some(tx.dst_base + input - tx.src_base.start)
+                    Some((tx.dst_base + input - tx.src_base.start, self.dest))
                 } else {
                     None
                 }
             })
             .next()
-            .map(|o| (o, self.dest))
             .unwrap_or( (input, self.dest))
     }
 }
@@ -65,7 +64,49 @@ impl FromStr for Map {
             dest: map_type.next().unwrap(),
             mappings: maps
                 .map(|m| m.parse::<Mapping>().expect("mapping::Ops"))
-                .collect::<Vec<_>>()
+                .collect::<Arc<[_]>>()
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::Seeds;
+
+    #[test]
+    fn test_map_transform() {
+        let input = std::fs::read_to_string("./src/bin/day5/sample.txt").expect("Ops!");
+        let mut split = input.split("\n\n");
+        let seeds = split.next().unwrap().parse::<Seeds>().expect("Ops!");
+        let map = split.next().unwrap().parse::<Map>().expect("Ops!");
+
+        seeds.iter()
+            .inspect(|seed| print!("Input: {seed}"))
+            .map(|&seed| map.transform(seed))
+            .for_each(|d| println!(" -> {:?}",d));
+
+        assert_eq!(
+            seeds.iter().map(|&seed| map.transform(seed)).collect::<Vec<_>>(),
+            [(81, MapType::Soil), (14, MapType::Soil), (57, MapType::Soil),(13, MapType::Soil)]
+        )
+    }
+
+    #[test]
+    fn test_parse_map() {
+        let data = std::fs::read_to_string("./src/bin/day5/sample.txt").expect("Ops!");
+        let input = data.split("\n\n").nth(1).unwrap();
+
+        let map = input.parse::<Map>().expect("Map::Ops!");
+        println!("{:?}",map);
+        assert_eq!(
+            map,
+            Map { map: MapType::Seed, dest: MapType::Soil,
+                    mappings: vec![
+                        Mapping { src_base: 98..100, dst_base: 50 },
+                        Mapping { src_base: 50..98, dst_base: 52 }
+                    ].into()
+                }
+        )
     }
 }
