@@ -1,4 +1,4 @@
-use std::{sync::Arc, str::FromStr};
+use std::{ops::Range, str::FromStr, sync::Arc};
 use super::mapping::*;
 
 #[derive(Debug,Hash,Eq,PartialEq,Copy, Clone)]
@@ -32,17 +32,30 @@ pub(crate) struct Map {
 }
 
 impl Map {
-    pub(crate) fn transform(&self, input: u64) -> (u64,MapType) {
+    pub(crate) fn transform(&self, seed: u64) -> (u64,MapType) {
         self.mappings.iter()
-            .filter_map(|tx| {
-                if tx.src_base.contains(&input) {
-                    Some((tx.dst_base + input - tx.src_base.start, self.dest))
-                } else {
-                    None
-                }
-            })
+            .filter_map(|mapping| mapping.transform(seed))
+            .map(|seed| (seed, self.dest))
             .next()
-            .unwrap_or( (input, self.dest))
+            .unwrap_or( (seed, self.dest))
+    }
+
+    pub(crate) fn transform_range(&self, seeds: &[Range<u64>]) -> (Vec<Range<u64>>,MapType) {
+        let mut queue: Vec<Range<u64>> = seeds.into();
+        let mut out = vec![];
+
+        for mapping in self.mappings.iter() {
+            let mut tmp = vec![];
+            while let Some(rng) = queue.pop() {
+                let (rng, residual) = mapping.transform_range(&rng);
+                rng.map(|r| out.push(r));
+                tmp.extend(residual);
+            }
+            queue = tmp;
+            // println!("{:?}",(mapping,&queue));
+        }
+        out.extend(queue);
+        (out, self.dest)
     }
 }
 
@@ -73,6 +86,18 @@ impl FromStr for Map {
 mod test {
     use super::*;
     use crate::Seeds;
+
+    #[test]
+    fn test_map_transform_ranges() {
+        let input = std::fs::read_to_string("./src/bin/day5/sample.txt").expect("Ops!");
+        let mut split = input.split("\n\n");
+        let seeds = split.next().unwrap().parse::<Seeds>().expect("Ops!");
+        let map = split.next().unwrap().parse::<Map>().expect("Ops!");
+
+        println!("{:?}",
+            map.transform_range(&seeds.get_ranges())
+        );
+    }
 
     #[test]
     fn test_map_transform() {

@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use crate::block::{CityBlock, Heat};
 
-#[derive(Debug)]
 pub(crate) struct CityMapPath {
     map: HashMap::<CityBlock,(Heat, Option<CityBlock>)>,
     total_heat_loss: Heat,

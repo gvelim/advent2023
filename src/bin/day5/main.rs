@@ -1,3 +1,5 @@
+#![feature(iter_collect_into)]
+
 mod map;
 mod mapping;
 mod pipeline;
@@ -23,20 +25,12 @@ fn main() {
     assert_eq!(min, Some(388_071_289));
 
     let t = Instant::now();
-    let min = seeds
-        .get_ranges()
-        .into_par_iter()
-        .inspect(|range| print!("{:?} - ",range))
-        .map(|range| {
-            range.clone().map(|seed|
-                    pipeline.run((seed,MapType::Seed))
-                )
-                .min()
-                .unwrap_or(u64::MAX)
-        })
-        .inspect(|_| println!("{:?}", t.elapsed()))
-        .min();
+    let min = pipeline
+        .run_ranges((&seeds.get_ranges(),MapType::Seed))
+        .into_iter()
+        .min_by_key(|r| r.start)
+        .unwrap();
 
-    println!("Part 2, min: {:?}",min);
-    assert_eq!(min, Some(84_206_669));
+    println!("Part 2, min: {:?} - {:?}",min.start, t.elapsed());
+    assert_eq!(min.start, 84_206_669);
 }

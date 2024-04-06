@@ -17,7 +17,7 @@ impl HashLen for Rc<str> {
     }
 }
 
-
+#[cfg(test)]
 mod test {
     use super::*;
     use crate::operation::Label;

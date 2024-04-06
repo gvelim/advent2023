@@ -49,6 +49,17 @@ impl Pipeline {
         // println!();
         out
     }
+    pub(crate) fn run_ranges(&self, start: (&[Range<u64>],MapType)) -> Vec<Range<u64>> {
+        let mut out: Vec<Range<u64>> = start.0.into();
+        let mut next = start.1;
+
+        println!();
+        while let Some(map) = self.maps.get(&next) {
+            // println!("{:?}->",(&out,next));
+             (out, next) = map.transform_range(&out);
+        }
+        out
+    }
 }
 
 impl FromStr for Pipeline {
@@ -72,6 +83,21 @@ impl FromStr for Pipeline {
 #[cfg(test)]
 mod test_pipeline {
     use super::*;
+
+    #[test]
+    fn test_pipeline_ranges() {
+        let input = std::fs::read_to_string("./src/bin/day5/sample.txt").expect("Ops!");
+        let seeds = input.parse::<Seeds>().expect("Ops!");
+        let pipeline = input.parse::<Pipeline>().expect("Ops!");
+
+        let min = pipeline.run_ranges((&seeds.get_ranges(),MapType::Seed))
+            .into_iter()
+            .min_by_key(|d| d.start )
+            .unwrap();
+
+        println!("{:?}",min);
+        assert_eq!(min.start,46);
+    }
 
     #[test]
     fn test_ranges_min_location() {
