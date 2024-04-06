@@ -7,7 +7,6 @@ mod pipeline;
 use std::time::Instant;
 use map::*;
 use pipeline::*;
-use rayon::prelude::*;
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day5/input.txt").expect("Ops!");
@@ -17,7 +16,7 @@ fn main() {
     let t = Instant::now();
     let min = seeds.iter()
         .map(|&seed|
-            pipeline.run((seed,MapType::Seed))
+            pipeline.run(seed, MapType::Seed)
         )
         .min();
 
@@ -26,7 +25,7 @@ fn main() {
 
     let t = Instant::now();
     let min = pipeline
-        .run_ranges((&seeds.get_ranges(),MapType::Seed))
+        .run_ranges(&seeds.get_ranges(), MapType::Seed)
         .into_iter()
         .min_by_key(|r| r.start)
         .unwrap();

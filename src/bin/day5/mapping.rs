@@ -1,6 +1,13 @@
 use std::{num::ParseIntError, ops::Range, str::FromStr};
 
 #[derive(Debug,PartialEq)]
+pub(crate) enum RangeResidue {
+    None,
+    Single(Range<u64>),
+    Double(Range<u64>,Range<u64>)
+}
+
+#[derive(Debug,PartialEq)]
 pub(crate) struct Mapping {
     pub src_base: Range<u64>, // 98 (98,99)
     pub dst_base: u64, // 52
@@ -20,25 +27,26 @@ impl Mapping {
         }
     }
 
-    pub(crate) fn transform_range(&self, rng: &Range<u64>) -> (Option<Range<u64>>,Vec<Range<u64>>) {
+    pub(crate) fn transform_range(&self, rng: &Range<u64>) -> (Option<Range<u64>>,RangeResidue) {
         let src = &self.src_base;
         match (src.contains(&rng.start), src.contains(&(rng.end-1))) {
             (true, true) =>
                 // src range contains input range
-                (Some(self.shift(rng.start)..self.shift(rng.end)), vec![]),
+                (Some(self.shift(rng.start)..self.shift(rng.end)), RangeResidue::None),
             (true, false) =>
                 // overlapping right of src
-                (Some(self.shift(rng.start)..self.shift(src.end)), vec![src.end..rng.end]),
+                (Some(self.shift(rng.start)..self.shift(src.end)), RangeResidue::Single(src.end..rng.end)),
             (false, true) =>
                 // overlapping left of src
-                (Some(self.shift(src.start)..self.shift(rng.end)), vec![rng.start..src.start]),
+                (Some(self.shift(src.start)..self.shift(rng.end)), RangeResidue::Single(rng.start..src.start)),
             (false, false) =>{
                 // does it fall left or right of the src range ?
                 if rng.end <= src.start || rng.start >= src.end {
-                    (None, vec![rng.clone()])
+                    (None, RangeResidue::Single(rng.clone()))
                 } else {
                     // input range contains the src range, hence
-                    (Some(self.shift(src.start)..self.shift(src.end)), vec![rng.start..src.start,src.end..rng.end])
+                    (Some(self.shift(src.start)..self.shift(src.end)),
+                        RangeResidue::Double(rng.start..src.start,src.end..rng.end))
                 }
             }
         }
@@ -63,16 +71,16 @@ impl FromStr for Mapping {
 
 #[cfg(test)]
 mod test {
-    use super::Mapping;
+    use super::{Mapping, RangeResidue};
 
     #[test]
     fn test_mapping_transform_range() {
         let data = [
-            ("50 98 2", 79..98, (Some(79..98), vec![])),
-            ("52 50 48", 79..98, (Some(81..100), vec![])),
-            ("0 15 37", 42..62, (Some(27..37), vec![52..62])),
-            ("37 52 2", 42..53, (Some(37..38), vec![42..52])),
-            ("39 5 15", 0..30, (Some(39..54), vec![0..5, 20..30]))
+            ("50 98 2", 79..98, (None, RangeResidue::Single(79..98))),
+            ("52 50 48", 79..98, (Some(81..100), RangeResidue::None)),
+            ("0 15 37", 42..62, (Some(27..37), RangeResidue::Single(52..62))),
+            ("37 52 2", 42..53, (Some(37..38), RangeResidue::Single(42..52))),
+            ("39 5 15", 0..30, (Some(39..54), RangeResidue::Double(0..5, 20..30)))
         ];
 
         for (inp,rng,out) in data {

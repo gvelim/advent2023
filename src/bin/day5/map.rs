@@ -1,4 +1,4 @@
-use std::{ops::Range, str::FromStr, sync::Arc};
+use std::{ops::Range, rc::Rc, str::FromStr};
 use super::mapping::*;
 
 #[derive(Debug,Hash,Eq,PartialEq,Copy, Clone)]
@@ -28,7 +28,7 @@ impl FromStr for MapType {
 pub(crate) struct Map {
     pub(crate) map: MapType,
     pub(crate) dest: MapType,
-    pub(crate) mappings: Arc<[Mapping]>
+    pub(crate) mappings: Rc<[Mapping]>
 }
 
 impl Map {
@@ -41,21 +41,30 @@ impl Map {
     }
 
     pub(crate) fn transform_range(&self, seeds: &[Range<u64>]) -> (Vec<Range<u64>>,MapType) {
-        let mut queue: Vec<Range<u64>> = seeds.into();
-        let mut out = vec![];
+        let mut queue1: Vec<Range<u64>> = seeds.into();
+        let mut queue2 = Vec::with_capacity(seeds.len()*2);
+        let mut out = Vec::with_capacity(seeds.len()*2);
 
         for mapping in self.mappings.iter() {
-            let mut tmp = vec![];
-            while let Some(rng) = queue.pop() {
-                let (rng, residual) = mapping.transform_range(&rng);
-                rng.map(|r| out.push(r));
-                tmp.extend(residual);
+            while let Some(rng) = queue1.pop() {
+                let (mapped, residual) = mapping.transform_range(&rng);
+                mapped.map(|r| out.push(r));
+                match residual {
+                    RangeResidue::Single(a) => queue2.push(a),
+                    RangeResidue::Double(a, b) => {
+                        queue2.push(a); queue2.push(b)
+                    },
+                    _ => {},
+                }
             }
-            queue = tmp;
+            // swap input queues for processing by next mapping
+            std::mem::swap::<Vec<Range<u64>>>(&mut queue1, &mut queue2);
             // println!("{:?}",(mapping,&queue));
         }
-        out.extend(queue);
-        (out, self.dest)
+        // add any residual ranges after final mapping is processed
+        queue1.extend(out);
+
+        (queue1, self.dest)
     }
 }
 
@@ -77,7 +86,7 @@ impl FromStr for Map {
             dest: map_type.next().unwrap(),
             mappings: maps
                 .map(|m| m.parse::<Mapping>().expect("mapping::Ops"))
-                .collect::<Arc<[_]>>()
+                .collect::<Rc<[_]>>()
         })
     }
 }
