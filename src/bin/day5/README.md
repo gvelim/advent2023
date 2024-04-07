@@ -52,21 +52,219 @@ Min = 35
 Repeat Part 1 however the seeds line now actually describes ranges of seed numbers, e.g. `seeds: 79 14 55 13` has two ranges, `(79..=92)` and `(55..=67)`
 
 ## Approach
-The following data structure captures the behaviours. 
+We know that
+1. we have a number of map types
+2. each map
+  1. has a name
+  2. links to the next map in the processing sequence
+  3. has 1 or more mappings
+    1. each mapping translates a number within the base range to a target range
+
+The following data structures capture the behaviour.
+``` rust
+enum MapType {
+    Seed, Soil, Fertilizer, Water, Light, Temperature, Humidity, Location
+}
+
+struct Mapping {
+    src_base: Range<u64>, // 98..100 from base: 98, len: 2
+    dst_base: u64,        // 52: dst base: 52
+}
+
+struct Map {
+    pub(crate) map: MapType,
+    pub(crate) dest: MapType,
+    pub(crate) mappings: Rc<[Mapping]>
+}
+
+struct Pipeline {
+    maps: HashMap<MapType,Map>
+}
 ```
-MapType { seed,soil, .. , humidity } <-- location doesn't have a map
-Pipeline
-   + HashMap( MapType, Map )
-        +-- Map
-            +--- name: MapType
-            +--- next: MapType
-            +--- Mappings: Vec<Mapping>
-                    +--- inp_range: Range<u64>  <--- (src_base .. src_base + length)
-                    +--- dst_offset: u64
-        +-- Map
+## Part 1
+When a seed is fed onto a map the following steps app
+1. for each mapping
+    1. does the `seed` falls into the `src` range ?
+        1. yes, then convert it to dst value and return it along with the `name` of next map
+        2. no, check seed against next mapping until no mappings remain
+2. If no mapping matched then pass seed to the next map
+
+The below `Map::transform()` performs the above logic
+```rust
+impl Mapping {
+    fn shift(&self, n:u64) ->u64 {
+        self.dst_base + n - self.src_base.start
+    }
+    fn transform(&self, seed: u64) -> Option<u64> {
+        if self.src_base.contains(&seed) {
+            Some(self.shift(seed))
+        } else {
+            None
+        }
+    }
+...
+}
+
+impl Map {
+    fn transform(&self, seed: u64) -> (u64,MapType) {
+        self.mappings.iter()
+            .filter_map(|mapping| mapping.transform(seed))
+            .map(|seed| (seed, self.dest))
+            .next()
+            .unwrap_or( (seed, self.dest))
+    }
+...
+}
 ```
-Pipeline has the `run(start: (u64,MapType))` 
-1. which takes the seed and starting `MapType` i.e. for seed-to-soil is `seed`, 
-2. extracts the seed map instance i.e. seed-to-soil, from the hashmap and 
-3. runs the map's `map::transform(inp:u64)->(u64,MapType)` to produce the output and suitable `MapType`
-4. repeat step 1 using the output of the first iteration until there is no target maptype, i.e. location 
+With the map logic in place, the `Pipeline::run()` will 
+1. Feed the seed against the starting map type
+2. receive the value and next map name
+3. repeat (1) until the next map name is None (doesn't exist) and the final value is received
+    1. `Location` isn't a defined map
+    2. Hence when next map type becomes `Location` this will terminate the loop hence we have the final value
+
+```rust
+impl Pipeline {
+    fn run(&self, seed: u64, mut map_type: MapType) -> u64 {
+        let mut out = seed;
+
+        while let Some(map) = self.maps.get(&map_type) {
+             (out, map_type) = map.transform(out);
+        }
+        out
+    }
+...
+}
+```
+Answering Part 1 is given by the below logic, given seeds is a vector of `int` values.
+```rust
+let min = seeds.iter()
+    .map(|&seed| pipeline.run(seed, MapType::Seed))
+    .min();
+
+```
+## Part 2
+Part 2 becomes trickier as the above implementation has `O(seeds * MapTypes * Mappings)` therefore it will take a lot computing time to complete.
+
+An alternative approach here is to enhance the `Mapping` logic to transform `src` ranges to `dst` ranges. This will require us to understand the **`range` vs `mapping` transformation**. This is explained in the below picture
+```
+Mapping (M)   ----------XXXXXXXXXXXX---------
+Range 1 (R1)     xxxxx
+    M*R1         xxxxx  <- unmapped range 
+Range 2 (R2)        xxxxxxx
+    M*R2            xxxx    <- src unmapped part (residual)
+                        TTT <- dst mapped part
+Range 3 (R3)        xxxxxxxxxxxxxxxxxxxx
+    M*R3            xxxxx                   <- src unmapped part (residual)
+                         TTTTTTTTTTTT       <- dst mapped part
+                                     xxx    <- src unmapped part (residual)
+```
+With the above intuition we implement the `Mapping::transform_range()` that given an input range it returns 
+1. the transformed part
+2. the residual, non-transformed part
+
+```rust
+enum RangeResidue {
+    None,
+    Single(Range<u64>),
+    Double(Range<u64>,Range<u64>)
+}
+impl Mapping {
+...
+    pub(crate) fn transform_range(&self, rng: &Range<u64>) -> (Option<Range<u64>>,RangeResidue) {
+        let src = &self.src_base;
+        match (src.contains(&rng.start), src.contains(&(rng.end-1))) {
+            (true, true) =>
+                (Some(self.shift(rng.start)..self.shift(rng.end)), RangeResidue::None),
+            (true, false) =>
+                (Some(self.shift(rng.start)..self.shift(src.end)), RangeResidue::Single(src.end..rng.end)),
+            (false, true) =>
+                (Some(self.shift(src.start)..self.shift(rng.end)), RangeResidue::Single(rng.start..src.start)),
+            (false, false) =>{
+                if rng.end <= src.start || rng.start >= src.end {
+                    (None, RangeResidue::Single(rng.clone()))
+                } else {
+                    (Some(self.shift(src.start)..self.shift(src.end)),
+                        RangeResidue::Double(rng.start..src.start,src.end..rng.end))
+                }
+            }
+        }
+    }
+}
+```
+Now, a `Map` applies multiple `Mappings` to an input `range` and here we need to understand how the **output** from one `Mapping` affects the **input** of the subsequent `Mapping`
+
+```
+            Input Range processing Queue       Map Output Queue
+            ===============================  =======================
+Inp: Range        xxxxxxxxxxxxxxxxxxxx
+Mapping 1   ----------XXXXXXXXXXXX---------
+Out: Range        xxxx            xxxx       TTTTTTTTTTTT
+Mapping 2   -------XXXXX-----XXXXXXX-------
+Out: Range        x                 xx       TTT, TT
+
+Map out ranges:   x                 xx       TTTTTTTTTTTT, TTT, TT
+```
+Hence here we see that a transformed part **should never** be fed a subsequent mapping as this invalidates the processing rules.
+
+Hence the `Map::transform()` takes an vector of ranges and returns the mapping results along with the name of the next map
+```rust
+impl Map {
+...
+    fn transform_range(&self, seeds: &[Range<u64>]) -> (Vec<Range<u64>>,MapType) {
+        let mut queue1: Vec<Range<u64>> = seeds.into();
+        let mut queue2 = Vec::with_capacity(seeds.len()*2);
+        let mut out = Vec::with_capacity(seeds.len());
+
+        for mapping in self.mappings.iter() {
+            while let Some(rng) = queue1.pop() {
+                // map input range into mapped and residual range(s)
+                let (mapped, residual) = mapping.transform_range(&rng);
+                // push mapped range to the output
+                mapped.map(|r| out.push(r));
+                // push residual to the queue for processing by subsequent mappings
+                match residual {
+                    RangeResidue::Single(a) => queue2.push(a),
+                    RangeResidue::Double(a, b) => {
+                        queue2.push(a); queue2.push(b)
+                    },
+                    _ => (),
+                }
+            }
+            // flip/flop the pointers to the queues' memory allocation:
+            // one is now empty and the other has the ranges for processing by the next mapping
+            // so we avoid temporary vector and subsequenly heap allocation
+            std::mem::swap::<Vec<Range<u64>>>(&mut queue1, &mut queue2);
+            // println!("{:?}",(self.map, mapping,&queue1));
+        }
+        // add remaining residual ranges following the processing of all mappings
+        queue1.extend(out);
+
+        (queue1, self.dest)
+    }
+}
+```
+The Pipeline logic remains nearly identical and returns the final vector of processed ranges
+```rust
+impl Pipeline {
+    fn run_ranges(&self, seeds: &[Range<u64>], mut map_type: MapType) -> Vec<Range<u64>> {
+        let mut out: Vec<Range<u64>> = seeds.into();
+        // println!();
+        while let Some(map) = self.maps.get(&map_type) {
+            // println!("{:?}->",(&out,next));
+             (out, map_type) = map.transform_range(&out);
+        }
+        out
+    }
+...
+}
+```
+Finding the minimum value becomes an exercise to find the range with the smallest starting value
+```rust
+let min = pipeline
+        .run_ranges(&seeds.get_ranges(), MapType::Seed)
+        .into_iter()
+        .min_by_key(|r| r.start)
+        .unwrap();
+
+```

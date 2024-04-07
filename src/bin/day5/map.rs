@@ -43,25 +43,30 @@ impl Map {
     pub(crate) fn transform_range(&self, seeds: &[Range<u64>]) -> (Vec<Range<u64>>,MapType) {
         let mut queue1: Vec<Range<u64>> = seeds.into();
         let mut queue2 = Vec::with_capacity(seeds.len()*2);
-        let mut out = Vec::with_capacity(seeds.len()*2);
+        let mut out = Vec::with_capacity(seeds.len());
 
         for mapping in self.mappings.iter() {
             while let Some(rng) = queue1.pop() {
+                // map input range into mapped and residual range(s)
                 let (mapped, residual) = mapping.transform_range(&rng);
+                // push mapped range to the output
                 mapped.map(|r| out.push(r));
+                // push residual to the queue for processing by subsequent mappings
                 match residual {
                     RangeResidue::Single(a) => queue2.push(a),
                     RangeResidue::Double(a, b) => {
                         queue2.push(a); queue2.push(b)
                     },
-                    _ => {},
+                    _ => (),
                 }
             }
-            // swap input queues for processing by next mapping
+            // flip/flop the pointers to the queues' memory allocation:
+            // one is now empty and the other has the ranges for processing by the next mapping
+            // so we avoid temporary vector and subsequenly heap allocation
             std::mem::swap::<Vec<Range<u64>>>(&mut queue1, &mut queue2);
-            // println!("{:?}",(mapping,&queue));
+            // println!("{:?}",(self.map, mapping,&queue1));
         }
-        // add any residual ranges after final mapping is processed
+        // add remaining residual ranges following the processing of all mappings
         queue1.extend(out);
 
         (queue1, self.dest)
