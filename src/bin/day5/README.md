@@ -72,9 +72,9 @@ struct Mapping {
 }
 
 struct Map {
-    pub(crate) map: MapType,
-    pub(crate) dest: MapType,
-    pub(crate) mappings: Rc<[Mapping]>
+    map: MapType,
+    dest: MapType,
+    mappings: Rc<[Mapping]>
 }
 
 struct Pipeline {
