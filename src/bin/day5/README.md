@@ -198,12 +198,13 @@ Now, a `Map` applies multiple `Mappings` to an input `range` and here we need to
             Input Range processing Queue       Map Output Queue
             ===============================  =======================
 Inp: Range        xxxxxxxxxxxxxxxxxxxx
+
 Mapping 1   ----------XXXXXXXXXXXX---------
 Out: Range        xxxx            xxxx       TTTTTTTTTTTT
 Mapping 2   -------XXXXX-----XXXXXXX-------
 Out: Range        x                 xx       TTT, TT
-
-Map out ranges:   x                 xx       TTTTTTTTTTTT, TTT, TT
+--------------------------------------------------------------------
+Result/Output : [ x, xx, TTTTTTTTTTTT, TTT, TT ]
 ```
 Hence here we see that a transformed part **should never** be fed a subsequent mapping as this invalidates the processing rules.
 
