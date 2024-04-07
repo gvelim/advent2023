@@ -40,7 +40,7 @@ impl Map {
             .unwrap_or( (seed, self.dest))
     }
 
-    pub(crate) fn transform_range(&self, seeds: &[Range<u64>]) -> (Vec<Range<u64>>,MapType) {
+    pub(crate) fn transform_range(&self, seeds: &[Range<u64>]) -> (Rc<[Range<u64>]>,MapType) {
         let mut queue1: Vec<Range<u64>> = seeds.into();
         let mut queue2 = Vec::with_capacity(seeds.len()*2);
         let mut out = Vec::with_capacity(seeds.len());
@@ -69,7 +69,7 @@ impl Map {
         // add remaining residual ranges following the processing of all mappings
         queue1.extend(out);
 
-        (queue1, self.dest)
+        (queue1.into(), self.dest)
     }
 }
 

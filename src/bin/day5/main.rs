@@ -24,8 +24,8 @@ fn main() {
     assert_eq!(min, Some(388_071_289));
 
     let t = Instant::now();
-    let min = pipeline
-        .run_ranges(&seeds.get_ranges(), MapType::Seed)
+    let ranges = pipeline.run_ranges(&seeds.get_ranges(), MapType::Seed);
+    let min = ranges
         .into_iter()
         .min_by_key(|r| r.start)
         .unwrap();

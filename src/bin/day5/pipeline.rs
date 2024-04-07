@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Range, str::FromStr, sync::Arc};
+use std::{collections::HashMap, ops::Range, rc::Rc, str::FromStr, sync::Arc};
 
 use super::map::*;
 
@@ -49,8 +49,8 @@ impl Pipeline {
         // println!();
         out
     }
-    pub(crate) fn run_ranges(&self, seeds: &[Range<u64>], mut map_type: MapType) -> Vec<Range<u64>> {
-        let mut out: Vec<Range<u64>> = seeds.into();
+    pub(crate) fn run_ranges(&self, seeds: &[Range<u64>], mut map_type: MapType) -> Rc<[Range<u64>]> {
+        let mut out: Rc<[Range<u64>]> = seeds.into();
         // println!();
         while let Some(map) = self.maps.get(&map_type) {
             // println!("{:?}->",(&out,next));
@@ -88,7 +88,8 @@ mod test_pipeline {
         let seeds = input.parse::<Seeds>().expect("Ops!");
         let pipeline = input.parse::<Pipeline>().expect("Ops!");
 
-        let min = pipeline.run_ranges(&seeds.get_ranges(), MapType::Seed)
+        let ranges = pipeline.run_ranges(&seeds.get_ranges(), MapType::Seed);
+        let min = ranges
             .into_iter()
             .min_by_key(|d| d.start )
             .unwrap();
