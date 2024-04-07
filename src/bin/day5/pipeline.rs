@@ -36,8 +36,12 @@ pub(crate) struct Pipeline {
     maps: HashMap<MapType,Map>
 }
 
-impl Pipeline {
-    pub(crate) fn run(&self, seed: u64, mut map_type: MapType) -> u64 {
+pub(crate) trait PipelineRun<T> {
+    fn run(&self, seed: T, map_type: MapType) -> T;
+}
+
+impl PipelineRun<u64> for Pipeline {
+    fn run(&self, seed: u64, mut map_type: MapType) -> u64 {
         let mut out = seed;
 
         while let Some(map) = self.maps.get(&map_type) {
@@ -45,8 +49,11 @@ impl Pipeline {
         }
         out
     }
-    pub(crate) fn run_ranges(&self, seeds: &[Range<u64>], mut map_type: MapType) -> Rc<[Range<u64>]> {
-        let mut out: Rc<[Range<u64>]> = seeds.into();
+}
+
+impl PipelineRun<Rc<[Range<u64>]>> for Pipeline {
+    fn run(&self, seeds: Rc<[Range<u64>]>, mut map_type: MapType) -> Rc<[Range<u64>]> {
+        let mut out: Rc<[Range<u64>]> = seeds.as_ref().into();
 
         while let Some(map) = self.maps.get(&map_type) {
              (out, map_type) = map.transform(out);
@@ -83,7 +90,7 @@ mod test_pipeline {
         let seeds = input.parse::<Seeds>().expect("Ops!");
         let pipeline = input.parse::<Pipeline>().expect("Ops!");
 
-        let ranges = pipeline.run_ranges(&seeds.get_ranges(), MapType::Seed);
+        let ranges = pipeline.run(seeds.get_ranges(), MapType::Seed);
         let min = ranges
             .into_iter()
             .min_by_key(|d| d.start )

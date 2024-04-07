@@ -3,8 +3,8 @@ mod mapping;
 mod pipeline;
 
 use std::time::Instant;
-use map::*;
-use pipeline::*;
+use map::MapType;
+use pipeline::{ PipelineRun, Pipeline, Seeds};
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day5/input.txt").expect("Ops!");
@@ -22,7 +22,7 @@ fn main() {
     assert_eq!(min, Some(388_071_289));
 
     let t = Instant::now();
-    let ranges = pipeline.run_ranges(&seeds.get_ranges(), MapType::Seed);
+    let ranges = pipeline.run(seeds.get_ranges(), MapType::Seed);
     let min = ranges
         .into_iter()
         .min_by_key(|r| r.start)
