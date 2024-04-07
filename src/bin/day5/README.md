@@ -55,10 +55,10 @@ Repeat Part 1 however the seeds line now actually describes ranges of seed numbe
 We know that
 1. we have a number of map types
 2. each map
-  1. has a name
-  2. links to the next map in the processing sequence
-  3. has 1 or more mappings
-    1. each mapping translates a number within the base range to a target range
+   1. has a name
+   2. links to the next map in the processing sequence
+   3. has 1 or more mappings
+      1. each mapping translates a number within the base range to a target range
 
 The following data structures capture the behaviour.
 ``` rust
