@@ -1,5 +1,3 @@
-#![feature(iter_collect_into)]
-
 mod map;
 mod mapping;
 mod pipeline;

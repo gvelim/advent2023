@@ -26,22 +26,34 @@ impl FromStr for MapType {
 
 #[derive(Debug,PartialEq)]
 pub(crate) struct Map {
-    pub(crate) map: MapType,
-    pub(crate) dest: MapType,
-    pub(crate) mappings: Rc<[Mapping]>
+    map: MapType,
+    dest: MapType,
+    mappings: Rc<[Mapping]>
 }
 
 impl Map {
-    pub(crate) fn transform(&self, seed: u64) -> (u64,MapType) {
+    pub(crate) fn id(&self) -> MapType {
+        self.map
+    }
+}
+
+pub trait MapTransform<T> {
+    fn transform(&self, seed: T) -> (T,MapType) where T: Clone;
+}
+
+impl MapTransform<u64> for Map {
+    fn transform(&self, seed: u64) -> (u64,MapType) where u64: Clone {
         self.mappings.iter()
             .filter_map(|mapping| mapping.transform(seed))
             .map(|seed| (seed, self.dest))
             .next()
             .unwrap_or( (seed, self.dest))
     }
+}
 
-    pub(crate) fn transform_range(&self, seeds: &[Range<u64>]) -> (Rc<[Range<u64>]>,MapType) {
-        let mut queue1: Vec<Range<u64>> = seeds.into();
+impl MapTransform<Rc<[Range<u64>]>> for Map {
+    fn transform(&self, seeds: Rc<[Range<u64>]>) -> (Rc<[Range<u64>]>,MapType) {
+        let mut queue1: Vec<Range<u64>> = seeds.as_ref().into();
         let mut queue2 = Vec::with_capacity(seeds.len()*2);
         let mut out = Vec::with_capacity(seeds.len());
 
@@ -54,9 +66,7 @@ impl Map {
                 // push residual to the queue for processing by subsequent mappings
                 match residual {
                     RangeResidue::Single(a) => queue2.push(a),
-                    RangeResidue::Double(a, b) => {
-                        queue2.push(a); queue2.push(b)
-                    },
+                    RangeResidue::Double(a, b) => queue2.extend([a,b]),
                     _ => (),
                 }
             }
@@ -72,6 +82,7 @@ impl Map {
         (queue1.into(), self.dest)
     }
 }
+
 
 impl FromStr for Map {
     type Err = ();
@@ -109,7 +120,7 @@ mod test {
         let map = split.next().unwrap().parse::<Map>().expect("Ops!");
 
         println!("{:?}",
-            map.transform_range(&seeds.get_ranges())
+            map.transform(seeds.get_ranges())
         );
     }
 

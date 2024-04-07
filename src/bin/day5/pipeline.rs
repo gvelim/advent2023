@@ -1,15 +1,13 @@
-use std::{collections::HashMap, ops::Range, rc::Rc, str::FromStr, sync::Arc};
+use std::{collections::HashMap, ops::Range, rc::Rc, str::FromStr};
+use super::map::{MapTransform,MapType,Map};
 
-use super::map::*;
-
-
-pub(crate) struct Seeds(Arc<[u64]>);
+pub(crate) struct Seeds(Rc<[u64]>);
 
 impl Seeds {
-    pub(crate) fn get_ranges(&self) -> Arc<[Range<u64>]>{
+    pub(crate) fn get_ranges(&self) -> Rc<[Range<u64>]> {
         self.0.chunks(2)
             .map(|r| (r[0]..r[0]+r[1]))
-            .collect::<Arc<[_]>>()
+            .collect::<Rc<[_]>>()
     }
 
     #[inline]
@@ -29,7 +27,7 @@ impl FromStr for Seeds {
             .last().unwrap()
             .split_whitespace()
             .map(|num| num.trim().parse::<u64>().expect("Seeds:Ops!"))
-            .collect::<Arc<[_]>>()
+            .collect::<Rc<[_]>>()
         ))
     }
 }
@@ -43,18 +41,15 @@ impl Pipeline {
         let mut out = seed;
 
         while let Some(map) = self.maps.get(&map_type) {
-            // print!("{:?}->",(out,next));
              (out, map_type) = map.transform(out);
         }
-        // println!();
         out
     }
     pub(crate) fn run_ranges(&self, seeds: &[Range<u64>], mut map_type: MapType) -> Rc<[Range<u64>]> {
         let mut out: Rc<[Range<u64>]> = seeds.into();
-        // println!();
+
         while let Some(map) = self.maps.get(&map_type) {
-            // println!("{:?}->",(&out,next));
-             (out, map_type) = map.transform_range(&out);
+             (out, map_type) = map.transform(out);
         }
         out
     }
@@ -70,7 +65,7 @@ impl FromStr for Pipeline {
                 maps: split
                     .into_iter()
                     .map(|map| map.parse::<Map>().expect("Ops!"))
-                    .map(|map| (map.map, map))
+                    .map(|map| (map.id(), map))
                     .collect::<HashMap<MapType,Map>>()
             }
         )
