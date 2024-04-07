@@ -1,5 +1,5 @@
 use std::{collections::HashMap, ops::Range, rc::Rc, str::FromStr};
-use super::map::{MapTransform,MapType,Map};
+use super::map::{Transform,MapType,Map};
 
 pub(crate) struct Seeds(Rc<[u64]>);
 
@@ -36,11 +36,11 @@ pub(crate) struct Pipeline {
     maps: HashMap<MapType,Map>
 }
 
-pub(crate) trait PipelineRun<T> {
+pub(crate) trait Run<T> {
     fn run(&self, seed: T, map_type: MapType) -> T;
 }
 
-impl PipelineRun<u64> for Pipeline {
+impl Run<u64> for Pipeline {
     fn run(&self, seed: u64, mut map_type: MapType) -> u64 {
         let mut out = seed;
 
@@ -51,9 +51,9 @@ impl PipelineRun<u64> for Pipeline {
     }
 }
 
-impl PipelineRun<Rc<[Range<u64>]>> for Pipeline {
+impl Run<Rc<[Range<u64>]>> for Pipeline {
     fn run(&self, seeds: Rc<[Range<u64>]>, mut map_type: MapType) -> Rc<[Range<u64>]> {
-        let mut out: Rc<[Range<u64>]> = seeds.as_ref().into();
+        let mut out = seeds.clone();
 
         while let Some(map) = self.maps.get(&map_type) {
              (out, map_type) = map.transform(out);

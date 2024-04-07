@@ -37,11 +37,11 @@ impl Map {
     }
 }
 
-pub trait MapTransform<T> {
+pub trait Transform<T> {
     fn transform(&self, seed: T) -> (T,MapType) where T: Clone;
 }
 
-impl MapTransform<u64> for Map {
+impl Transform<u64> for Map {
     fn transform(&self, seed: u64) -> (u64,MapType) where u64: Clone {
         self.mappings.iter()
             .filter_map(|mapping| mapping.transform(seed))
@@ -51,7 +51,7 @@ impl MapTransform<u64> for Map {
     }
 }
 
-impl MapTransform<Rc<[Range<u64>]>> for Map {
+impl Transform<Rc<[Range<u64>]>> for Map {
     fn transform(&self, seeds: Rc<[Range<u64>]>) -> (Rc<[Range<u64>]>,MapType) {
         let mut queue1: Vec<Range<u64>> = seeds.as_ref().into();
         let mut queue2 = Vec::with_capacity(seeds.len()*2);
@@ -82,7 +82,6 @@ impl MapTransform<Rc<[Range<u64>]>> for Map {
         (queue1.into(), self.dest)
     }
 }
-
 
 impl FromStr for Map {
     type Err = ();
