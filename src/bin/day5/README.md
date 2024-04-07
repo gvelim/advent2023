@@ -105,15 +105,18 @@ impl Mapping {
 ...
 }
 
-impl Map {
-    fn transform(&self, seed: u64) -> (u64,MapType) {
+pub trait MapTransform<T> {
+    fn transform(&self, seed: T) -> (T,MapType) where T: Clone;
+}
+
+impl MapTransform<u64> for Map {
+    fn transform(&self, seed: u64) -> (u64,MapType) where u64: Clone {
         self.mappings.iter()
             .filter_map(|mapping| mapping.transform(seed))
             .map(|seed| (seed, self.dest))
             .next()
             .unwrap_or( (seed, self.dest))
     }
-...
 }
 ```
 With the map logic in place, the `Pipeline::run()` will 
@@ -124,7 +127,11 @@ With the map logic in place, the `Pipeline::run()` will
     2. Hence when next map type becomes `Location` this will terminate the loop hence we have the final value
 
 ```rust
-impl Pipeline {
+trait PipelineRun<T> {
+    fn run(&self, seed: T, map_type: MapType) -> T;
+}
+
+impl PipelineRun<u64> for Pipeline {
     fn run(&self, seed: u64, mut map_type: MapType) -> u64 {
         let mut out = seed;
 
@@ -133,12 +140,12 @@ impl Pipeline {
         }
         out
     }
-...
 }
 ```
 Answering Part 1 is given by the below logic, given seeds is a vector of `int` values.
 ```rust
-let min = seeds.iter()
+let min = seeds
+    .iter()
     .map(|&seed| pipeline.run(seed, MapType::Seed))
     .min();
 
@@ -210,10 +217,10 @@ Hence here we see that a transformed part **should never** be fed a subsequent m
 
 Hence the `Map::transform()` takes an vector of ranges and returns the mapping results along with the name of the next map
 ```rust
-impl Map {
-...
-    fn transform_range(&self, seeds: &[Range<u64>]) -> (Vec<Range<u64>>,MapType) {
-        let mut queue1: Vec<Range<u64>> = seeds.into();
+
+impl MapTransform<Rc<[Range<u64>]>> for Map {
+    fn transform(&self, seeds: Rc<[Range<u64>]>) -> (Rc<[Range<u64>]>,MapType) {
+        let mut queue1: Vec<Range<u64>> = seeds.as_ref().into();
         let mut queue2 = Vec::with_capacity(seeds.len()*2);
         let mut out = Vec::with_capacity(seeds.len());
 
@@ -226,9 +233,7 @@ impl Map {
                 // push residual to the queue for processing by subsequent mappings
                 match residual {
                     RangeResidue::Single(a) => queue2.push(a),
-                    RangeResidue::Double(a, b) => {
-                        queue2.push(a); queue2.push(b)
-                    },
+                    RangeResidue::Double(a, b) => queue2.extend([a,b]),
                     _ => (),
                 }
             }
@@ -241,31 +246,29 @@ impl Map {
         // add remaining residual ranges following the processing of all mappings
         queue1.extend(out);
 
-        (queue1, self.dest)
+        (queue1.into(), self.dest)
     }
 }
 ```
 The Pipeline logic remains nearly identical and returns the final vector of processed ranges
 ```rust
-impl Pipeline {
-    fn run_ranges(&self, seeds: &[Range<u64>], mut map_type: MapType) -> Vec<Range<u64>> {
-        let mut out: Vec<Range<u64>> = seeds.into();
-        // println!();
+impl PipelineRun<Rc<[Range<u64>]>> for Pipeline {
+    fn run(&self, seeds: Rc<[Range<u64>]>, mut map_type: MapType) -> Rc<[Range<u64>]> {
+        let mut out: Rc<[Range<u64>]> = seeds.as_ref().into();
+
         while let Some(map) = self.maps.get(&map_type) {
-            // println!("{:?}->",(&out,next));
-             (out, map_type) = map.transform_range(&out);
+             (out, map_type) = map.transform(out);
         }
         out
     }
-...
 }
 ```
 Finding the minimum value becomes an exercise to find the range with the smallest starting value
 ```rust
-let min = pipeline
-        .run_ranges(&seeds.get_ranges(), MapType::Seed)
-        .into_iter()
-        .min_by_key(|r| r.start)
-        .unwrap();
+let ranges = pipeline.run(seeds.get_ranges(), MapType::Seed);
+let min = ranges
+    .into_iter()
+    .min_by_key(|r| r.start)
+    .unwrap();
 
 ```
