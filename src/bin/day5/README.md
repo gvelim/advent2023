@@ -119,7 +119,7 @@ impl MapTransform<u64> for Map {
     }
 }
 ```
-With the map logic in place, the `Pipeline::run()` will 
+With the map logic in place, the `Pipeline::run()` will
 1. Feed the seed against the starting map type
 2. receive the value and next map name
 3. repeat (1) until the next map name is None (doesn't exist) and the final value is received
@@ -157,7 +157,7 @@ An alternative approach here is to enhance the `Mapping` logic to transform `src
 ```
 Mapping (M)   ----------XXXXXXXXXXXX---------
 Range 1 (R1)     xxxxx
-    M*R1         xxxxx  <- unmapped range 
+    M*R1         xxxxx  <- unmapped range
 Range 2 (R2)        xxxxxxx
     M*R2            xxxx    <- src unmapped part (residual)
                         TTT <- dst mapped part
@@ -166,7 +166,7 @@ Range 3 (R3)        xxxxxxxxxxxxxxxxxxxx
                          TTTTTTTTTTTT       <- dst mapped part
                                      xxx    <- src unmapped part (residual)
 ```
-With the above intuition we implement the `Mapping::transform_range()` that given an input range it returns 
+With the above intuition we implement the `Mapping::transform_range()` that given an input range it returns
 1. the transformed part
 2. the residual, non-transformed part
 
@@ -254,7 +254,7 @@ The Pipeline logic remains nearly identical and returns the final vector of proc
 ```rust
 impl PipelineRun<Rc<[Range<u64>]>> for Pipeline {
     fn run(&self, seeds: Rc<[Range<u64>]>, mut map_type: MapType) -> Rc<[Range<u64>]> {
-        let mut out: Rc<[Range<u64>]> = seeds.as_ref().into();
+        let mut out: Rc<[Range<u64>]> = seeds.clone();
 
         while let Some(map) = self.maps.get(&map_type) {
              (out, map_type) = map.transform(out);
