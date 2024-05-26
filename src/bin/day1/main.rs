@@ -17,17 +17,12 @@ fn main() {
 }
 
 fn extract_first_last_part1(inp: &str) -> Option<u32> {
-    use std::ops::Not;
-
-    let mut tmp = vec![];
-
-    inp.chars()
+    let mut iter = inp
+        .chars()
         .filter(|c| c.is_ascii_digit())
-        .for_each(|c| tmp.push(c.to_digit(10).expect("Failed to convert")) );
+        .map(|c| (c as u8 - b'0') as u32);
 
-    tmp.is_empty()
-        .not()
-        .then(|| 10 * tmp.first().unwrap() + tmp.last().unwrap() )
+    iter.next().map(|f| 10*f + iter.last().unwrap_or(f) )
 }
 
 fn extract_first_last_part2(input: &str) -> Option<u32> {
