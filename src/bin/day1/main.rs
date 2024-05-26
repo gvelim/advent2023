@@ -3,29 +3,31 @@ fn main() {
     let inp = std::fs::read_to_string("src/bin/day1/input.txt").unwrap_or_else(|e| panic!("{e}"));
 
     let t = Instant::now();
-    let sum = inp.lines()
-        .filter_map( extract_first_last_part1 )
+    let sum = inp
+        .lines()
+        .filter_map(|line| extract_first_last(simple_parser(line)))
         .sum::<u32>();
-    println!("Part 1 -> Sum = {sum} - {:?}", t.elapsed());
+    println!("Part 1 -> Sum = {:?} - {:?}", sum, t.elapsed());
 
     let t = Instant::now();
-    let sum = inp.lines()
-        .filter_map( extract_first_last_part2 )
-        // .inspect(|num| println!("Result: {num}"))
+    let sum = inp
+        .lines()
+        .filter_map(|line| extract_first_last(complex_parser(line)) )
         .sum::<u32>();
-    println!("Part 2 -> Sum = {sum} - {:?}", t.elapsed());
+    println!("Part 2 -> Sum = {:?} - {:?}", sum, t.elapsed());
 }
 
-fn extract_first_last_part1(inp: &str) -> Option<u32> {
-    let mut iter = inp
-        .chars()
+fn extract_first_last(mut parser: impl Iterator<Item = u32>) -> Option<u32> {
+    parser.next().map(|f| 10*f + parser.last().unwrap_or(f) )
+}
+
+fn simple_parser(inp: &str) -> impl Iterator<Item = u32> + '_ {
+    inp.chars()
         .filter(|c| c.is_ascii_digit())
-        .map(|c| (c as u8 - b'0') as u32);
-
-    iter.next().map(|f| 10*f + iter.last().unwrap_or(f) )
+        .map(|c| (c as u8 - b'0') as u32)
 }
 
-fn extract_first_last_part2(input: &str) -> Option<u32> {
+fn complex_parser(input: &str) -> impl Iterator<Item = u32> + '_ {
     static DIGITS: [(&str,u32); 9] = [
         ("one",1), ("two",2), ("three",3), ("four",4), ("five",5), ("six",6), ("seven",7), ("eight",8), ("nine",9)
     ];
@@ -35,14 +37,13 @@ fn extract_first_last_part2(input: &str) -> Option<u32> {
     // print!("Inp: {input} -> ");
 
     // for every char in the input string
-    let mut parser = input
-        .chars()
-        .filter_map(|c| {
+    input.chars()
+        .filter_map(move |c| {
             match c {
                 // if digit convert to numeric
-                '1'..='9' => {
-                    c.to_digit(10)
-                },
+                '1'..='9' =>
+                    Some((c as u8 - b'0') as u32)
+                ,
                 // if non-digit
                 'a'..='z' => {
                     // append char onto the string
@@ -65,13 +66,7 @@ fn extract_first_last_part2(input: &str) -> Option<u32> {
                 },
                 _ => None
             }
-        });
-
-    parser
-        // get first digit or return None
-        .next()
-        // and then get the last digit otherwise reuse the first digit
-        .map(|ret| ret * 10 + parser.last().unwrap_or(ret))
+        })
 }
 
 #[cfg(test)]
@@ -88,11 +83,11 @@ mod test {
     ];
 
     #[test]
-    fn test_extract_digit_numeric() {
+    fn test_part1() {
         let sum = INPUT.iter()
             .filter_map(|str|{
                 print!("{str:?} : ");
-                let val = extract_first_last_part1(str);
+                let val = extract_first_last(simple_parser(str));
                 println!(" -> {:?}",val );
                 val
             })
@@ -105,7 +100,7 @@ mod test {
 
         let sum = INPUT.iter()
             .filter_map(|input| {
-                let val = extract_first_last_part2(input);
+                let val = extract_first_last(complex_parser(input));
                 println!("Found: {:?}", val);
                 val
             })
