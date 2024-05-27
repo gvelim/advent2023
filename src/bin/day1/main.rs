@@ -1,33 +1,36 @@
 use std::time::Instant;
+
 fn main() {
     let inp = std::fs::read_to_string("src/bin/day1/input.txt").unwrap_or_else(|e| panic!("{e}"));
 
     let t = Instant::now();
     let sum = inp
         .lines()
-        .filter_map(|line| extract_first_last(simple_parser(line)))
+        .filter_map(|line| encode(parse_digits(line)))
         .sum::<u32>();
     println!("Part 1 -> Sum = {:?} - {:?}", sum, t.elapsed());
 
     let t = Instant::now();
     let sum = inp
         .lines()
-        .filter_map(|line| extract_first_last(complex_parser(line)))
+        .filter_map(|line| encode(parse_numerics(line)))
         .sum::<u32>();
     println!("Part 2 -> Sum = {:?} - {:?}", sum, t.elapsed());
 }
 
-fn extract_first_last(mut parser: impl Iterator<Item = u32>) -> Option<u32> {
-    parser.next().map(|f| 10*f + parser.last().unwrap_or(f) )
+fn encode(mut parser: impl Iterator<Item = u32>) -> Option<u32> {
+    parser
+        .next()
+        .map(|f| 10*f + parser.last().unwrap_or(f) )
 }
 
-fn simple_parser(inp: &str) -> impl Iterator<Item = u32> + '_ {
+fn parse_digits(inp: &str) -> impl Iterator<Item = u32> + '_ {
     inp.chars()
         .filter(|c| c.is_ascii_digit())
         .map(|c| (c as u8 - b'0') as u32)
 }
 
-fn complex_parser(input: &str) -> impl Iterator<Item = u32> + '_ {
+fn parse_numerics(input: &str) -> impl Iterator<Item = u32> + '_ {
     static DIGITS: [(&str,u32); 9] = [
         ("one",1), ("two",2), ("three",3), ("four",4), ("five",5), ("six",6), ("seven",7), ("eight",8), ("nine",9)
     ];
@@ -85,7 +88,7 @@ mod test {
         let sum = INPUT.iter()
             .filter_map(|str|{
                 print!("{str:?} : ");
-                let val = extract_first_last(simple_parser(str));
+                let val = encode(parse_digits(str));
                 println!(" -> {:?}",val );
                 val
             })
@@ -98,7 +101,7 @@ mod test {
 
         let sum = INPUT.iter()
             .filter_map(|input| {
-                let val = extract_first_last(complex_parser(input));
+                let val = encode(parse_numerics(input));
                 println!("Found: {:?}", val);
                 val
             })
