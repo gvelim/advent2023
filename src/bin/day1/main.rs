@@ -12,7 +12,7 @@ fn main() {
     let t = Instant::now();
     let sum = inp
         .lines()
-        .filter_map(|line| extract_first_last(complex_parser(line)) )
+        .filter_map(|line| extract_first_last(complex_parser(line)))
         .sum::<u32>();
     println!("Part 2 -> Sum = {:?} - {:?}", sum, t.elapsed());
 }
@@ -41,9 +41,7 @@ fn complex_parser(input: &str) -> impl Iterator<Item = u32> + '_ {
         .filter_map(move |c| {
             match c {
                 // if digit convert to numeric
-                '1'..='9' =>
-                    Some((c as u8 - b'0') as u32)
-                ,
+                '0'..='9' => Some((c as u8 - b'0') as u32),
                 // if non-digit
                 'a'..='z' => {
                     // append char onto the string
@@ -52,7 +50,7 @@ fn complex_parser(input: &str) -> impl Iterator<Item = u32> + '_ {
                     DIGITS
                         .iter()
                         // check if the string we have in BUF matches any of the DIGIT names
-                        .filter_map(|(d,numeric)|
+                        .filter_map(|(d, numeric)|
                             // if BUF doesn't match any return NONE
                             if !buf.ends_with(d) { None }
                             else {
