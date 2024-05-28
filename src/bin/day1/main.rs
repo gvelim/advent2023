@@ -12,14 +12,11 @@ fn main() {
 
 fn sum_up(inp:&str, p: impl Parse) -> u32 {
     inp.lines()
-        .filter_map(|line| encode(p.parser(line)))
+        .filter_map(|line| {
+            let mut iter = p.parser(line);
+            iter.next().map(|f| 10*f + iter.last().unwrap_or(f) )
+        })
         .sum::<u32>()
-}
-
-fn encode(mut iter: impl Iterator<Item = u32>) -> Option<u32> {
-    iter
-        .next()
-        .map(|f| 10*f + iter.last().unwrap_or(f) )
 }
 
 trait Parse {
@@ -65,34 +62,23 @@ impl Parse for ParserNumerics {
 #[cfg(test)]
 mod test {
     use super::*;
-    static INPUT: [&str; 7] = [
-        "two1nine",
-        "eightwothree",
-        "abcone2threexyz",
-        "xtwone3four",
-        "4nineeightseven2",
-        "zoneight234",
-        "7pqrstsixteen"
-    ];
+
+    static INPUT: &str =
+        "two1nine\n\
+        eightwothree\n\
+        abcone2threexyz\n\
+        xtwone3four\n\
+        4nineeightseven2\n\
+        zoneight234\n\
+        7pqrstsixteen";
 
     #[test]
     fn test_part1() {
-        assert_eq!(sum_up(ParserDigits), 209)
+        assert_eq!(sum_up(INPUT, ParserDigits), 209)
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(sum_up(ParserNumerics), 281)
-    }
-
-    fn sum_up(p: impl Parse) -> u32 {
-        INPUT.iter()
-            .filter_map(|input|{
-                print!("{input:?} : ");
-                let val = encode(p.parser(input));
-                println!(" -> {:?}",val );
-                val
-            })
-            .sum::<u32>()
+        assert_eq!(sum_up(INPUT, ParserNumerics), 281)
     }
 }
