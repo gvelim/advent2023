@@ -8,7 +8,7 @@ pub(crate) struct Card {
 }
 
 impl Card {
-    pub(crate) fn winning_numbers<'a>(&'a self, win_nums: &'a Numbers) -> impl Iterator<Item=&u32> + 'a {
+    pub(crate) fn winning_numbers<'a>(&'a self, win_nums: &'a Numbers) -> impl Iterator<Item=&'a u32> {
         self.elf_nums.0.intersection(&win_nums.0)
     }
 }

@@ -7,8 +7,13 @@ pub(crate) struct Network<'a> {
 
 impl Network<'_> {
 
-    pub(crate) fn iter<'a>(&'a self, start: &'a str, turns: impl Iterator<Item=char>) -> NetworkIter<'a, impl Iterator<Item=char>> {
-        NetworkIter { net: self, start, turns }
+    pub(crate) fn iter<'a>(
+        &'a self,
+        start: &'a str,
+        turns: impl Iterator<Item=char>
+    ) -> NetworkIter<'a, impl Iterator<Item=char>>
+    {
+        NetworkIter { net: self, key: start, turns }
     }
 
     pub(crate) fn parse(s: &str) -> Network<'_> {
@@ -26,7 +31,7 @@ impl Network<'_> {
 
 pub(crate) struct NetworkIter<'a,I> where I: Iterator<Item=char> {
     net: &'a Network<'a>,
-    start: &'a str,
+    key: &'a str,
     turns: I
 }
 
@@ -35,12 +40,10 @@ impl<'a, I> Iterator for NetworkIter<'a, I> where I: Iterator<Item=char> {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.turns.next() {
-            Some('L') => self.net.net.get(self.start).map(|(l,_)| *l),
-            Some('R') => self.net.net.get(self.start).map(|(_,r)| *r),
+            Some('L') => self.net.net.get(self.key).map(|(l,_)| *l),
+            Some('R') => self.net.net.get(self.key).map(|(_,r)| *r),
             _ => unreachable!()
-        }.map(|next| {
-            self.start = next;
-            next
-        })
+        }
+        .inspect(|&next| self.key = next )
     }
 }

@@ -1,5 +1,3 @@
-#![feature(isqrt)]
-
 mod race;
 
 use crate::race::*;

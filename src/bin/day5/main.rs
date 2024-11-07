@@ -24,7 +24,7 @@ fn main() -> Result<(),()> {
     let t = Instant::now();
     let ranges = pipeline.run(seeds.get_ranges(), MapType::Seed);
     let min = ranges
-        .into_iter()
+        .iter()
         .min_by_key(|r| r.start)
         .unwrap();
 

@@ -92,7 +92,7 @@ mod test_pipeline {
 
         let ranges = pipeline.run(seeds.get_ranges(), MapType::Seed);
         let min = ranges
-            .into_iter()
+            .iter()
             .min_by_key(|d| d.start )
             .unwrap();
 

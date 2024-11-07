@@ -62,7 +62,7 @@ impl Transform<Rc<[Range<u64>]>> for Map {
                 // map input range into mapped and residual range(s)
                 let (mapped, residual) = mapping.transform_range(&rng);
                 // push mapped range to the output
-                mapped.map(|r| out.push(r));
+                if let Some(r) = mapped { out.push(r) };
                 // push residual to the queue for processing by subsequent mappings
                 match residual {
                     RangeResidue::Single(a) => queue2.push(a),

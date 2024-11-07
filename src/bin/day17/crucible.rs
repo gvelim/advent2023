@@ -19,7 +19,7 @@ impl<'a> Crucible<'a> {
     pub(crate) fn new(map: &CityMap, pos: Position, dir: Direction) -> Crucible {
         Crucible { cmap: map, pos, dir }
     }
-    fn neighbour_blocks(&'a self, node: CityBlock, rng: &'a Range<Step>) -> impl Iterator<Item=CityBlock> + '_ {
+    fn neighbour_blocks(&'a self, node: CityBlock, rng: &'a Range<Step>) -> impl Iterator<Item=CityBlock> + 'a {
         let CityBlock(pos, dir, step) = node;
         dir.directions()
             // if step < min then move same direction otherwise move all directions

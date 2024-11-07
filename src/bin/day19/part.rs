@@ -31,7 +31,7 @@ impl FromStr for Part {
     fn from_str(inp: &str) -> Result<Self, Self::Err> {
         // {x=787,m=2655,a=1222,s=2876}
         let mut s = inp
-            .trim_matches(&['{','}'])
+            .trim_matches(['{','}'])
             .split_terminator(',');
         let x = Unit::from_str( &s.next().unwrap()[2..] )?;
         let m = Unit::from_str( &s.next().unwrap()[2..] )?;
