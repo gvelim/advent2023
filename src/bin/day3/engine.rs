@@ -18,7 +18,8 @@ impl EngineSchematic {
             })
     }
     pub(crate) fn get_gears_part_numbers(&self, gear: char) -> impl Iterator<Item=Rc<[&PartNumber]>> {
-        self.symbols.iter()
+        self.symbols
+            .iter()
             // only proceed with gear symbol provided
             .filter(move |s| s.1.eq(&gear))
             // .inspect(|d| println!("{:?}",d))

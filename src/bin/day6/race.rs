@@ -27,29 +27,26 @@ impl Race {
         self.trial_charge_times().filter(|&(_,dist)| dist > self.record)
     }
 
-    pub(crate) fn find_lower_winning_charge(&self) -> u64 {
-        let charge = (self.duration - u64::isqrt(u64::pow(self.duration,2) - 4*self.record)) / 2;
-        let mut range = (charge - 1) ..= (charge + 1);
+    fn find_winning_charge_between(&self, mut time_range: impl Iterator<Item = u64>) -> u64 {
         let mut output = 0;
-        range.any(|charge| {
+        time_range.any(|charge| {
             output = charge;
             self.record < Boat::distance_travelled(charge, self.duration)
         });
         output
+    }
+
+    pub(crate) fn find_lower_winning_charge(&self) -> u64 {
+        let charge = (self.duration - u64::isqrt(u64::pow(self.duration,2) - 4*self.record)) / 2;
+        self.find_winning_charge_between( (charge - 1) ..= (charge + 1) )
     }
 
     pub(crate) fn find_upper_winning_charge(&self) -> u64 {
         let charge = (self.duration + u64::isqrt(u64::pow(self.duration,2) - 4*self.record)) / 2;
-        let mut range = ((charge - 1) ..= (charge + 1)).rev();
-        let mut output = 0;
-        range.any(|charge| {
-            output = charge;
-            self.record < Boat::distance_travelled(charge, self.duration)
-        });
-        output
+        self.find_winning_charge_between( ((charge - 1) ..= (charge + 1)).rev() )
     }
 
-    pub(crate) fn parse_races(input: &str) -> impl Iterator<Item=Race> + '_{
+    pub(crate) fn parse_races(input: &str) -> impl Iterator<Item=Race> + '_ {
         let mut split = input.split('\n');
         let time = split.next().unwrap().split(':').last().unwrap().split_ascii_whitespace();
         let dist = split.next().unwrap().split(':').last().unwrap().split_ascii_whitespace();

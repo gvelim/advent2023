@@ -5,6 +5,17 @@ pub struct Run {
     pub(crate) red: u32, pub(crate) green: u32, pub(crate) blue: u32
 }
 
+impl Run {
+    pub fn is_feasible(&self, run: &Run) -> bool {
+        self.red <= run.red
+        && self.blue <= run.blue
+        && self.green <= run.green
+    }
+    pub fn power(&self) -> u32 {
+        self.red * self.green * self.blue
+    }
+}
+
 impl FromStr for Run {
     type Err = ();
 

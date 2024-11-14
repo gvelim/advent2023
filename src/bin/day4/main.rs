@@ -11,7 +11,7 @@ fn main() {
     let t = Instant::now();
     let part1 = Rounds::parse_rounds(input.as_str())
         .map(|(card, numbers)| card.winning_numbers(&numbers).count())
-        .filter(|size| size > &0)
+        .filter(|&size| size > 0)
         .map(|size| 2_u32.pow((size - 1) as u32))
         .sum::<u32>();
 
@@ -29,13 +29,10 @@ fn main() {
         })
         .map(|(card, wins)| {
             let card_copies = *part2.get(&card.id).unwrap();
-            (card.id+1 ..=card.id + wins)
-                .all(|next_card|
-                    part2.get_mut(&next_card).map(|next_card_copies| {
-                        *next_card_copies += card_copies;
-                        Some(())
-                    } ).is_some()
-                );
+            (card.id+1 ..= card.id + wins)
+                .for_each(|next_card| {
+                    part2.entry(next_card).and_modify( |next_card_copies| *next_card_copies += card_copies);
+            });
             card_copies
         })
         .sum::<u32>();

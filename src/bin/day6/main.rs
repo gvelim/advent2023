@@ -58,7 +58,7 @@ mod test {
     fn test_parse_whole_numbers() {
         assert_eq!(
             Race { duration:71530, record:940200 },
-          Race::parse_whole_numbers(INPUT).expect("")
+            Race::parse_whole_numbers(INPUT).expect("")
         )
     }
     #[test]

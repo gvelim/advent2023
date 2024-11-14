@@ -11,14 +11,12 @@ pub(crate) struct Game {
 
 impl Game {
     pub(crate) fn is_feasible(&self, run: &Run) -> bool {
-        let &Run{ red,green,blue} = run;
         self.runs
             .iter()
-            .all(|run| run.red <= red && run.blue <= blue && run.green <= green )
+            .all(|r| r.is_feasible(run) )
     }
     pub(crate) fn power(&self) -> u32 {
-        let Run { red, green, blue} = self.max;
-        red * green * blue
+        self.max.power()
     }
 }
 
