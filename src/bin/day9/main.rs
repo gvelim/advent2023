@@ -1,5 +1,5 @@
 mod sequence;
-mod predictor;
+mod iterator;
 
 use crate::sequence::{Sequence,Number};
 
