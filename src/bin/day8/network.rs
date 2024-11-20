@@ -1,49 +1,55 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 #[derive(Debug,PartialEq)]
-pub(crate) struct Network<'a> {
-    pub(crate) net: HashMap<&'a str,(&'a str, &'a str)>,
+pub(crate) struct Network {
+    pub(crate) net: HashMap<Rc<str>,(Rc<str>, Rc<str>)>,
 }
 
-impl Network<'_> {
+impl Network {
 
-    pub(crate) fn iter<'a>(
-        &'a self,
-        start: &'a str,
+    pub(crate) fn iter(
+        self: Rc<Self>,
+        start: &str,
         turns: impl Iterator<Item=char>
-    ) -> NetworkIter<'a, impl Iterator<Item=char>>
+    ) -> NetworkIter<impl Iterator<Item=char>>
     {
-        NetworkIter { net: self, key: start, turns }
+        NetworkIter { net: self, key: start.into(), turns }
     }
 
-    pub(crate) fn parse(s: &str) -> Network<'_> {
+    pub(crate) fn parse(s: &str) -> Network {
         Network {
             net: s.lines()
                 .map(|line| {
                     let mut iter = line.split([' ', '=', '(', ')', ','])
                         .filter(|&s| !s.is_empty());
-                    (iter.next().unwrap(), (iter.next().unwrap(),iter.next().unwrap()))
+                    (
+                        iter.next().unwrap().into(),
+                        (
+                            iter.next().unwrap().into(),
+                            iter.next().unwrap().into()
+                        )
+                    )
                 })
-                .collect::<HashMap<&str,(&str,&str)>>()
+                .collect::<HashMap<Rc<str>,(Rc<str>,Rc<str>)>>()
         }
     }
 }
 
-pub(crate) struct NetworkIter<'a,I> where I: Iterator<Item=char> {
-    net: &'a Network<'a>,
-    key: &'a str,
+pub(crate) struct NetworkIter<I> where I: Iterator<Item=char> {
+    net: Rc<Network>,
+    key: Rc<str>,
     turns: I
 }
 
-impl<'a, I> Iterator for NetworkIter<'a, I> where I: Iterator<Item=char> {
-    type Item = &'a str;
+impl<I> Iterator for NetworkIter<I> where I: Iterator<Item=char> {
+    type Item = Rc<str>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.turns.next() {
-            Some('L') => self.net.net.get(self.key).map(|(l,_)| *l),
-            Some('R') => self.net.net.get(self.key).map(|(_,r)| *r),
+            Some('L') => self.net.net.get(&self.key).map(|(l,_)| l.clone()),
+            Some('R') => self.net.net.get(&self.key).map(|(_,r)| r.clone()),
             _ => unreachable!()
         }
-        .inspect(|&next| self.key = next )
+        .inspect(|next| self.key = next.clone() )
     }
 }

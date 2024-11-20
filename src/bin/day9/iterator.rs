@@ -50,6 +50,7 @@ impl BkwIterator {
         seq.reverse();
         BkwIterator { seq }
     }
+
     fn predict_bwd(history: &[Number]) -> Number {
         let reduced = reduce_level(history, |a| a[0]-a[1]);
         if reduced.iter().all(|d| 0.eq(d)) {
@@ -59,6 +60,7 @@ impl BkwIterator {
         }
     }
 }
+
 impl Iterator for BkwIterator {
     type Item = Number;
 
