@@ -5,7 +5,8 @@ use crate::sequence::{Sequence,Number};
 
 fn main() {
     let input = std::fs::read_to_string("src/bin/day9/input.txt").expect("Ops!");
-    let mut seqs = input.lines()
+    let mut seqs = input
+        .lines()
         .map(|line| line
             .parse::<Sequence>()
             .unwrap_or_else(|e| panic!("Ops! {} -> {:?}",e, line))
