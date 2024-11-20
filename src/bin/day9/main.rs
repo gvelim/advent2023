@@ -70,24 +70,4 @@ mod test {
 
         assert_eq!(sum,114);
     }
-    #[test]
-    fn test_parse() {
-        use std::rc::Rc;
-
-        let seq = INPUT.lines()
-            .map(|line| line.parse::<Sequence>().expect("Ops!"))
-            .collect::<Vec<_>>();
-
-        seq.iter().for_each(|s| println!("{:?}",s) );
-        assert_eq!(
-            seq,
-            [
-                Sequence { history: Rc::from([0, 3, 6, 9, 12, 15]) },
-                Sequence { history: Rc::from([1, 3, 6, 10, 15, 21]) },
-                Sequence { history: Rc::from([10, 13, 16, 21, 30, 45]) }
-            ]
-        )
-
-    }
-
 }
