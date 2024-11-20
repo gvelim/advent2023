@@ -72,6 +72,8 @@ mod test {
     }
     #[test]
     fn test_parse() {
+        use std::rc::Rc;
+
         let seq = INPUT.lines()
             .map(|line| line.parse::<Sequence>().expect("Ops!"))
             .collect::<Vec<_>>();
@@ -80,9 +82,9 @@ mod test {
         assert_eq!(
             seq,
             [
-                Sequence { history: vec![0, 3, 6, 9, 12, 15] },
-                Sequence { history: vec![1, 3, 6, 10, 15, 21] },
-                Sequence { history: vec![10, 13, 16, 21, 30, 45] }
+                Sequence { history: Rc::from([0, 3, 6, 9, 12, 15]) },
+                Sequence { history: Rc::from([1, 3, 6, 10, 15, 21]) },
+                Sequence { history: Rc::from([10, 13, 16, 21, 30, 45]) }
             ]
         )
 

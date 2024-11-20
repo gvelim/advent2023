@@ -1,21 +1,21 @@
 use crate::predictor::*;
-use std::str::FromStr;
+use std::{str::FromStr, rc::Rc};
 
 pub(crate) type Number = i32;
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Sequence {
-    pub(crate) history: Vec<Number>
+    pub(crate) history: Rc<[Number]>
 }
 
 impl Sequence {
     pub(crate) fn get_fwd_predictor(&self) -> FwdPredictor {
-        FwdPredictor { seq: self.history.clone() }
+        FwdPredictor::new(&self.history)
     }
     pub(crate) fn get_bkwd_predictor(&self) -> BkwdPredictor {
-        let mut seq = self.history.clone();
+        let mut seq = self.history.to_vec();
         seq.reverse();
-        BkwdPredictor { seq }
+        BkwdPredictor::new(&seq)
     }
 }
 
@@ -25,7 +25,7 @@ impl FromStr for Sequence {
         Ok(Sequence {
             history: s.split_ascii_whitespace()
                 .map(|s| s.parse::<Number>().expect("Ops!"))
-                .collect::<Vec<_>>()
+                .collect::<Rc<[_]>>()
         })
     }
 }

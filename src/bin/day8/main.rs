@@ -8,8 +8,9 @@ fn main() {
 
     let t = std::time::Instant::now();
     println!("\nPart 1: Steps {:?} - {:?}",
-             net.iter("AAA", &mut turns.chars().cycle())
-                 .take_while(|node| !node.eq(&"ZZZ")).count() + 1,
+            net.iter("AAA", &mut turns.chars().cycle())
+                .take_while(|node| !node.eq(&"ZZZ"))
+                .count() + 1,
              t.elapsed()
     );
 

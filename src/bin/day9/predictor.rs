@@ -1,17 +1,35 @@
+use std::rc::Rc;
 use crate::sequence::*;
 
-pub(crate) struct FwdPredictor {
-    pub(crate) seq: Vec<Number>
+fn reduce_level(
+    vec: &[Number],
+    pair_calc: fn(&[Number]) -> Number
+) -> Rc<[Number]>
+{
+    vec
+        .windows(2)
+        .map(pair_calc)
+        .collect::<Rc<[Number]>>()
 }
+
+pub(crate) struct FwdPredictor {
+    seq: Vec<Number>
+}
+
 impl FwdPredictor {
-    fn predict_next(history: &[i32]) -> i32 {
-        let reduced = history.windows(2).map(|a| a[1]-a[0]).collect::<std::rc::Rc<[_]>>();
+    pub(crate) fn new(vec: &[Number]) -> FwdPredictor {
+        FwdPredictor { seq: vec.to_vec() }
+    }
+    fn predict_next(history: &[Number]) -> Number {
+        let reduced = reduce_level(history, |a| a[1]-a[0] );
         if reduced.iter().all(|d| d.eq(&0)) {
-            return history[0];
+            history[0]
+        } else {
+            Self::predict_next(&reduced) + history[reduced.len()]
         }
-        Self::predict_next(&reduced) + history[reduced.len()]
     }
 }
+
 impl Iterator for FwdPredictor {
     type Item = Number;
 
@@ -23,16 +41,20 @@ impl Iterator for FwdPredictor {
 }
 
 pub(crate) struct BkwdPredictor {
-    pub(crate) seq: Vec<Number>
+    seq: Vec<Number>
 }
 
 impl BkwdPredictor {
-    fn predict_bwd(history: &[i32]) -> i32 {
-        let reduced = history.windows(2).map(|a| a[0]-a[1]).collect::<std::rc::Rc<[_]>>();
+    pub fn new(vec: &[Number]) -> BkwdPredictor {
+        BkwdPredictor { seq: vec.to_vec() }
+    }
+    fn predict_bwd(history: &[Number]) -> Number {
+        let reduced = reduce_level(history, |a| a[0]-a[1]);
         if reduced.iter().all(|d| d.eq(&0)) {
-            return history[0];
+            history[0]
+        } else {
+            history[reduced.len()] - Self::predict_bwd(&reduced)
         }
-        history[reduced.len()] - Self::predict_bwd(&reduced)
     }
 }
 impl Iterator for BkwdPredictor {
