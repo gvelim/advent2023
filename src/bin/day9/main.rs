@@ -12,7 +12,7 @@ fn main() {
     let t = std::time::Instant::now();
     let sum = seqs
         .iter_mut()
-        .map(|seq| seq.get_fwd_predictor().next().unwrap() )
+        .map(|seq| seq.iter_forward().next().unwrap() )
         .sum::<Number>();
 
     println!("Part 1 - Sum of forward predictions: {sum} - {:?}", t.elapsed());
@@ -20,7 +20,7 @@ fn main() {
     let t = std::time::Instant::now();
     let sum = seqs
         .iter_mut()
-        .map(|seq| seq.get_bkwd_predictor().next().unwrap() )
+        .map(|seq| seq.iter_backward().next().unwrap() )
         .sum::<Number>();
 
     println!("Part 2 - Sum of backward predictions: {sum} - {:?}", t.elapsed());
@@ -40,7 +40,7 @@ mod test {
 
         let sum = seqs.iter_mut()
             .map(|seq| {
-                let a = seq.get_bkwd_predictor().next();
+                let a = seq.iter_backward().next();
                 (seq, a)
             })
             .map(|(s,r)| {
@@ -59,7 +59,7 @@ mod test {
 
         let sum = seqs.iter_mut()
             .map(|seq| {
-                let a = seq.get_fwd_predictor().next();
+                let a = seq.iter_forward().next();
                 (seq, a)
             })
             .map(|(s,r)| {

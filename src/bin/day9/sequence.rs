@@ -9,11 +9,11 @@ pub(crate) struct Sequence {
 }
 
 impl Sequence {
-    pub(crate) fn get_fwd_predictor(&self) -> FwdPredictor {
-        FwdPredictor::new(&self.history)
+    pub(crate) fn iter_forward(&self) -> FwdIterator {
+        FwdIterator::new(&self.history)
     }
-    pub(crate) fn get_bkwd_predictor(&self) -> BkwdPredictor {
-        BkwdPredictor::new(&self.history)
+    pub(crate) fn iter_backward(&self) -> BkwIterator {
+        BkwIterator::new(&self.history)
     }
 }
 

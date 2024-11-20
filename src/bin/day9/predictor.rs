@@ -12,13 +12,13 @@ fn reduce_level(
         .collect::<Rc<[Number]>>()
 }
 
-pub(crate) struct FwdPredictor {
+pub(crate) struct FwdIterator {
     seq: Vec<Number>
 }
 
-impl FwdPredictor {
-    pub(crate) fn new(vec: &[Number]) -> FwdPredictor {
-        FwdPredictor { seq: vec.to_vec() }
+impl FwdIterator {
+    pub(crate) fn new(vec: &[Number]) -> FwdIterator {
+        FwdIterator { seq: vec.to_vec() }
     }
     fn predict_next(history: &[Number]) -> Number {
         let reduced = reduce_level(history, |a| a[1]-a[0] );
@@ -30,25 +30,25 @@ impl FwdPredictor {
     }
 }
 
-impl Iterator for FwdPredictor {
+impl Iterator for FwdIterator {
     type Item = Number;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let p = FwdPredictor::predict_next(&self.seq);
+        let p = FwdIterator::predict_next(&self.seq);
         self.seq.push(p);
         Some(p)
     }
 }
 
-pub(crate) struct BkwdPredictor {
+pub(crate) struct BkwIterator {
     seq: Vec<Number>
 }
 
-impl BkwdPredictor {
-    pub fn new(vec: &[Number]) -> BkwdPredictor {
+impl BkwIterator {
+    pub fn new(vec: &[Number]) -> BkwIterator {
         let mut seq = vec.to_vec();
         seq.reverse();
-        BkwdPredictor { seq }
+        BkwIterator { seq }
     }
     fn predict_bwd(history: &[Number]) -> Number {
         let reduced = reduce_level(history, |a| a[0]-a[1]);
@@ -59,11 +59,11 @@ impl BkwdPredictor {
         }
     }
 }
-impl Iterator for BkwdPredictor {
+impl Iterator for BkwIterator {
     type Item = Number;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let p = BkwdPredictor::predict_bwd(&self.seq);
+        let p = BkwIterator::predict_bwd(&self.seq);
         self.seq.push(p);
         Some(p)
     }
