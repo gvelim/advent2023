@@ -43,7 +43,9 @@ impl Map {
         let mut split = input.split("\n\n");
         (
             split.next().unwrap(),
-            Network::parse(split.next().unwrap())
+            split.next().unwrap()
+                .parse::<Network>()
+                .unwrap_or_else(|e| panic!("{}",e))
         )
     }
 }

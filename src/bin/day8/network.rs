@@ -1,4 +1,9 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{
+    collections::HashMap,
+    fmt::Display,
+    rc::Rc,
+    str::FromStr
+};
 
 #[derive(Debug,PartialEq)]
 pub(crate) struct Network {
@@ -6,7 +11,6 @@ pub(crate) struct Network {
 }
 
 impl Network {
-
     pub(crate) fn iter(
         self: Rc<Self>,
         start: &str,
@@ -15,22 +19,43 @@ impl Network {
     {
         NetworkIter { net: self, key: start.into(), turns }
     }
+}
 
-    pub(crate) fn parse(s: &str) -> Network {
-        Network {
-            net: s.lines()
-                .map(|line| {
-                    let mut iter = line.split([' ', '=', '(', ')', ','])
-                        .filter(|&s| !s.is_empty());
+pub enum NetworkParseErr {
+    UnknownError
+}
+
+impl Display for NetworkParseErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NetworkParseErr::UnknownError => write!(f, "Unkown Network parsing error")
+        }
+    }
+}
+
+impl FromStr for Network {
+    type Err = NetworkParseErr;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let net = s.lines()
+            .map(|line| {
+                let mut iter = line
+                    .split([' ', '=', '(', ')', ','])
+                    .filter(|&s| !s.is_empty());
+                (
+                    iter.next().unwrap().into(),
                     (
                         iter.next().unwrap().into(),
-                        (
-                            iter.next().unwrap().into(),
-                            iter.next().unwrap().into()
-                        )
+                        iter.next().unwrap().into()
                     )
-                })
-                .collect::<HashMap<Rc<str>,(Rc<str>,Rc<str>)>>()
+                )
+            })
+            .collect::<HashMap<Rc<str>,(Rc<str>,Rc<str>)>>();
+
+        if !net.is_empty() {
+            Ok(Network { net })
+        } else {
+            Err(NetworkParseErr::UnknownError)
         }
     }
 }
