@@ -22,7 +22,7 @@ impl FwdPredictor {
     }
     fn predict_next(history: &[Number]) -> Number {
         let reduced = reduce_level(history, |a| a[1]-a[0] );
-        if reduced.iter().all(|d| d.eq(&0)) {
+        if reduced.iter().all(|d| 0.eq(d)) {
             history[0]
         } else {
             Self::predict_next(&reduced) + history[reduced.len()]
@@ -46,11 +46,13 @@ pub(crate) struct BkwdPredictor {
 
 impl BkwdPredictor {
     pub fn new(vec: &[Number]) -> BkwdPredictor {
-        BkwdPredictor { seq: vec.to_vec() }
+        let mut seq = vec.to_vec();
+        seq.reverse();
+        BkwdPredictor { seq }
     }
     fn predict_bwd(history: &[Number]) -> Number {
         let reduced = reduce_level(history, |a| a[0]-a[1]);
-        if reduced.iter().all(|d| d.eq(&0)) {
+        if reduced.iter().all(|d| 0.eq(d)) {
             history[0]
         } else {
             history[reduced.len()] - Self::predict_bwd(&reduced)

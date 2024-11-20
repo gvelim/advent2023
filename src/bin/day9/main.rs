@@ -40,12 +40,12 @@ mod test {
 
         let sum = seqs.iter_mut()
             .map(|seq| {
-                let a = seq.get_bkwd_predictor().next().unwrap();
+                let a = seq.get_bkwd_predictor().next();
                 (seq, a)
             })
             .map(|(s,r)| {
                 println!("{:?} -> {:?}",s,r);
-                r
+                r.unwrap()
             })
             .sum::<Number>();
 

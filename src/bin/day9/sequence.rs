@@ -13,9 +13,7 @@ impl Sequence {
         FwdPredictor::new(&self.history)
     }
     pub(crate) fn get_bkwd_predictor(&self) -> BkwdPredictor {
-        let mut seq = self.history.to_vec();
-        seq.reverse();
-        BkwdPredictor::new(&seq)
+        BkwdPredictor::new(&self.history)
     }
 }
 
