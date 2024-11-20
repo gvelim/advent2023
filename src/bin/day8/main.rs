@@ -10,10 +10,10 @@ fn main() {
 
     let t = std::time::Instant::now();
     println!("\nPart 1: Steps {:?} - {:?}", net.clone()
-        .iter("AAA", &mut turns.chars().cycle())
+        .iter("AAA", turns.chars().cycle())
         .take_while(|node| !(node as &str).eq("ZZZ"))
         .count() + 1,
-        t.elapsed()
+        (t.elapsed(),Rc::strong_count(&net))
     );
 
     let t = std::time::Instant::now();
@@ -22,19 +22,19 @@ fn main() {
         .filter(|s| s.ends_with('A'))
         .collect::<std::rc::Rc<[_]>>();
 
-    println!("{:?}",a_nodes);
+    println!("{:?}",(&a_nodes,Rc::strong_count(&net)));
 
     let steps = a_nodes.iter()
         .map(|node|
             net.clone()
-                .iter(node, &mut turns.chars().cycle())
+                .iter(node, turns.chars().cycle())
                 .take_while(|node| !node.ends_with("Z"))
                 .count() + 1
         )
         .reduce( num::integer::lcm )
         .unwrap();
 
-    println!("Part 2: Steps {:?} - {:?}", steps, t.elapsed());
+    println!("Part 2: Steps {:?} - {:?}", steps, (t.elapsed(),Rc::strong_count(&net)));
 }
 
 struct Map;
@@ -92,7 +92,8 @@ mod test {
     fn test_network_traversing() {
         let (turns, net) = Map::parse(INPUT_P1);
 
-        let count = Rc::new(net).iter("AAA", turns.chars().cycle())
+        let count = Rc::new(net)
+            .iter("AAA", turns.chars().cycle())
             .inspect(|n| println!("{:?}",n))
             .take_while(|node| (node as &str).ne("ZZZ") )
             .count() + 1;
