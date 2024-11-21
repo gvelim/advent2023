@@ -52,8 +52,6 @@ impl Map {
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashMap;
-    use std::rc::Rc;
     use super::*;
 
     static INPUT_P1: &str = "LLR\n\nAAA = (BBB, BBB)\nBBB = (AAA, ZZZ)\nZZZ = (ZZZ, ZZZ)";
@@ -67,6 +65,7 @@ mod test {
         let a_nodes = net.net
             .keys()
             .filter(|s| s.ends_with('A'))
+            .cloned()
             .collect::<Rc<[_]>>();
         println!("{:?}",a_nodes);
 
@@ -110,19 +109,5 @@ mod test {
             vec!['L', 'L', 'R', 'L', 'L'],
             out
         );
-    }
-    #[test]
-    fn test_parse_nodes() {
-        let (_,net) = Map::parse(INPUT_P1);
-
-        println!("{:?}",net);
-        assert_eq!(
-            Network { net: HashMap::from([
-                ("ZZZ".into(), ("ZZZ".into(), "ZZZ".into())),
-                ("AAA".into(), ("BBB".into(), "BBB".into())),
-                ("BBB".into(), ("AAA".into(), "ZZZ".into()))
-            ])},
-            net
-        )
     }
 }

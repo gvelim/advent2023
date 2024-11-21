@@ -21,13 +21,14 @@ impl FromStr for Sequence {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut history = vec![];
-
-        for s in s.split_ascii_whitespace() {
-             history.push(s.parse::<Number>()?);
+        match s
+            .split_ascii_whitespace()
+            .map(|s| s.parse::<Number>())
+            .collect::<Result<Rc<[_]>,_>>()
+        {
+            Ok(history) => Ok(Sequence { history }),
+            Err(e) => Err(e),
         }
-
-        Ok(Sequence { history: history.into() })
     }
 }
 
