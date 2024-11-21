@@ -12,7 +12,7 @@ impl FromStr for Numbers {
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         match input
             .split_ascii_whitespace()
-            .map(|num| u32::from_str(num))
+            .map(u32::from_str)
             .collect::<Result<HashSet<u32>,_>>()
         {
             Ok(set) =>  Ok(Numbers(set)),
