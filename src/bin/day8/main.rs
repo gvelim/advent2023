@@ -5,8 +5,7 @@ use std::rc::Rc;
 
 fn main() {
     let input = std::fs::read_to_string("./src/bin/day8/input.txt").expect("Ops!");
-    let (turns, n) = Map::parse(input.as_str());
-    let net = Rc::new(n);
+    let (turns, net) = Map::parse(input.as_str());
 
     let t = std::time::Instant::now();
     println!("\nPart 1: Steps {:?} - {:?}", net.clone()
@@ -39,13 +38,15 @@ fn main() {
 
 struct Map;
 impl Map {
-    fn parse(input: &str) -> (&str, Network) {
+    fn parse(input: &str) -> (&str, Rc<Network>) {
         let mut split = input.split("\n\n");
         (
             split.next().unwrap(),
-            split.next().unwrap()
-                .parse::<Network>()
-                .unwrap_or_else(|e| panic!("{}",e))
+            Rc::new(
+                split.next().unwrap()
+                    .parse::<Network>()
+                    .unwrap_or_else(|e| panic!("{}",e))
+            )
         )
     }
 }
@@ -59,8 +60,7 @@ mod test {
 
     #[test]
     fn test_network_lcm() {
-        let (turns, n) = Map::parse(INPUT_P2);
-        let net = Rc::new(n);
+        let (turns, net) = Map::parse(INPUT_P2);
 
         let a_nodes = net.net
             .keys()
@@ -91,7 +91,7 @@ mod test {
     fn test_network_traversing() {
         let (turns, net) = Map::parse(INPUT_P1);
 
-        let count = Rc::new(net)
+        let count = net
             .iter("AAA", turns.chars().cycle())
             .inspect(|n| println!("{:?}",n))
             .take_while(|node| (node as &str).ne("ZZZ") )
