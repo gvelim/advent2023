@@ -1,15 +1,22 @@
-use std::{collections::HashSet, str::FromStr};
+use std::{
+    collections::HashSet,
+    num::ParseIntError,
+    str::FromStr
+};
 
 #[derive(Debug)]
 pub(crate) struct Numbers(pub(crate) HashSet<u32>);
 impl FromStr for Numbers {
-    type Err = ();
+    type Err = ParseIntError;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        Ok( Numbers( input
+        match input
             .split_ascii_whitespace()
-            .map(|num| u32::from_str(num).expect("Ops!"))
-            .collect::<HashSet<u32>>()
-        ))
+            .map(|num| u32::from_str(num))
+            .collect::<Result<HashSet<u32>,_>>()
+        {
+            Ok(set) =>  Ok(Numbers(set)),
+            Err(e) => Err(e),
+        }
     }
 }
