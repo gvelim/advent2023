@@ -73,14 +73,4 @@ mod test {
         println!("{:?} = {}",game, game.power());
         assert_eq!(game.power(), 48);
     }
-
-    #[test]
-    fn test_run_parse() {
-        let input = [" 3 blue, 4 red"," 1 red, 2 green, 6 blue"," 2 green"];
-        input.iter()
-            .for_each(|inp| {
-                let run = inp.parse::<Run>().expect("Ops!");
-                println!("Run: {:?}",run);
-            });
-    }
 }

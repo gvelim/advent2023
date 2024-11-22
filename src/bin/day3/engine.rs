@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::num::ParseIntError;
 use std::str::FromStr;
 use std::rc::Rc;
 use super::parts::*;
@@ -48,8 +49,25 @@ pub enum ErrorEngineSchematic {
 impl Display for ErrorEngineSchematic {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ErrorEngineSchematic::PartNumberTooLarge => writeln!(f, "PartNumber found exceeds 32bit size"),
-            ErrorEngineSchematic::ParsedEmptyInput => writeln!(f, "Parsed input potentialy empty"),
+            ErrorEngineSchematic::PartNumberTooLarge => write!(f, "PartNumber found exceeds 32bit size"),
+            ErrorEngineSchematic::ParsedEmptyInput => write!(f, "Parsed input potentialy empty"),
+        }
+    }
+}
+
+impl From<ParseIntError> for ErrorEngineSchematic {
+
+    fn from(err: ParseIntError) -> Self {
+        use std::num::IntErrorKind as IEK;
+        use ErrorEngineSchematic as E;
+
+        match err.kind() {
+            IEK::Empty => E::ParsedEmptyInput,
+            IEK::InvalidDigit |
+            IEK::PosOverflow |
+            IEK::NegOverflow => E::PartNumberTooLarge,
+            IEK::Zero => E::ParsedEmptyInput,
+            _ => E::ParsedEmptyInput,
         }
     }
 }
@@ -69,14 +87,14 @@ impl FromStr for EngineSchematic {
 
         // converts a tuple array to a Partnumber
         // e.g. (23,"1"),(24,"4"),(25,"6") => PartNumber { 146, (23..=25) }
-        let make_part_number = |buf: &[(usize, char)]| {
+        let make_part_number = |buf: &[(usize, char)]| -> Result<PartNumber,ParseIntError> {
             let (rng, number):(Vec<usize>, String) = buf
                 .iter()
                 .cloned()
                 .unzip();
 
             Ok(PartNumber {
-                number: number.parse::<u32>().map_err(|_| ErrorEngineSchematic::PartNumberTooLarge)?,
+                number: number.parse::<u32>()?,
                 pos: (rng[0] ..= rng[rng.len()-1]),
             })
         };
