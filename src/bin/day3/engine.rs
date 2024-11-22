@@ -1,4 +1,4 @@
-use std::num::ParseIntError;
+use std::fmt::Display;
 use std::str::FromStr;
 use std::rc::Rc;
 use super::parts::*;
@@ -39,19 +39,33 @@ impl EngineSchematic {
     }
 }
 
+#[derive(Debug,PartialEq)]
+pub enum ErrorEngineSchematic {
+    PartNumberTooLarge,
+    ParsedEmptyInput
+}
+
+impl Display for ErrorEngineSchematic {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ErrorEngineSchematic::PartNumberTooLarge => writeln!(f, "PartNumber found exceeds 32bit size"),
+            ErrorEngineSchematic::ParsedEmptyInput => writeln!(f, "Parsed input potentialy empty"),
+        }
+    }
+}
+
 impl FromStr for EngineSchematic {
-    type Err = ParseIntError;
+    type Err = ErrorEngineSchematic;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let input = input.lines();
-        let mut len = 0;
+        let len = input.lines()
+            .next()
+            .ok_or(ErrorEngineSchematic::ParsedEmptyInput)?
+            .len();
         let schematic = input
-                .inspect(|l| { len = l.len(); })
-                .flat_map(|d| d.chars())
-                .collect::<String>();
-
-        let mut partnums: Vec<PartNumber> = vec![];
-        let mut symbols: Vec<Symbol> = vec![];
+            .lines()
+            .flat_map(|d| d.chars())
+            .collect::<String>();
 
         // converts a tuple array to a Partnumber
         // e.g. (23,"1"),(24,"4"),(25,"6") => PartNumber { 146, (23..=25) }
@@ -62,7 +76,7 @@ impl FromStr for EngineSchematic {
                 .unzip();
 
             Ok(PartNumber {
-                number: number.parse::<u32>()?,
+                number: number.parse::<u32>().map_err(|_| ErrorEngineSchematic::PartNumberTooLarge)?,
                 pos: (rng[0] ..= rng[rng.len()-1]),
             })
         };
@@ -71,6 +85,8 @@ impl FromStr for EngineSchematic {
         // the for loop scans (pos, char) tuples
         // converts tuple **sequences** that contain 0..9 chars into PartNumber { Number & range }
         // e.g. (23,"1"),(24,"4"),(25,"6") => PartNumber { 146, (23..=25) }
+        let mut partnums: Vec<PartNumber> = vec![];
+        let mut symbols: Vec<Symbol> = vec![];
         let mut buf = Vec::with_capacity(40);
         for c in schematic.char_indices() {
             match c.1 {
@@ -103,7 +119,6 @@ impl FromStr for EngineSchematic {
 
 #[cfg(test)]
 mod test {
-    use std::num::IntErrorKind;
     use super::*;
 
     static INPUT: &str =
@@ -126,18 +141,19 @@ mod test {
 
     #[test]
     fn test_parse_int_error() {
-        let input: &str =
-            "9999999999\n\
-            ...*.......\n\
-            ..35..633..\n\
-            .664.598...";
+        let dataset: [(&str,ErrorEngineSchematic);2] = [
+            ("9999999999\n...*.......\n..35..633..\n.664.598...", ErrorEngineSchematic::PartNumberTooLarge),
+            ("", ErrorEngineSchematic::ParsedEmptyInput)
+        ];
 
-        match input.parse::<EngineSchematic>() {
-            Ok(r) => panic!("Received Ok({:?}) instead of Err",r),
-            Err(e) => {
-                println!("Error: {}",e);
-                assert_eq!(e.kind(), &IntErrorKind::PosOverflow)
-            },
+        for (test,err) in dataset {
+            match test.parse::<EngineSchematic>() {
+                Ok(r) => panic!("Received Ok({:?}) instead of Err",r),
+                Err(e) => {
+                    println!("Error: {} in {:?}",e, test);
+                    assert_eq!(e, err)
+                },
+            }
         }
     }
 
