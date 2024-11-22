@@ -50,7 +50,7 @@ impl FromStr for Run {
         #[derive(Debug,Eq, PartialEq,Hash)]
         enum Colour { Red, Green, Blue }
 
-        match input
+        input
             .trim()
             .split(',')
             .map(|picked| {
@@ -65,8 +65,7 @@ impl FromStr for Run {
                 Ok((colour,count))
             })
             .collect::<Result<Vec<(Colour,u32)>,RunError>>()
-        {
-            Ok(colours) => Ok(colours
+            .map(|colours| colours
                 .into_iter()
                 .fold(Run::default(),|mut run, (col, val)| {
                     match col {
@@ -76,9 +75,7 @@ impl FromStr for Run {
                     }
                     run
                 })
-            ),
-            Err(e) => Err(e),
-        }
+            )
     }
 }
 

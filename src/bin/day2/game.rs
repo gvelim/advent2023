@@ -34,7 +34,7 @@ impl FromStr for Game {
             .last().unwrap()
             .parse::<u32>()?;
 
-        match gsplit
+        gsplit
             .next().unwrap()
             .split(';')
             .map(|run| run.parse::<Run>())
@@ -46,12 +46,11 @@ impl FromStr for Game {
                 }
             })
             .collect::<Result<Rc<_>,_>>()
-        {
-            Ok(runs) => Ok(Game {
-                id, runs,
-                max: Run { red, green, blue },
-            }),
-            Err(e) => Err(e),
-        }
+            .map(|runs|
+                Game {
+                    id, runs,
+                    max: Run { red, green, blue },
+                }
+            )
     }
 }
