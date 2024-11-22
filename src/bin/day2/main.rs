@@ -11,7 +11,10 @@ fn main() {
 
     let games = input
         .lines()
-        .map(|game| game.parse::<Game>().expect("Ops!"))
+        .map(|game| game.parse::<Game>()
+            .map_err(|e| panic!("{} -> {:?}",e,game))
+            .unwrap()
+        )
         .collect::<std::rc::Rc<_>>();
 
     let t = Instant::now();
