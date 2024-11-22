@@ -10,8 +10,8 @@ impl PartNumber {
     pub(crate) fn is_touching(&self, s: &Symbol, len:usize) -> bool {
         s.is_touching(self,len)
     }
-
 }
+
 #[derive(Debug)]
 pub(crate) struct Symbol(
     pub(crate) usize,
@@ -28,6 +28,7 @@ impl Symbol {
             pn.pos.contains(&(self.0 + 1))
     }
 }
+
 impl From<(usize,char)> for Symbol {
     fn from(value: (usize, char)) -> Self {
         Symbol(value.0,value.1)
