@@ -1,11 +1,13 @@
 use std::{
     collections::HashSet, fmt::Display, str::FromStr
 };
+use std::num::{IntErrorKind, ParseIntError};
 
 #[derive(Debug,PartialEq)]
 pub enum NumbersErrors {
     InvalidDigit,
-    EmptyInput
+    EmptyInput,
+    Unknown
 }
 
 impl Display for NumbersErrors {
@@ -13,10 +15,23 @@ impl Display for NumbersErrors {
         match self {
             NumbersErrors::InvalidDigit => write!(f,"Invalid number found"),
             NumbersErrors::EmptyInput => write!(f,"No numbers have been provided for parsing"),
+            _ => write!(f,"Unknown error incurred")
         }
     }
 }
 
+impl From<ParseIntError> for NumbersErrors {
+    fn from(err: ParseIntError) -> NumbersErrors {
+        match err.kind() {
+            IntErrorKind::Empty => NumbersErrors::EmptyInput,
+            IntErrorKind::InvalidDigit => NumbersErrors::InvalidDigit,
+            IntErrorKind::PosOverflow => NumbersErrors::InvalidDigit,
+            IntErrorKind::NegOverflow => NumbersErrors::InvalidDigit,
+            IntErrorKind::Zero => NumbersErrors::InvalidDigit,
+            _ => NumbersErrors::Unknown
+        }
+    }
+}
 #[derive(Debug)]
 pub(crate) struct Numbers(pub(crate) HashSet<u32>);
 impl FromStr for Numbers {
@@ -29,7 +44,7 @@ impl FromStr for Numbers {
             .collect::<Result<HashSet<u32>,_>>()
         {
             Ok(set) if !set.is_empty() => Ok(Numbers(set)),
-            Err(_) => Err(NumbersErrors::InvalidDigit),
+            Err(e) => Err(e.into()),
             _ => Err(NumbersErrors::EmptyInput)
         }
     }

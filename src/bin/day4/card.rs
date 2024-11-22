@@ -1,5 +1,6 @@
 use super::numbers::{Numbers, NumbersErrors as NE};
 use std::{fmt::Display, str::FromStr};
+use crate::card::CardError::{InvalidNumericValue, MalformedCardNumbers};
 
 #[derive(Debug)]
 pub(crate) struct Card {
@@ -32,6 +33,17 @@ impl Display for CardError {
     }
 }
 
+/// this will reduce the need for using map_err() on parse::<Numbers>()
+impl From<NE> for CardError {
+    fn from(err: NE) -> Self {
+        match err {
+            NE::InvalidDigit => InvalidNumericValue,
+            NE::EmptyInput => MalformedCardNumbers,
+            NE::Unknown => MalformedCardNumbers
+        }
+    }
+}
+
 impl FromStr for Card {
     type Err = CardError;
 
@@ -56,11 +68,7 @@ impl FromStr for Card {
             elf_nums: split
                 .next()
                 .ok_or(CE::MalformedCardNumbers)?
-                .parse::<Numbers>()
-                .map_err(|e| match e {
-                    NE::InvalidDigit => CE::InvalidNumericValue,
-                    NE::EmptyInput => CE::MalformedCardNumbers
-                })?
+                .parse::<Numbers>()?
         })
     }
 }
