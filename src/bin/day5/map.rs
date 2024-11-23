@@ -1,4 +1,4 @@
-use std::{num::ParseIntError, ops::Range, rc::Rc, str::FromStr};
+use std::{ops::Range, rc::Rc, str::FromStr};
 use super::mapping::*;
 
 #[derive(Debug,Hash,Eq,PartialEq,Copy, Clone)]
@@ -8,7 +8,7 @@ pub(crate) enum MapType {
 
 #[derive(Debug)]
 pub enum MapTypeError {
-    InvalidType
+    UknownMapType
 }
 
 impl FromStr for MapType {
@@ -24,7 +24,7 @@ impl FromStr for MapType {
             "temperature" => Ok(MapType::Temperature),
             "humidity" => Ok(MapType::Humidity),
             "location" => Ok(MapType::Location),
-            _ => Err(MapTypeError::InvalidType)
+            _ => Err(MapTypeError::UknownMapType)
         }
     }
 }
@@ -47,8 +47,9 @@ pub trait Transform<T> {
 }
 
 impl Transform<u64> for Map {
-    fn transform(&self, seed: u64) -> (u64,MapType) where u64: Clone {
-        self.mappings.iter()
+    fn transform(&self, seed: u64) -> (u64,MapType) {
+        self.mappings
+            .iter()
             .filter_map(|mapping| mapping.transform(seed))
             .map(|seed| (seed, self.dest))
             .next()
@@ -58,33 +59,33 @@ impl Transform<u64> for Map {
 
 impl Transform<Rc<[Range<u64>]>> for Map {
     fn transform(&self, seeds: Rc<[Range<u64>]>) -> (Rc<[Range<u64>]>,MapType) {
-        let mut queue1: Vec<Range<u64>> = seeds.as_ref().into();
-        let mut queue2 = Vec::with_capacity(seeds.len()*2);
+        let mut flip: Vec<Range<u64>> = seeds.as_ref().into();
+        let mut flop = Vec::with_capacity(seeds.len()*2);
         let mut out = Vec::with_capacity(seeds.len());
 
         for mapping in self.mappings.iter() {
-            while let Some(rng) = queue1.pop() {
+            while let Some(rng) = flip.pop() {
                 // map input range into mapped and residual range(s)
                 let (mapped, residual) = mapping.transform_range(&rng);
                 // push mapped range to the output
                 if let Some(r) = mapped { out.push(r) };
                 // push residual to the queue for processing by subsequent mappings
                 match residual {
-                    RangeResidue::Single(a) => queue2.push(a),
-                    RangeResidue::Double(a, b) => queue2.extend([a,b]),
+                    RangeResidue::Single(a) => flop.push(a),
+                    RangeResidue::Double(a, b) => flop.extend([a,b]),
                     _ => (),
                 }
             }
             // flip/flop the pointers to the queues' memory allocation:
             // one is now empty and the other has the ranges for processing by the next mapping
             // so we avoid temporary vector and subsequenly heap allocation
-            std::mem::swap::<Vec<Range<u64>>>(&mut queue1, &mut queue2);
+            std::mem::swap::<Vec<Range<u64>>>(&mut flip, &mut flop);
             // println!("{:?}",(self.map, mapping,&queue1));
         }
         // add remaining residual ranges following the processing of all mappings
-        queue1.extend(out);
+        flip.extend(out);
 
-        (queue1.into(), self.dest)
+        (flip.into(), self.dest)
     }
 }
 
@@ -92,13 +93,16 @@ impl Transform<Rc<[Range<u64>]>> for Map {
 pub enum MapError {
     InvalidMapType,
     MissingMapType,
-    InvalidMappingValue,
+    InvalidMappingValues,
     ParseInputFormatInvalid
 }
 
-impl From<ParseIntError> for MapError {
-    fn from(_: ParseIntError) -> Self {
-        MapError::InvalidMappingValue
+impl From<MappingError> for MapError {
+    fn from(err: MappingError) -> Self {
+        match err {
+            MappingError::MappingValueMissing => MapError::InvalidMappingValues,
+            MappingError::MappingValueInvalid => MapError::InvalidMappingValues,
+        }
     }
 }
 impl From<MapTypeError> for MapError {
@@ -125,11 +129,11 @@ impl FromStr for Map {
             .map(|map| map.parse::<MapType>());
 
         Ok(Map {
-            map: map_type.next().unwrap()?,
-            dest: map_type.next().unwrap()?,
+            map: map_type.next().ok_or(MapError::ParseInputFormatInvalid)??,
+            dest: map_type.next().ok_or(MapError::ParseInputFormatInvalid)??,
             mappings: maps
                 .map(|m| m.parse::<Mapping>())
-                .collect::<Result<Rc<[_]>,ParseIntError>>()?
+                .collect::<Result<Rc<[_]>,MappingError>>()?
         })
     }
 }
@@ -185,5 +189,30 @@ mod test {
                     ].into()
                 }
         )
+    }
+    #[test]
+    fn test_parse_map_erros() {
+        let input = [
+        ("soul-to-fertilizer map:\n\
+            39 0 15", MapError::InvalidMapType),
+        ("fertilizer-to-water map:\n\
+            57 7 A",MapError::InvalidMappingValues),
+        ("fertilizer-to-water map:\n\
+            57 4",MapError::InvalidMappingValues),
+        ("fertilizer-too-water map:\n\
+            57 4 9",MapError::InvalidMapType),
+        ("fertilizer water map:\n\
+            57 4",MapError::ParseInputFormatInvalid)
+        ];
+
+        for (test,err) in input {
+            match test.parse::<Map>() {
+                Ok(_) => panic!("Test case [{test:?}] should not succeed!"),
+                Err(e) => {
+                    println!("Received [{e:?}], Expected [{err:?}] in {test:}");
+                    assert_eq!(e, err)
+                }
+            }
+        }
     }
 }

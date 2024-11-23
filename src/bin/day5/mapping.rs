@@ -53,14 +53,26 @@ impl Mapping {
     }
 }
 
+#[derive(Debug,PartialEq)]
+pub enum MappingError {
+    MappingValueMissing,
+    MappingValueInvalid
+}
+
+impl From<ParseIntError> for MappingError {
+    fn from(_: ParseIntError) -> Self {
+        MappingError::MappingValueInvalid
+    }
+}
+
 impl FromStr for Mapping {
-    type Err = ParseIntError;
+    type Err = MappingError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut nums = s.split_whitespace();
-        let dst_base = nums.next().expect("Mapping: Missing value").parse::<u64>()?;
-        let src_base = nums.next().expect("Mapping: Missing value").parse::<u64>()?;
-        let len = nums.next().expect("Mapping: Missing value").parse::<u64>()?;
+        let dst_base = nums.next().ok_or(MappingError::MappingValueMissing)?.parse::<u64>()?;
+        let src_base = nums.next().ok_or(MappingError::MappingValueMissing)?.parse::<u64>()?;
+        let len = nums.next().ok_or(MappingError::MappingValueMissing)?.parse::<u64>()?;
 
         Ok( Mapping {
             dst_base,
@@ -71,7 +83,7 @@ impl FromStr for Mapping {
 
 #[cfg(test)]
 mod test {
-    use super::{Mapping, RangeResidue};
+    use super::{Mapping, MappingError, RangeResidue};
 
     #[test]
     fn test_mapping_transform_range() {
@@ -108,6 +120,23 @@ mod test {
                 mapping.transform(seed),
                 out
             )
+        }
+    }
+
+    #[test]
+    fn test_mapping_parse_error() {
+        let data = [
+            ("50 98 Z",MappingError::MappingValueInvalid),
+            (" 52   48  ",MappingError::MappingValueMissing),
+            ("0",MappingError::MappingValueMissing),
+            ("",MappingError::MappingValueMissing)
+        ];
+
+        for (test,err) in data {
+            match test.parse::<Mapping>() {
+                Ok(_) => panic!("{test:?} must not succeed"),
+                Err(e) => assert_eq!(e,err,"Received [{e:?}], Expected [{err:?}] in {test:}"),
+            }
         }
     }
 }
