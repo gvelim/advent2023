@@ -1,6 +1,5 @@
 use std::{collections::HashMap, num::ParseIntError, ops::Range, rc::Rc, str::FromStr};
-use crate::map::MapError;
-
+use super::error::*;
 use super::map::{Transform,MapType,Map};
 
 pub(crate) struct Seeds(Rc<[u64]>);

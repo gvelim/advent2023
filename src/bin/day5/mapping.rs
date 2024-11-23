@@ -1,4 +1,5 @@
-use std::{num::ParseIntError, ops::Range, str::FromStr};
+use std::{ops::Range, str::FromStr};
+use super::error::*;
 
 #[derive(Debug,PartialEq)]
 pub(crate) enum RangeResidue {
@@ -50,18 +51,6 @@ impl Mapping {
                 }
             }
         }
-    }
-}
-
-#[derive(Debug,PartialEq)]
-pub enum MappingError {
-    MappingValueMissing,
-    MappingValueInvalid
-}
-
-impl From<ParseIntError> for MappingError {
-    fn from(_: ParseIntError) -> Self {
-        MappingError::MappingValueInvalid
     }
 }
 

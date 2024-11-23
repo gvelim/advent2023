@@ -1,6 +1,7 @@
 mod map;
 mod mapping;
 mod pipeline;
+mod error;
 
 use std::time::Instant;
 use map::MapType;

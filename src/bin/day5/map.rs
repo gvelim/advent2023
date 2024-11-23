@@ -1,14 +1,10 @@
 use std::{ops::Range, rc::Rc, str::FromStr};
 use super::mapping::*;
+use super::error::*;
 
 #[derive(Debug,Hash,Eq,PartialEq,Copy, Clone)]
 pub(crate) enum MapType {
     Seed, Soil, Fertilizer, Water, Light, Temperature, Humidity, Location
-}
-
-#[derive(Debug)]
-pub enum MapTypeError {
-    UknownMapType
 }
 
 impl FromStr for MapType {
@@ -24,7 +20,7 @@ impl FromStr for MapType {
             "temperature" => Ok(MapType::Temperature),
             "humidity" => Ok(MapType::Humidity),
             "location" => Ok(MapType::Location),
-            _ => Err(MapTypeError::UknownMapType)
+            _ => Err(MapTypeError::UnknownMapType)
         }
     }
 }
@@ -86,28 +82,6 @@ impl Transform<Rc<[Range<u64>]>> for Map {
         flip.extend(out);
 
         (flip.into(), self.dest)
-    }
-}
-
-#[derive(Debug,PartialEq)]
-pub enum MapError {
-    InvalidMapType,
-    MissingMapType,
-    InvalidMappingValues,
-    ParseInputFormatInvalid
-}
-
-impl From<MappingError> for MapError {
-    fn from(err: MappingError) -> Self {
-        match err {
-            MappingError::MappingValueMissing => MapError::InvalidMappingValues,
-            MappingError::MappingValueInvalid => MapError::InvalidMappingValues,
-        }
-    }
-}
-impl From<MapTypeError> for MapError {
-    fn from(_: MapTypeError) -> Self {
-        MapError::InvalidMapType
     }
 }
 
