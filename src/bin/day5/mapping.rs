@@ -58,10 +58,18 @@ impl FromStr for Mapping {
     type Err = MappingError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+
+        let parse_or = |val: Option<&str>| { val
+            .ok_or(MappingError::MappingValueMissing(s.to_string()))?
+            .parse::<u64>()
+            .map_err(|e| MappingError::MappingValueInvalid(format!("{s:?}:{e}")))
+        };
+
         let mut nums = s.split_whitespace();
-        let dst_base = nums.next().ok_or(MappingError::MappingValueMissing)?.parse::<u64>()?;
-        let src_base = nums.next().ok_or(MappingError::MappingValueMissing)?.parse::<u64>()?;
-        let len = nums.next().ok_or(MappingError::MappingValueMissing)?.parse::<u64>()?;
+
+        let dst_base = parse_or(nums.next())?;
+        let src_base = parse_or(nums.next())?;
+        let len = parse_or(nums.next())?;
 
         Ok( Mapping {
             dst_base,
@@ -115,16 +123,19 @@ mod test {
     #[test]
     fn test_mapping_parse_error() {
         let data = [
-            ("50 98 Z",MappingError::MappingValueInvalid),
-            (" 52   48  ",MappingError::MappingValueMissing),
-            ("0",MappingError::MappingValueMissing),
-            ("",MappingError::MappingValueMissing)
+            ("50 98 Z", MappingError::MappingValueInvalid("\"50 98 Z\":invalid digit found in string".to_string())),
+            (" 52   48  ", MappingError::MappingValueMissing(" 52   48  ".to_string())),
+            ("0", MappingError::MappingValueMissing("0".to_string())),
+            ("", MappingError::MappingValueMissing("".to_string()))
         ];
 
         for (test,err) in data {
             match test.parse::<Mapping>() {
                 Ok(_) => panic!("{test:?} must not succeed"),
-                Err(e) => assert_eq!(e,err,"Received [{e:?}], Expected [{err:?}] in {test:}"),
+                Err(e) => {
+                    println!("Received [{e:?}], Expected [{err:?}] in {test:}");
+                    assert_eq!(e,err)
+                },
             }
         }
     }

@@ -20,7 +20,7 @@ impl FromStr for MapType {
             "temperature" => Ok(MapType::Temperature),
             "humidity" => Ok(MapType::Humidity),
             "location" => Ok(MapType::Location),
-            _ => Err(MapTypeError::UnknownMapType)
+            err => Err(MapTypeError::UnknownMapType(err.into()))
         }
     }
 }
@@ -96,9 +96,9 @@ impl FromStr for Map {
             .lines();
 
         let mut map_type = maps
-            .next().ok_or(MapError::MissingMapType)?
+            .next().ok_or(MapError::MapTypeError(s.to_string()))?
             .split_whitespace()
-            .next().ok_or(MapError::MissingMapType)?
+            .next().ok_or(MapError::MapTypeError(s.to_string()))?
             .split("-to-")
             .map(|map| map.parse::<MapType>());
 
@@ -164,19 +164,20 @@ mod test {
                 }
         )
     }
+
     #[test]
     fn test_parse_map_erros() {
         let input = [
-        ("soul-to-fertilizer map:\n\
-            39 0 15", MapError::InvalidMapType),
-        ("fertilizer-to-water map:\n\
-            57 7 A",MapError::InvalidMappingValues),
-        ("fertilizer-to-water map:\n\
-            57 4",MapError::InvalidMappingValues),
-        ("fertilizer-too-water map:\n\
-            57 4 9",MapError::InvalidMapType),
-        ("fertilizer water map:\n\
-            57 4",MapError::ParseInputFormatInvalid)
+        ("soul-to-fertilizer map:\n39 0 15",
+            MapError::MapTypeError("Map Type [soul] neither of seed, soil, fertilizer, water, light, temperature, humidity, location".to_string())),
+        ("fertilizer-to-water map:\n57 7 A",
+            MapError::MappingError("Invalid Mapping value: [\"57 7 A\":invalid digit found in string]".to_string())),
+        ("fertilizer-to-water map:\n57 4",
+            MapError::MappingError("Missing Mapping value: [57 4]".to_string())),
+        ("fertilizer-too-water map:\n57 4 9",
+            MapError::MapTypeError("Map Type [fertilizer-too-water] neither of seed, soil, fertilizer, water, light, temperature, humidity, location".to_string())),
+        ("fertilizer water map:\n57 4",
+            MapError::ParseInputFormatInvalid)
         ];
 
         for (test,err) in input {
