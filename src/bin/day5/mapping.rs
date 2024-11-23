@@ -62,7 +62,7 @@ impl FromStr for Mapping {
         let parse_or = |val: Option<&str>| { val
             .ok_or(MappingError::MappingValueMissing(s.to_string()))?
             .parse::<u64>()
-            .map_err(|e| MappingError::MappingValueInvalid(format!("{s:?}:{e}")))
+            .map_err(|e| MappingError::MappingValueInvalid(format!("{e} in {s:?}")))
         };
 
         let mut nums = s.split_whitespace();
@@ -123,7 +123,7 @@ mod test {
     #[test]
     fn test_mapping_parse_error() {
         let data = [
-            ("50 98 Z", MappingError::MappingValueInvalid("\"50 98 Z\":invalid digit found in string".to_string())),
+            ("50 98 Z", MappingError::MappingValueInvalid("invalid digit found in string in \"50 98 Z\"".to_string())),
             (" 52   48  ", MappingError::MappingValueMissing(" 52   48  ".to_string())),
             ("0", MappingError::MappingValueMissing("0".to_string())),
             ("", MappingError::MappingValueMissing("".to_string()))

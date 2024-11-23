@@ -171,7 +171,7 @@ mod test {
         ("soul-to-fertilizer map:\n39 0 15",
             MapError::MapTypeError("Map Type [soul] neither of seed, soil, fertilizer, water, light, temperature, humidity, location".to_string())),
         ("fertilizer-to-water map:\n57 7 A",
-            MapError::MappingError("Invalid Mapping value: [\"57 7 A\":invalid digit found in string]".to_string())),
+            MapError::MappingError("Invalid Mapping value: [invalid digit found in string in \"57 7 A\"]".to_string())),
         ("fertilizer-to-water map:\n57 4",
             MapError::MappingError("Missing Mapping value: [57 4]".to_string())),
         ("fertilizer-too-water map:\n57 4 9",
