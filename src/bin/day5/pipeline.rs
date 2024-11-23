@@ -1,4 +1,6 @@
-use std::{collections::HashMap, ops::Range, rc::Rc, str::FromStr};
+use std::{collections::HashMap, num::ParseIntError, ops::Range, rc::Rc, str::FromStr};
+use crate::map::MapError;
+
 use super::map::{Transform,MapType,Map};
 
 pub(crate) struct Seeds(Rc<[u64]>);
@@ -17,7 +19,7 @@ impl Seeds {
 }
 
 impl FromStr for Seeds {
-    type Err = ();
+    type Err = ParseIntError;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         Ok(Seeds(
@@ -26,8 +28,8 @@ impl FromStr for Seeds {
             .split(':')
             .last().unwrap()
             .split_whitespace()
-            .map(|num| num.trim().parse::<u64>().expect("Seeds:Ops!"))
-            .collect::<Rc<[_]>>()
+            .map(|num| num.trim().parse::<u64>())
+            .collect::<Result<Rc<[_]>,ParseIntError>>()?
         ))
     }
 }
@@ -63,7 +65,7 @@ impl Run<Rc<[Range<u64>]>> for Pipeline {
 }
 
 impl FromStr for Pipeline {
-    type Err = ();
+    type Err = MapError;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let split = input.split("\n\n").skip(1);
@@ -71,9 +73,11 @@ impl FromStr for Pipeline {
             Pipeline {
                 maps: split
                     .into_iter()
-                    .map(|map| map.parse::<Map>().expect("Ops!"))
-                    .map(|map| (map.id(), map))
-                    .collect::<HashMap<MapType,Map>>()
+                    .map(|m| m.parse::<Map>())
+                    .map(|m|
+                        m.map(|map| (map.id(), map))
+                    )
+                    .collect::<Result<HashMap<MapType,Map>,MapError>>()?
             }
         )
     }
@@ -87,8 +91,8 @@ mod test_pipeline {
     #[test]
     fn test_pipeline_ranges() {
         let input = std::fs::read_to_string("./src/bin/day5/sample.txt").expect("Ops!");
-        let seeds = input.parse::<Seeds>().expect("Ops!");
-        let pipeline = input.parse::<Pipeline>().expect("Ops!");
+        let seeds = input.parse::<Seeds>().map_err(|e| panic!("{e}")).unwrap();
+        let pipeline = input.parse::<Pipeline>().map_err(|e| panic!("{e:?}")).unwrap();
 
         let ranges = pipeline.run(seeds.get_ranges(), MapType::Seed);
         let min = ranges

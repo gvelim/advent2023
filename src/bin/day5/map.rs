@@ -1,4 +1,4 @@
-use std::{ops::Range, rc::Rc, str::FromStr};
+use std::{num::ParseIntError, ops::Range, rc::Rc, str::FromStr};
 use super::mapping::*;
 
 #[derive(Debug,Hash,Eq,PartialEq,Copy, Clone)]
@@ -6,8 +6,13 @@ pub(crate) enum MapType {
     Seed, Soil, Fertilizer, Water, Light, Temperature, Humidity, Location
 }
 
+#[derive(Debug)]
+pub enum MapTypeError {
+    InvalidType
+}
+
 impl FromStr for MapType {
-    type Err = String;
+    type Err = MapTypeError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -19,7 +24,7 @@ impl FromStr for MapType {
             "temperature" => Ok(MapType::Temperature),
             "humidity" => Ok(MapType::Humidity),
             "location" => Ok(MapType::Location),
-            _ => Err(format!("Cannot convert to MapType {s}"))
+            _ => Err(MapTypeError::InvalidType)
         }
     }
 }
@@ -83,25 +88,48 @@ impl Transform<Rc<[Range<u64>]>> for Map {
     }
 }
 
+#[derive(Debug,PartialEq)]
+pub enum MapError {
+    InvalidMapType,
+    MissingMapType,
+    InvalidMappingValue,
+    ParseInputFormatInvalid
+}
+
+impl From<ParseIntError> for MapError {
+    fn from(_: ParseIntError) -> Self {
+        MapError::InvalidMappingValue
+    }
+}
+impl From<MapTypeError> for MapError {
+    fn from(_: MapTypeError) -> Self {
+        MapError::InvalidMapType
+    }
+}
+
 impl FromStr for Map {
-    type Err = ();
+    type Err = MapError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut maps = s.split("\n\n").next().unwrap().lines();
+        let mut maps = s
+            .split("\n\n")
+            .next()
+            .ok_or(MapError::ParseInputFormatInvalid)?
+            .lines();
 
         let mut map_type = maps
-            .next().unwrap()
+            .next().ok_or(MapError::MissingMapType)?
             .split_whitespace()
-            .next().unwrap()
+            .next().ok_or(MapError::MissingMapType)?
             .split("-to-")
-            .map(|map| map.parse::<MapType>().expect("map_type::Ops!"));
+            .map(|map| map.parse::<MapType>());
 
         Ok(Map {
-            map: map_type.next().unwrap(),
-            dest: map_type.next().unwrap(),
+            map: map_type.next().unwrap()?,
+            dest: map_type.next().unwrap()?,
             mappings: maps
-                .map(|m| m.parse::<Mapping>().expect("mapping::Ops"))
-                .collect::<Rc<[_]>>()
+                .map(|m| m.parse::<Mapping>())
+                .collect::<Result<Rc<[_]>,ParseIntError>>()?
         })
     }
 }

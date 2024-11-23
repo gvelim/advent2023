@@ -8,8 +8,8 @@ use pipeline::{ Run, Pipeline, Seeds};
 
 fn main() -> Result<(),()> {
     let input = std::fs::read_to_string("src/bin/day5/input.txt").expect("Ops!");
-    let seeds = input.parse::<Seeds>()?;
-    let pipeline = input.parse::<Pipeline>()?;
+    let seeds = input.parse::<Seeds>().map_err(|e| panic!("{e}"))?;
+    let pipeline = input.parse::<Pipeline>().map_err(|e| panic!("{e:?}"))?;
 
     let t = Instant::now();
     let min = seeds.iter()
