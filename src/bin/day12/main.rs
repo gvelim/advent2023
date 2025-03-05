@@ -1,4 +1,3 @@
-#![feature(iter_collect_into)]
 mod combinator;
 
 use rayon::prelude::*;

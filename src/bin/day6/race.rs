@@ -18,13 +18,13 @@ pub(crate) struct Race {
 }
 
 impl Race {
-    pub(crate) fn trial_charge_times(&self) -> impl Iterator<Item=(u64, u64)> + '_ {
+    pub(crate) fn _trial_charge_times(&self) -> impl Iterator<Item=(u64, u64)> + '_ {
         (0..=self.duration).map(|charge|
             ( charge, Boat::distance_travelled(charge,self.duration) )
         )
     }
-    pub(crate) fn winning_charge_times(&self) -> impl Iterator<Item=(u64, u64)> + '_ {
-        self.trial_charge_times().filter(|&(_,dist)| dist > self.record)
+    pub(crate) fn _winning_charge_times(&self) -> impl Iterator<Item=(u64, u64)> + '_ {
+        self._trial_charge_times().filter(|&(_,dist)| dist > self.record)
     }
 
     fn find_winning_charge_between(&self, mut time_range: impl Iterator<Item = u64>) -> u64 {

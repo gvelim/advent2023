@@ -1,5 +1,3 @@
-#![feature(iter_collect_into)]
-
 mod universe;
 mod galaxy;
 

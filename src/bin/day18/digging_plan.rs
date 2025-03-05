@@ -10,7 +10,7 @@ impl DigPlan {
         self.set.iter()
     }
 
-    pub fn is_clockwise(&self) -> bool {
+    pub fn _is_clockwise(&self) -> bool {
         let mut last: Option<Direction> = None;
         self.set
             .iter()
@@ -67,7 +67,7 @@ mod test {
             Err(e) => panic!("{}", e),
         };
 
-        match plan.is_clockwise() {
+        match plan._is_clockwise() {
             true => println!("Clockwise"),
             false => println!("Counter Clockwise"),
         }

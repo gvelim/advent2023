@@ -68,7 +68,7 @@ mod test {
             288,
             races.into_iter()
                 .inspect(|race| print!("{:?}",race))
-                .map(|race| race.winning_charge_times().collect::<Vec<_>>() )
+                .map(|race| race._winning_charge_times().collect::<Vec<_>>() )
                 .inspect(|ways| println!("-> {:?}",ways))
                 .map(|ways| ways.len() as u32)
                 .product::<u32>()
@@ -79,7 +79,7 @@ mod test {
         let race = Race::parse_races(INPUT).next().unwrap();
         assert_eq!(
             race
-                .winning_charge_times()
+                ._winning_charge_times()
                 .inspect(|dist| print!("{:?},",dist))
                 .collect::<Vec<_>>(),
             [(2, 10), (3, 12), (4, 12), (5, 10)]
@@ -90,7 +90,7 @@ mod test {
         let race = Race::parse_races(INPUT).next().unwrap();
         assert_eq!(
             race
-                .trial_charge_times()
+                ._trial_charge_times()
                 .inspect(|dist| print!("{:?},",dist))
                 .collect::<Vec<_>>(),
             [(0, 0), (1, 6), (2, 10), (3, 12), (4, 12), (5, 10), (6, 6), (7,0)]

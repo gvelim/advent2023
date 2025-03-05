@@ -74,7 +74,7 @@ mod test {
             map.get_crucible(0, D::Right)
                 .find_path_to(map.len()-1, rng)
                 .map(|path| {
-                    map.display_path(&path);
+                    map._display_path(&path);
                     path.total_heat_loss()
                 })
         };

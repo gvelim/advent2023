@@ -154,7 +154,7 @@ mod test {
     #[test]
     fn test_boundaries() {
         let f = Field::parse(INPUT_PART1, 'S');
-        
+
         assert_eq!(Some('S'), f.get_pipe(f.start));
         assert_eq!(Some('7'), f.get_pipe((3, 0)));
         assert_eq!(Some('F'), f.get_pipe((2, 0)));
