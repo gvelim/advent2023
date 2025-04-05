@@ -4,6 +4,7 @@
 You are given a "map" on how to navigate the desert. The map contains
 * a list of left/right instructions, and
 * the rest of the document seem to describe some kind of network of labeled nodes
+
 ```
 RL
 
@@ -19,6 +20,7 @@ Assume we need to navigate from `AAA` to `ZZZ`. Starting with `AAA`, you need to
 
 ## Part 1
 Starting at `AAA`, follow the left/right instructions. How many steps are required to reach `ZZZ`?
+
 ```
 Input:
 
@@ -39,8 +41,10 @@ Output:
 
 6 steps
 ```
+
 ## Part 2
 Start concurently, at every node that ends with `A` and follow all of the paths at the same time until they all simultaneously end up at nodes that end with `Z`. How many steps are required to reach the place where all nodes are ending with `Z`?
+
 ```
 Input:
 
