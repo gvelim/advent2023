@@ -1,7 +1,9 @@
-# Day 3
+# Day 3: Gear Ratios - Learning About Grid Processing
 
-## Input
-The engine schematic consists of a visual representation of the engine. Numbers adjacent to a symbol, even diagonally, are "part numbers".
+## Problem Statement
+The engine schematic consists of a visual representation of the engine. We need to identify "part numbers" - any numbers that are adjacent to a symbol (including diagonally). This is a classic grid processing problem that teaches us important concepts about data representation and adjacency detection.
+
+Example input:
 ```
 467..114..
 ...*......
@@ -14,38 +16,90 @@ The engine schematic consists of a visual representation of the engine. Numbers 
 ...$.*....
 .664.598..
 ```
-## Part 1: Output
-Find all the part numbers and produce their SUM()
+
+## Part 1: Finding Part Numbers
+Our first task is to identify all part numbers and calculate their sum. A part number is any number adjacent to a symbol (horizontally, vertically, or diagonally).
+
+From the example above, the part numbers are:
 ```
 467 + 35 + 633 + 617 + 592 + 755 + 664 + 598 = 4361
 ```
-## Part 2: Output
-A gear is any `*` symbol that is adjacent to exactly two part numbers. Its gear ratio is the result of multiplying those two numbers together. Add up all the gear ratios
+
+## Part 2: Understanding Gear Ratios
+Building on Part 1, we now focus on a specific type of symbol: gears. A gear is any `*` symbol that is adjacent to exactly two part numbers. The "gear ratio" is the product of these two numbers. We need to sum all gear ratios in the schematic.
+
+From our example:
 ```
 467 * 35 + 755 * 598 = 467835
+```
+
+## Solution Strategy: From 2D to 1D
+
+When working with grid problems, we have two main approaches: processing the grid as a 2D structure or flattening it to a 1D structure. Let's explore the 1D approach, which simplifies many operations:
+
+### 1. **Grid Flattening: Converting Dimensions**
+Instead of dealing with row and column indices, we convert our 2D grid into a single string. This simplifies our data structure while requiring us to understand position mapping:
+
+```rust
+// Store the line length to navigate between rows
+let len = input.lines().next().unwrap().len();
+// Convert the entire grid to a single string
+let schematic = input.lines().flat_map(|d| d.chars()).collect::<String>();
+```
+
+### 2. **Data Modeling: Representing Elements**
+We need to track two types of elements - numbers and symbols - along with their positions in our flattened grid:
+
+```rust
+// A part number with its value and position range
+struct PartNumber {
+    number: u32,
+    pos: RangeInclusive<usize>
+}
+// A symbol with its position and character value
+struct Symbol(usize, char);
+```
+
+This representation allows us to efficiently check for adjacency between elements.
+
+### 3. **Adjacency Detection: Understanding Grid Navigation**
+The key challenge is determining when elements are adjacent. In our flattened grid, we need to translate 2D adjacency to 1D position calculations:
+
+```rust
+fn is_touching(&self, pn: &PartNumber, len: usize) -> bool {
+    // Check positions above, below, and adjacent using offset arithmetic
+    (self.0 - len-1 ..= self.0 - len+1).contains(pn.pos.end()) ||
+    // Additional adjacency checks...
+}
+```
+
+### Understanding Grid Flattening: A Visual Guide
+
+To truly understand how 2D to 1D conversion works, let's visualize it:
 
 ```
-## Approach
-1. Keep the length of the first line (offset) and convert the two dimensions to a single dimension; single string
-2. Extract all numbers from the string in a struct (value, pos(start,end))
-3. Extract all symbols from the string in a struct (value, pos)
-4. Per number, iterate over the symbols and check if
-   1. `Symbol.pos -/+ 1` falls within `Number.pos(star,end)` ? == Adjacent to number
-   2. `Symbol.pos -/+ offset` falls within `Number.pos(star,end)` ? == Under/Over the number 
-   3. `Symbol.pos -/+ offset +/- 1` falls within `Number.pos(star,end)` ?  == diagonal to the number
+Original 2D Grid:       Flattened 1D String (offset: 9)
+...123...               ...123.....%//*#..
+..%//*#..               ^       ^
+                        |       |
+                        Position relationships:
+                        ||+---10----+  (diagonal right/below)
+                        ||+---9----+   (directly below)
+                        |+---9----+    (diagonal left/below)
+                        +---9----+     (directly above)
+                        +---8---+      (diagonal above)
 
+Position Analysis Example:
+..abbbc..   ==>         ..abbbc....d123d....efffg..
+..d123d..                     |    |    |
+..efffg..                     |    |    |
+                              |    |    |
+Element Relationships:        |    |    |
+- To move down one row:        +9   +9   +9
+- To move down diagonally:    +8/+10 +8/+10 +8/+10
+- To move horizontally:        ±1    ±1    ±1
 ```
-...123...   ==> ...123.....%//*#.. (offset: 9)   
-..%//*#..          ||+---10----+
-                   ||+---9----+
-                   |+---9----+
-                   +---9----+
-                   +---8---+
-Offset analysis
-================
-..abbbc..   ==> ..abbbc....d123d....efffg.. (offset: 9)
-..d123d..         ||  |    + 1 -    |  ||
-..efffg..         ||  +      8      -  ||
-                  |+++       9       ---|
-                  +          10         -
-```
+
+This visualization helps us understand how to navigate between rows in our flattened representation. Using the line length (offset), we can move between rows by adding or subtracting this value, and check for adjacency in all eight directions around an element.
+
+By understanding these position relationships, we can efficiently detect adjacency without needing to maintain a complex 2D data structure.

@@ -54,61 +54,152 @@ Galaxy { pos: (1000003, 2000007) } ->  = Sum: 0,
 Sum of sortest paths = 82000210
 ```
 ## Approach
-Overall we avoid taking a matrix approach emulating the input as this will result in very large arrays with mostly zeros. Instead, we use a simple vector of galaxies to perform the (a) expansion and (b) distance calculations
+Overall we avoid taking a matrix approach emulating the input as this will result in very large arrays with mostly zeros. Instead, we use a simple vector of galaxies to perform the (a) expansion and (b) distance calculations. This sparse representation is particularly critical for Part 2, where a 1,000,000x expansion would make a matrix approach impractical.
+
+```rust
+// Our core data structures
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct Galaxy {
+    pub(crate) pos: (usize, usize)
+}
+
+#[derive(Debug, PartialEq)]
+pub(crate) struct Universe {
+    pub(crate) clusters: Vec<Galaxy>
+}
+```
+
 ### Gap Identification
 We know gaps can grow very large hence use of `Range`, like `(2..=3)`, is an economical way to represent & process gaps.
-Therefore, gaps can be extracted by 
+Therefore, gaps can be extracted by:
 1. Collecting all `X` values into a sorted array. Similarly, for `Y` coordinates
 2. Check the **distance delta** of each `X` **pair** in the array and if greater than `1` then save it as range
 
-The below function performs step 2 by providing an Iterator over the array of X or Y values.
+This approach allows us to work with potentially enormous gaps without explicitly storing every coordinate within them - essential for million-fold expansions.
+
+The below function performs step 2 by providing an Iterator over the array of X or Y values:
 ```rust
-pub(crate) fn extract_gaps(seq: &Vec<usize>) -> impl Iterator<Item=RangeInclusive<usize>> + '_ {
+pub(crate) fn extract_gaps(seq: &[usize]) -> impl Iterator<Item=RangeInclusive<usize>> + '_ {
     seq.windows(2)
         .filter_map(|pair| {
-            let [a,b] = pair else { unreachable!() };
-            if b - a > 1 {
-                Some(a + 1 ..= *b - 1)
+            if pair[1] - pair[0] > 1 {
+                Some(pair[0] + 1 ..= pair[1] - 1)
             } else {
                 None
             }
         })
 }
 ```
+
+The function uses the `.windows(2)` method which creates a sliding window of size 2 over the array, allowing us to examine pairs of adjacent values. When a gap is detected, we return it as an inclusive range.
+
 ### Universe Expansion
-The important consideration here is that with each expanding gap, all subsequent gaps and galaxies are moved out by **expansion multiples**. As a result
+The important consideration here is that with each expanding gap, all subsequent gaps and galaxies are moved out by **expansion multiples**. As a result:
 1. 1st gap pushes all subsequent galaxies and gaps by `expand`*`1`
 2. 2nd gap pushes all subsequent galaxies and gaps by `expand`*`2`
 3. 3rd gap pushes all subsequent galaxies and gaps by `expand`*`3`
 4. etc
 
-With the above in mind, calculating the new position per galaxy we run the following logic
+This cumulative effect is crucial - each gap not only shifts galaxies by its own expansion amount but also needs to account for all previous expansions.
+
+First, we define methods to modify galaxy positions:
+
+```rust
+impl Galaxy {
+    pub(crate) fn shift_by(&mut self, delta: (usize, usize)) {
+        self.pos.0 += delta.0;
+        self.pos.1 += delta.1;
+    }
+}
+```
+
+With the above in mind, calculating the new position per galaxy we run the following logic:
 1. For each `gap range` identified on `X` dimension and with `gap order`
    1. get range's `gap length`
    2. For each galaxy with `X` > `gap range end` + `expand` * (`gap order` - 1)
       1. Increment Galaxy's X by (`expand` * `gap length`)
    3. increase `gap order` by `gap length`
 
-With
-* `gap range`, a region of X or Y values with no galaxies 
+With:
+* `gap range`, a region of X or Y values with no galaxies
 * `expand`, the amount we expand the gap i.e. double is `+1`, tenfold is `+9`
 * `gap order`, the gap's sequence order i.e. `1` if first, `2` if second, etc
 
-The below code reflects the above algorithm
+The complete expand method:
 ```rust
-let gap_order = 0;
-Universe::extract_gaps(&x_gaps)
-    .for_each(|gap_range| {
-        let len = gap_range.end() - gap_range.start() + 1;
-        self.clusters
-            .iter_mut()
-            .filter(|g| g.pos.0 > gap_range.end() + gap_order * expand)
-            .for_each(|g|
-                g.shift_by((expand * len, 0))
-            );
-        gap_order += len;
+pub(crate) fn expand(&mut self, multiplier: usize) -> &Self {
+    let expand = if multiplier > 1 { multiplier - 1 } else { 1 };
+
+    let (mut x_gap, mut y_gap) = (vec![], vec![]);
+
+    self.clusters.iter().for_each(|g| {
+        x_gap.push(g.pos.0);
+        y_gap.push(g.pos.1);
     });
+
+    x_gap.sort();
+
+    // Expand along x-axis
+    let mut i = 0;
+    Universe::extract_gaps(&x_gap)
+        .for_each(|x| {
+            let len = x.end() - x.start() + 1;
+            self.clusters.iter_mut()
+                .filter(|g| g.pos.0.gt(&(x.end() + i * expand)))
+                .for_each(|g| {
+                    g.shift_by((expand * len, 0));
+                });
+            i += len;
+        });
+
+    // Expand along y-axis
+    i = 0;
+    Universe::extract_gaps(&y_gap)
+        .for_each(|y| {
+            let len = y.end() - y.start() + 1;
+            self.clusters.iter_mut()
+                .filter(|g| g.pos.1.gt(&(y.end() + i * expand)))
+                .for_each(|g|
+                    g.shift_by((0, expand * len))
+                );
+            i += len;
+        });
+
+    self
+}
 ```
-Expanding by Y dimension follows the same logic
+
+The filter condition `g.pos.0 > gap_range.end() + gap_order * expand` ensures we only shift galaxies that are beyond the current gap, taking into account all previous expansions.
+
+Expanding by Y dimension follows the same logic, operating on the Y coordinates instead.
+
 ### Distance between galaxies
-The Manhattan Distance formula `|x2-x1| + |y2-y1|` calculates the steps required to connect two points in a matrix
+The Manhattan Distance formula `|x2-x1| + |y2-y1|` calculates the steps required to connect two points in a matrix. This is appropriate for our problem because we can only move in four directions (up, down, left, right) through the grid. After expansion, we simply apply this formula to each pair of galaxies to find the shortest path between them.
+
+```rust
+impl Galaxy {
+    pub(crate) fn distance_to(&self, dst: &Galaxy) -> usize {
+        // Using the Manhattan distance formula
+        dst.pos.0.abs_diff(self.pos.0) + dst.pos.1.abs_diff(self.pos.1)
+    }
+}
+```
+
+Finally, to solve both parts, we compute the sum of all galaxy pair distances:
+
+```rust
+fn run_part(universe: &mut Universe, multiplier: usize) -> usize {
+    universe.expand(multiplier);
+    universe.clusters
+        .iter()
+        .enumerate()
+        .map(|(i, from)| {
+            universe.clusters
+                .iter()
+                .skip(i + 1)  // Only count each pair once
+                .map(|to| from.distance_to(to))
+                .sum::<usize>()
+        })
+        .sum::<usize>()
+}
+```

@@ -27,7 +27,7 @@ For example, in the first pattern, the reflection is across a vertical line betw
 
 ```
 123456789
-    ><   
+    ><
 #.##..##.
 ..#.##.#.
 ##......#
@@ -35,7 +35,7 @@ For example, in the first pattern, the reflection is across a vertical line betw
 ..#.##.#.
 ..##..##.
 #.#.##.#.
-    ><   
+    ><
 123456789
 ```
 The second pattern reflects across a horizontal line instead:
@@ -63,7 +63,7 @@ Find the line of reflection in each of the patterns in your notes. **What number
 "..##.|.##."
 "#.#.#|#.#."
 Horizontal:[None], Vertical:[position:5, radius:4] -> Result: 5
-   
+
 "#...##..#"
 "#....#..#" <
 "..##..###" |
@@ -92,7 +92,7 @@ In each pattern, fix the smudge and find the different line of reflection. What 
 "..##..##." <
 "#.#.##.#."
 Horizontal[position:3, radius:3], Vertical[position:5, radius:4] -> Result 3 * 100 = 300
- 
+
 "#....#..#" <
 ----------- 1
 "#....#..#" <
@@ -102,28 +102,38 @@ Horizontal[position:3, radius:3], Vertical[position:5, radius:4] -> Result 3 * 1
 "..##..###"
 "#....#..#"
  Horizontal[position:1, radius:1], Vertical[None] -> Result 1 * 100 = 100
- 
+
  Total = 400
 ```
-## Approach
-### Part 1
-Below is the definition of a **_perfect_** and _**smudged**_ pattern reflection:
+
+## Solution Approach
+
+### Understanding the Problem
+
+Before diving into the solution, let's understand what constitutes a perfect reflection and a smudged reflection:
+
 ```
-A perfect reflection      A smudged reflection is  
-MUST contains either      similar toa perfect one, 
-the first or last         but with a *ONE* flawed 
+A perfect reflection      A smudged reflection is
+MUST contains either      similar toa perfect one,
+the first or last         but with a *ONE* flawed
 column/row or both        reflection
 
-   <---4--->                   <---4--->   
+   <---4--->                   <---4--->
 "#[.##.|.##.]" = 4          "#[.##.|.##.]" 4
 ".[.#.#|#.#.]" = 4          ".[.#.#|#.#.]" 4
 "#[#...|...#]" = 4          "#[#...|...#]" 4
 "#[#...|...#]" = 4          "##.[..|..]##" 2 <-- smudged reflection
 ".[.#.#|#.#.]" = 4          ".[.#.#|#.#.]" 4
 ".[.##.|.##.]" = 4          ".[.##.|.##.]" 4
-"#[.#.#|#.#.]" = 4          "#[.#.#|#.#.]" 4    
+"#[.#.#|#.#.]" = 4          "#[.#.#|#.#.]" 4
 ```
-Identifying a perfect reflection for a **_single pattern line_** we take the following approach
+
+### Part 1: Finding Perfect Reflections
+
+Our solution leverages a systematic approach by checking each potential reflection line position and verifying if it creates a perfect reflection. For each line in the pattern, we calculate how many characters reflect perfectly at a given position.
+
+#### Checking Reflections in a Single Line:
+
 ```
 Starting form index position 1; 2nd position for zero based index arrays
 
@@ -142,13 +152,33 @@ Starting form index position 1; 2nd position for zero based index arrays
 #.##..[#|#]. => Index 6, Reflected: 1 => found a reflection, not perfect, expand
 #.##.[.#|#.] => Index 6, Reflected: 2 => Found a perfect reflecton !!
 ```
-Hence, by applying the above logic to the whole pattern we get
+
+The core of this approach is implemented in our `reflections_at_index` function, which:
+1. Splits the string at the potential reflection point
+2. Reverses the left part and compares with the right part
+3. Counts matching characters until a mismatch is found
+
+This function is elegantly implemented using Rust's iterators:
+
+```rust
+fn reflections_at_index(s: &str, idx:usize) -> usize {
+    let (l, r) = s.split_at(idx);
+    let li = l.bytes().rev();
+    let mut ri = r.bytes();
+    li.take_while(|&lc| ri.next() == Some(lc)).count()
+}
+```
+
+#### Applying to the Full Pattern:
+
+We then apply this check to each line in the pattern, ensuring all lines reflect perfectly at the same position:
+
 ```
 For
 Index 1            Index 2            Index 3            Index 4             Index 5            Index 6
 
 [#|.]##..##. = 0   #[.|#]#..##. = 0   #.[#|#]..##. = 1   #.#[#|.].##. = 0    #[.##.|.##.] = 4   #.##.[.|#]#. = 0
-[. .]#.##.#. Stop  .[. #].##.#. Stop  ..[#|.]##.#. = 0   ..#[. #]#.#. Stop   .[.#.#|#.#.] = 4   ..#.#[# .]#. Stop 
+[. .]#.##.#. Stop  .[. #].##.#. Stop  ..[#|.]##.#. = 0   ..#[. #]#.#. Stop   .[.#.#|#.#.] = 4   ..#.#[# .]#. Stop
 [# #]......#       #[# .].....#       ##[. .]....# Stop  ##.[. .]...#        #[#...|...#] = 4   ##...[. .].#
 [# #]......#       #[# .].....#       ##[. .]....#       ##.[. .]...#        #[#...|...#] = 4   ##...[. .].#
 [. .]#.##.#.       .[. #].##.#.       ..[# .]##.#.       ..#[. #]#.#.        .[.#.#|#.#.] = 4   ..#.#[# .]#.
@@ -156,15 +186,42 @@ Index 1            Index 2            Index 3            Index 4             Ind
 [# .]#.##.#.       #[. #].##.#.       #.[# .]##.#.       #.#[. #]#.#.        #[.#.#|#.#.] = 4   #.#.#[# .]#.
                                                                                        Finished
 Max Height 1       Max Height 1       Max Height 2       Max Height 1        Max Height 7       Max Height 1
-                                                                              ** MATCH **                                    
+                                                                              ** MATCH **
 Perfect Line Mirror at Index 5 with radius 4
 ```
-### Part 2
-In order to find a smudged reflection, the above logic has to be adjusted so to accept reflections with **ONLY ONE** flawed radius.
 
-Hence, the above pattern example would have a **smudged reflection** if it had `6` perfect reflections and `1` imperfect
+This check is encapsulated in the `find_perfect_reflection` function:
+
+```rust
+pub(crate) fn find_perfect_reflection(pat: &[String]) -> impl Iterator<Item=Reflection> + '_ {
+    let width = pat[0].len();
+
+    (1..width)
+        .filter(move |&idx|
+            pat.iter()
+                .map(|line| Pattern::reflections_at_index(line, idx))
+                .all(|r| idx == r || idx + r == width)
+        )
+}
 ```
-Index 5     
+
+A key optimization is that we handle both vertical and horizontal reflections with the same algorithm by transposing the pattern once during initialization:
+
+```rust
+fn transpose(p: &[String]) -> impl Iterator<Item=String> + '_ {
+    (0..p[0].len())
+        .map(move |col| {
+            p.iter().map(|line| line.as_bytes()[col] as char).collect::<String>()
+        })
+}
+```
+
+### Part 2: Finding Smudged Reflections
+
+For smudged reflections, we adapt our approach to count and track imperfections:
+
+```
+Index 5
 
 #[.##.|.##.] = 4 <-- Perfect reflection
 .[.#.#|#.#.] = 4
@@ -174,24 +231,70 @@ Index 5
 .[.##.|.##.] = 4
 #[.#.#|#.#.] = 4
 
-Max Height  7      
+Max Height  7
 ```
-Therefore, our scanning algorithm must continue the scan when a reflection flaw is discovered, and later decide whether to accept or reject the **scan results** based on the **radius variation** observed.
 
-As a result and during scanning, we need to measure the **radius' frequency**. We can use an array for this purpose which would look like this
+This requires tracking the quality of reflections at each position using a frequency counter:
+
 ```
 Array Length =  Zero ---- to ----> Pattern Width
             freq[0, 1, 0, 0, 6, 0, 0]
    radius = pos :  '1'      '4'
-              
+
 For pattern height = 7, the array reads as:
 radius '4' - appeared 6/7 times
 radius '1' - appeared 1/7 time
 ```
-Therefore, when an index scan is completed, a smudged reflection is found when the below conditions are true 
-1. `freq[radius] == height - 1`
-2. `freq[..radius].iter().sum() == 1`
 
-However, computing every index in full is a costly exercise, hence we can optimise the scanning by stopping when any of the below conditions are true 
-1. `freq[0] > 1` - we found more than 1 occurrence of `0` radius
-2. `freq[..radius].iter().sum() > 1` - we have more than 1 flaws
+The implementation builds on our perfect reflection algorithm but adds counting logic:
+
+```rust
+pub(crate) fn find_smudged_reflection(pat: &[String]) -> impl Iterator<Item=Reflection> + '_ {
+    let (width, height) = (pat[0].len(), pat.len());
+    let mut smudge_counter = vec![0; width];
+
+    (1..width)
+        .filter(move |&idx| {
+            let mut radius = usize::MIN;
+            smudge_counter.fill(0);
+
+            let line_found = pat.iter()
+                .map(|line| Pattern::reflections_at_index(line, idx))
+                .all(|r| {
+                    radius = std::cmp::max(r,radius);
+                    smudge_counter[r] += 1;
+                    smudge_counter[0] < 2 && smudge_counter[..radius].iter().sum::<usize>() < 2
+                });
+
+            line_found && smudge_counter[radius] == height-1
+        })
+}
+```
+
+A critical optimization is early termination - we stop checking a potential position as soon as we detect more than one flaw.
+
+To calculate the final summary, we check for reflections in both orientations and apply the appropriate multiplier:
+
+```rust
+pub(crate) fn summarise_notes<'a, F, I>(&'a self, find: F) -> usize
+    where
+        F: Fn(&'a [String]) -> I,
+        I: Iterator<Item = Reflection> + 'a
+{
+    self.patterns.iter()
+        .map(|pat|
+            find(&pat.t).next()
+                .map(|v| (Some(v), None))
+                .or_else(||{ Some((None, find(&pat.p).next())) })
+                .unwrap()
+        )
+        .map(|(v,h)| {
+            v.map(|v| v * 100)
+                .or_else(|| Some(h.unwrap_or(0)) )
+                .unwrap()
+        })
+        .sum::<usize>()
+}
+```
+
+This modular design lets us reuse the same summarization logic for both parts of the puzzle by simply swapping the reflection-finding algorithm.
